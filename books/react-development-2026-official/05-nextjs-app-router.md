@@ -78,7 +78,7 @@ export default async function PostsPage() {
     </div>
   )
 }
-```
+```tsx
 
 ### データフェッチングパターン
 
@@ -115,7 +115,7 @@ export default async function UsersPage() {
     </div>
   )
 }
-```
+```tsx
 
 #### パターン2: 並列データフェッチング
 
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
     </div>
   )
 }
-```
+```tsx
 
 ### 環境変数の安全な使用
 
@@ -178,7 +178,7 @@ export default async function ApiStatusPage() {
     </div>
   )
 }
-```
+```tsx
 
 ---
 
@@ -204,7 +204,7 @@ export function Counter() {
     </div>
   )
 }
-```
+```tsx
 
 ### インタラクティブなフォーム
 
@@ -242,7 +242,7 @@ export function SearchForm({ initialQuery = '' }: SearchFormProps) {
     </form>
   )
 }
-```
+```tsx
 
 ### ブラウザAPIの使用
 
@@ -279,7 +279,7 @@ export function ThemeToggle() {
     </button>
   )
 }
-```
+```tsx
 
 ---
 
@@ -287,7 +287,7 @@ export function ThemeToggle() {
 
 ### 決定フローチャート
 
-```
+```tsx
 コンポーネントを作成する
 ↓
 インタラクティブか？
@@ -300,7 +300,7 @@ export function ThemeToggle() {
     ├─ データベース直接アクセス？ → Server Component
     ├─ 環境変数（秘密鍵）を使う？ → Server Component
     └─ 静的コンテンツ？ → Server Component
-```
+```tsx
 
 ### パターン別実装
 
@@ -318,7 +318,7 @@ export default function AboutPage() {
     </div>
   )
 }
-```
+```tsx
 
 #### パターン2: Server + Client 混在（推奨）
 
@@ -383,7 +383,7 @@ export function ProductCard({ product }) {
     </div>
   )
 }
-```
+```tsx
 
 ---
 
@@ -409,7 +409,7 @@ fetch('https://api.example.com/data', {
 fetch('https://api.example.com/data', {
   cache: 'force-cache'
 })
-```
+```tsx
 
 ### Revalidation パターン
 
@@ -446,7 +446,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     </article>
   )
 }
-```
+```tsx
 
 ### On-Demand Revalidation
 
@@ -492,7 +492,7 @@ async function getData() {
 
 // CMSからWebhookで呼び出し
 // POST /api/revalidate?secret=xxx&tag=posts
-```
+```tsx
 
 ---
 
@@ -526,7 +526,7 @@ export async function generateStaticParams() {
     slug: post.slug
   }))
 }
-```
+```tsx
 
 ### Catch-all Routes
 
@@ -553,7 +553,7 @@ export default function ShopPage({ params }: PageProps) {
     </div>
   )
 }
-```
+```tsx
 
 ### Parallel Routes
 
@@ -588,7 +588,7 @@ export default function AnalyticsSlot() {
 export default function TeamSlot() {
   return <div>Team Overview</div>
 }
-```
+```tsx
 
 ---
 
@@ -624,7 +624,7 @@ export default function DashboardPage() {
     </div>
   )
 }
-```
+```tsx
 
 ### Error Handling
 
@@ -649,7 +649,7 @@ export default function Error({
     </div>
   )
 }
-```
+```tsx
 
 ---
 

@@ -51,7 +51,7 @@ function App() {
     </Profiler>
   )
 }
-```
+```typescript
 
 ### カスタムフックでパフォーマンス計測
 
@@ -86,7 +86,7 @@ function useRenderTime(componentName: string) {
     startTime.current = endTime
   })
 }
-```
+```typescript
 
 ---
 
@@ -125,7 +125,7 @@ const ListItem = memo(({ item }: { item: Item }) => {
 })
 
 // 結果：filterが変わってもListItemは再レンダリングされない
-```
+```typescript
 
 ### React.memoを使うべきとき・使わないべきとき
 
@@ -163,7 +163,7 @@ const AlwaysChanging = memo(({ timestamp }: { timestamp: number }) => {
   return <p>{timestamp}</p>
 })
 // timestampが毎回変わるのでメモ化の意味がない
-```
+```typescript
 
 ---
 
@@ -207,7 +207,7 @@ function DataVisualization({ data }: { data: DataPoint[] }) {
 
   return <Chart data={processedData} />
 }
-```
+```typescript
 
 ### useCallback: 関数のメモ化
 
@@ -252,7 +252,7 @@ function Parent() {
 }
 
 // 結果：countが変わってもChildは再レンダリングされない
-```
+```typescript
 
 ### useMemo vs useCallback の使い分け
 
@@ -287,7 +287,7 @@ function Component() {
   }), [])
   // configは常に同じオブジェクト
 }
-```
+```typescript
 
 ---
 
@@ -321,7 +321,7 @@ function App() {
     </Suspense>
   )
 }
-```
+```typescript
 
 ### Route-based Code Splitting
 
@@ -354,7 +354,7 @@ function App() {
 // - 初期バンドル: 50KB → 15KB（70%削減）
 // - 各ルート: 必要な時のみロード
 // - FCP（First Contentful Paint）: 1.2s → 0.4s（3倍高速化）
-```
+```typescript
 
 ### Component-based Code Splitting
 
@@ -389,7 +389,7 @@ function Dashboard() {
     </Suspense>
   )
 }
-```
+```typescript
 
 ---
 
@@ -440,7 +440,7 @@ function VirtualizedList({ items }: { items: Item[] }) {
 // - 悪い例: 初期レンダリング 2.5秒、メモリ使用量 150MB
 // - 良い例: 初期レンダリング 0.05秒、メモリ使用量 5MB
 // - パフォーマンス改善: 50倍
-```
+```typescript
 
 ### 可変高さの仮想化
 
@@ -483,7 +483,7 @@ function VirtualizedChat({ messages }: { messages: Message[] }) {
     </VariableSizeList>
   )
 }
-```
+```typescript
 
 ---
 
@@ -515,7 +515,7 @@ function BetterConditional({ show }: { show: boolean }) {
   if (!show) return null
   return <HeavyComponent />
 }
-```
+```typescript
 
 ### Key の最適化
 
@@ -543,7 +543,7 @@ function GoodList({ items }: { items: Item[] }) {
     </ul>
   )
 }
-```
+```typescript
 
 ---
 
@@ -562,7 +562,7 @@ const result = debounce(fn, 300)
 
 // さらに良い：lodash-es（ES Modules版）
 import { debounce } from 'lodash-es'
-```
+```typescript
 
 ### 依存関係の見直し
 
@@ -577,7 +577,7 @@ const date = format(new Date(), 'yyyy-MM-dd')
 
 // さらに良い：ネイティブAPI（0KB）
 const date = new Date().toISOString().split('T')[0]
-```
+```typescript
 
 ### Dynamic Import でライブラリを遅延ロード
 
@@ -596,7 +596,7 @@ function QRCodeGenerator({ value }: { value: string }) {
 
   return <QRCode value={value} />
 }
-```
+```typescript
 
 ---
 

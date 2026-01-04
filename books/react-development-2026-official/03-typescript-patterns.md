@@ -44,7 +44,7 @@ function Component({ name }: Props) {
 const Component = ({ name }: Props) => {
   return <div>{name}</div>
 }
-```
+```typescript
 
 **React.FCを使わない理由**:
 - 暗黙的に`children`を含む（型安全性が低下）
@@ -84,7 +84,7 @@ interface ObjectProps {
   user: User
   onUpdate: (user: User) => void
 }
-```
+```typescript
 
 ### HTML属性の継承
 
@@ -112,7 +112,7 @@ function Button({ variant = 'primary', children, ...props }: ButtonProps) {
 >
   Submit
 </Button>
-```
+```typescript
 
 ---
 
@@ -156,7 +156,7 @@ function Button(props: ButtonProps) {
 <Button variant="button" onClick={() => {}} /> // ✅ OK
 <Button variant="link" onClick={() => {}} /> // ❌ 型エラー
 <Button variant="button" href="/home" /> // ❌ 型エラー
-```
+```typescript
 
 ### Utility Types（Omit, Pick, Partial）
 
@@ -184,7 +184,7 @@ interface FormProps {
   initialValues?: Partial<FullUser>
   onSubmit: (data: FullUser) => void
 }
-```
+```typescript
 
 ---
 
@@ -237,7 +237,7 @@ function KeyboardInput() {
 
   return <input onKeyDown={handleKeyDown} />
 }
-```
+```typescript
 
 ### カスタムイベントハンドラの型
 
@@ -270,7 +270,7 @@ function UserList({ users, onUserSelect, onUserDelete }: UserListProps) {
     </ul>
   )
 }
-```
+```typescript
 
 ---
 
@@ -333,7 +333,7 @@ function UserList() {
     />
   )
 }
-```
+```typescript
 
 ### ジェネリックなSelectコンポーネント
 
@@ -398,7 +398,7 @@ function CountrySelect() {
     />
   )
 }
-```
+```typescript
 
 ---
 
@@ -424,7 +424,7 @@ type UnwrapArray<T> = T extends Array<infer U> ? U : T
 
 type StringType = UnwrapArray<string[]> // string
 type NumberType = UnwrapArray<number> // number
-```
+```typescript
 
 ### Template Literal Types
 
@@ -455,7 +455,7 @@ function Form({ title, onSubmit, onCancel, onSave }: FormProps) {
     </form>
   )
 }
-```
+```typescript
 
 ### Type Guards（型ガード）
 
@@ -488,7 +488,7 @@ function greet(person: User | Admin) {
     console.log(`Hello ${person.name}`)
   }
 }
-```
+```typescript
 
 ---
 
@@ -504,7 +504,7 @@ const [user, setUser] = useState<User>() // undefinedが許可されていない
 const [user, setUser] = useState<User | undefined>()
 // または
 const [user, setUser] = useState<User | null>(null)
-```
+```typescript
 
 ### エラー2: "Property 'X' does not exist on type 'never'"
 
@@ -516,7 +516,7 @@ data.push(item) // 型エラー
 // ✅ 解決
 const [data, setData] = useState<Item[]>([])
 data.push(item) // OK
-```
+```typescript
 
 ### エラー3: "Object is possibly 'null'"
 
@@ -532,7 +532,7 @@ inputRef.current?.focus()
 if (inputRef.current) {
   inputRef.current.focus()
 }
-```
+```typescript
 
 ---
 
