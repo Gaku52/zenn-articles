@@ -6,7 +6,7 @@ price: 0 # 無料公開で信頼構築
 # 本に含めるチャプターを順番に並べましょう
 chapters:
   - 00-introduction
-  - 01-useState-useEffect
+  - 01-usestate-useeffect
   - 02-hooks-mastery
   - 03-typescript-patterns
   - 04-optimization-performance
