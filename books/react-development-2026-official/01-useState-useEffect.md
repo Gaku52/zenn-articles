@@ -74,7 +74,82 @@ function BatchExample() {
 
 **なぜこれが重要か？**
 
-（TODO: バッチ更新のメリットを説明）
+バッチ更新には3つの重要なメリットがあります：
+
+#### 1. パフォーマンスの向上
+
+複数の状態更新が1回のレンダリングにまとめられるため、**無駄な再レンダリングを防げます**。
+
+```typescript
+// バッチ更新がない場合（仮想的な例）
+setCount(count + 1);    // 再レンダリング1回目
+setFlag(!flag);         // 再レンダリング2回目
+setName('New Name');    // 再レンダリング3回目
+// 合計: 3回の再レンダリング ❌
+
+// バッチ更新がある場合（実際のReact）
+setCount(count + 1);
+setFlag(!flag);
+setName('New Name');
+// 合計: 1回の再レンダリング ✅
+```
+
+**実務での影響**: 大規模なアプリケーションでは、この違いが体感できるほどのパフォーマンス差になります。
+
+#### 2. 一貫性のある状態
+
+複数の状態が同時に更新されることで、**中間的な不整合な状態を防げます**。
+
+```typescript
+function UserProfile() {
+  const [user, setUser] = useState({ name: 'Alice', age: 25 });
+  const [loading, setLoading] = useState(false);
+
+  const updateUser = () => {
+    setLoading(true);      // loading: true
+    setUser(newUserData);  // user: 新しいデータ
+    // この2つは同じレンダリングで反映される
+    // 「loading: false、user: 古いデータ」という中間状態は発生しない ✅
+  };
+}
+```
+
+#### 3. React 18の自動バッチング
+
+React 18以降、**すべての更新が自動的にバッチ処理**されます。
+
+```typescript
+// React 17以前: イベントハンドラ外ではバッチされない
+setTimeout(() => {
+  setCount(count + 1);  // 再レンダリング1回目
+  setFlag(!flag);       // 再レンダリング2回目
+}, 1000);
+
+// React 18以降: どこでもバッチされる ✅
+setTimeout(() => {
+  setCount(count + 1);
+  setFlag(!flag);
+  // 1回の再レンダリングにまとめられる
+}, 1000);
+```
+
+**実務でのポイント**: React 18を使っていれば、バッチ更新を意識する必要はほとんどありません。Reactが自動的に最適化してくれます。
+
+ただし、**どうしても即座にレンダリングしたい場合**は`flushSync`を使います：
+
+```typescript
+import { flushSync } from 'react-dom';
+
+flushSync(() => {
+  setCount(count + 1);
+});
+// ここで即座に再レンダリング
+
+setFlag(!flag);
+// ここでもう1回再レンダリング
+```
+
+**注意**: `flushSync`は特殊なケースでのみ使用してください。通常はReactの自動バッチングに任せる方が良いです。
 
 ---
 
