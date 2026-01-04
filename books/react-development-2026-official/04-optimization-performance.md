@@ -21,6 +21,30 @@ title: "パフォーマンス最適化の実践"
 
 ---
 
+## 目次
+
+1. [パフォーマンス計測の基礎](#1-パフォーマンス計測の基礎)
+   - React DevTools Profiler
+   - Core Web Vitals
+2. [React.memo による再レンダリング最適化](#2-reactmemo-による再レンダリング最適化)
+   - 基本的な使い方
+   - カスタム比較関数
+   - いつ使うべきか
+3. [useMemo と useCallback](#3-usememo-と-usecallback)
+   - useMemoの使い方
+   - useCallbackの使い方
+   - 使い分けのガイドライン
+4. [Code Splitting（コード分割）](#4-code-splittingコード分割)
+   - React.lazyとSuspense
+   - ルートベースの分割
+   - コンポーネントベースの分割
+5. [仮想化（Virtualization）](#5-仮想化virtualization)
+   - react-windowの使い方
+   - 大量データの最適化
+6. [実践：パフォーマンス改善ケーススタディ](#6-実践パフォーマンス改善ケーススタディ)
+
+---
+
 ## 1. パフォーマンス計測の基礎
 
 ### React DevTools Profiler
