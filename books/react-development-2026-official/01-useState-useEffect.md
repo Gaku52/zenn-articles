@@ -19,6 +19,27 @@ title: "useState と useEffect の深い理解"
 
 ---
 
+## 目次
+
+1. [useState の深い理解](#1-usestate-の深い理解)
+   - バッチ更新の仕組み
+   - 関数型更新（Functional Update）
+   - オブジェクト・配列の更新
+   - 遅延初期化（Lazy Initialization）
+2. [useEffect の深い理解](#2-useeffect-の深い理解)
+   - useEffect の基本
+   - 実行タイミングの理解
+   - クリーンアップ関数
+   - 依存配列の正しい理解
+3. [実践例](#3-実践例)
+   - フォーム入力の管理
+   - APIからのデータ取得
+   - タイマー・インターバル
+   - イベントリスナーの登録/解除
+   - ローカルストレージとの同期
+
+---
+
 ## 1. useState の深い理解
 
 ### 1.1 useState の基本的な使い方
@@ -95,6 +116,26 @@ setName('New Name');
 ```
 
 **実務での影響**: 大規模なアプリケーションでは、この違いが体感できるほどのパフォーマンス差になります。
+
+```typescript
+// バッチ更新の効果を確認する例
+function BatchDemo() {
+  const [count, setCount] = useState(0)
+  const [text, setText] = useState('')
+  const [flag, setFlag] = useState(false)
+
+  console.log('レンダリング実行') // クリックで1回だけ表示
+
+  const handleMultipleUpdates = () => {
+    setCount(c => c + 1)
+    setText('Updated')
+    setFlag(f => !f)
+    // この3つの更新は1回のレンダリングにバッチされる
+  }
+
+  return <button onClick={handleMultipleUpdates}>Update All</button>
+}
+```
 
 #### 2. 一貫性のある状態
 

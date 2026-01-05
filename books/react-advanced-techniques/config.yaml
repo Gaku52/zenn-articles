@@ -1,0 +1,24 @@
+title: "React実践テクニック - 実測データで学ぶパフォーマンス最適化と設計パターン"
+summary: "中級者向け。実測データ・失敗事例から学ぶReact開発。Hooks完全マスター、TypeScript活用、パフォーマンス最適化を実践的に解説。400万字の知識ベースから厳選した実務で使えるテクニック集。"
+topics: ["react", "typescript", "performance", "hooks", "frontend"]
+published: false # 執筆中はfalse
+price: 500 # 専門性の高い内容のため有料
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - 00-introduction
+  # Part 1: Hooks完全マスター
+  - 01-usestate-deep-dive
+  - 02-useeffect-complete-guide
+  - 03-custom-hooks-patterns
+  # Part 2: TypeScript × React
+  - 04-component-types
+  - 05-advanced-type-patterns
+  - 06-context-form-types
+  # Part 3: パフォーマンス最適化
+  - 07-react-memo-optimization
+  - 08-usememo-usecallback
+  - 09-code-splitting
+  - 10-virtualization
+  # Part 4: 実践
+  - 11-common-mistakes
+  - 12-performance-case-studies
