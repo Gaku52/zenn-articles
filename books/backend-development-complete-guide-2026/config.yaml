@@ -2,7 +2,7 @@ title: "Backend Development完全ガイド 2026 - Node.js/API/DB設計の全て"
 summary: "REST API設計、Node.js(Express/NestJS)、データベース設計、セキュリティ、エラーハンドリングまで、バックエンド開発の全てを実測データと実践例で学ぶ完全ガイド。TypeScript、Prisma、PostgreSQL対応。"
 topics: ["nodejs", "api", "database", "backend", "typescript"]
 published: false
-price: 500
+price: 1000
 chapters:
   - 00-introduction
   # Part 1: API設計の基礎
