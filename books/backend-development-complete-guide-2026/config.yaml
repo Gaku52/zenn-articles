@@ -22,4 +22,5 @@ chapters:
   - 11-backend-security
   - 12-error-handling
   # Part 5: 実践
-  - 13-real-world-case-study
+  - 13-real-world-case-study-part1
+  - 14-real-world-case-study-part2
