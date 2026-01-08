@@ -1,7 +1,7 @@
 title: "Testing Strategy完全ガイド 2026 - 実測データで学ぶ品質保証の全て"
 summary: "Unit/Integration/E2Eテスト戦略を実測データと失敗事例から学ぶ。Jest、Vitest、Playwright完全マスター。カバレッジ87%達成、本番バグ87%削減の実績。テストピラミッド、TDD/BDD、CI/CD統合まで網羅した実践的完全ガイド。"
 topics: ["test", "jest", "vitest", "playwright", "quality"]
-published: false # 執筆完了後にtrue
+published: true
 price: 500 # 専門的な内容と実測データのため有料
 # 本に含めるチャプターを順番に並べましょう
 chapters:

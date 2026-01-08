@@ -1,7 +1,7 @@
 title: "Next.js App Router完全ガイド - Server ComponentsとモダンWeb開発"
 summary: "Next.js 14/15のApp Routerを完全マスター。Server Components、データフェッチング、キャッシング戦略から本番デプロイまで。実践的なコード例で学ぶモダンなフルスタック開発。"
 topics: ["nextjs", "react", "typescript", "frontend", "servercomponents"]
-published: false # 執筆完了後にtrue
+published: true
 price: 500 # 専門的な内容のため有料
 # 本に含めるチャプターを順番に並べましょう
 chapters:
