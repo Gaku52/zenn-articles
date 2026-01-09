@@ -1,10 +1,10 @@
 ---
-title: "Chapter 11: Core Data完全マスター"
+title: "Chapter 15: Core Data完全マスター Part 1 - エンティティ設計とCRUD操作"
 ---
 
-# Chapter 11: Core Data完全マスター
+# Chapter 15: Core Data完全マスター Part 1 - エンティティ設計とCRUD操作
 
-## 11.1 概要
+## 15.1 概要
 
 Core DataはAppleが提供する、オブジェクトグラフ管理とデータ永続化のためのフレームワークです。単なるデータベースラッパーではなく、オブジェクト指向のデータモデル管理、メモリ管理、クエリの最適化、変更の追跡など、多くの高度な機能を提供します。
 
@@ -15,9 +15,7 @@ Core DataはAppleが提供する、オブジェクトグラフ管理とデータ
 - CRUD操作の実装
 - NSFetchedResultsControllerを使ったデータ管理
 - リレーションシップとカスケード削除
-- マイグレーションとバージョン管理
-- パフォーマンス最適化
-- SwiftUIとの統合
+- バッチ操作
 
 ### Core Dataのアーキテクチャ
 
@@ -36,9 +34,9 @@ NSManagedObject (Entity instances)
 */
 ```
 
-## 11.2 Core Data Stack のセットアップ
+## 15.2 Core Data Stack のセットアップ
 
-### 11.2.1 基本的なCore Data Stack
+### 15.2.1 基本的なCore Data Stack
 
 ```swift
 import CoreData
@@ -108,7 +106,7 @@ class CoreDataManager {
 }
 ```
 
-### 11.2.2 高度なセットアップ
+### 15.2.2 高度なセットアップ
 
 ```swift
 class AdvancedCoreDataManager {
@@ -254,9 +252,9 @@ class AdvancedCoreDataManager {
 }
 ```
 
-## 11.3 データモデルの設計
+## 15.3 データモデルの設計
 
-### 11.3.1 エンティティの定義
+### 15.3.1 エンティティの定義
 
 ```swift
 // User Entity
@@ -326,7 +324,7 @@ public class Tag: NSManagedObject {
 }
 ```
 
-### 11.3.2 エンティティ拡張
+### 15.3.2 エンティティ拡張
 
 ```swift
 // MARK: - User Extensions
@@ -484,9 +482,9 @@ extension Comment: Identifiable {}
 extension Tag: Identifiable {}
 ```
 
-## 11.4 CRUD操作
+## 15.4 CRUD操作
 
-### 11.4.1 Create - データの作成
+### 15.4.1 Create - データの作成
 
 ```swift
 class UserRepository {
@@ -585,7 +583,7 @@ enum CoreDataError: Error {
 }
 ```
 
-### 11.4.2 Read - データの取得
+### 15.4.2 Read - データの取得
 
 ```swift
 extension UserRepository {
@@ -807,7 +805,7 @@ extension PostRepository {
 }
 ```
 
-### 11.4.3 Update - データの更新
+### 15.4.3 Update - データの更新
 
 ```swift
 extension UserRepository {
@@ -952,7 +950,7 @@ extension PostRepository {
 }
 ```
 
-### 11.4.4 Delete - データの削除
+### 15.4.4 Delete - データの削除
 
 ```swift
 extension UserRepository {
@@ -1033,9 +1031,9 @@ extension PostRepository {
 }
 ```
 
-## 11.5 NSFetchedResultsController
+## 15.5 NSFetchedResultsController
 
-### 11.5.1 基本的な実装
+### 15.5.1 基本的な実装
 
 ```swift
 import Combine
@@ -1118,7 +1116,7 @@ extension PostListViewModel: NSFetchedResultsControllerDelegate {
 }
 ```
 
-### 11.5.2 セクション付きFetchedResultsController
+### 15.5.2 セクション付きFetchedResultsController
 
 ```swift
 class GroupedPostListViewModel: NSObject, ObservableObject {
@@ -1203,9 +1201,9 @@ extension Post {
 }
 ```
 
-## 11.6 リレーションシップの管理
+## 15.6 リレーションシップの管理
 
-### 11.6.1 1対多のリレーションシップ
+### 15.6.1 1対多のリレーションシップ
 
 ```swift
 class PostService {
@@ -1249,7 +1247,7 @@ class PostService {
 }
 ```
 
-### 11.6.2 多対多のリレーションシップ
+### 15.6.2 多対多のリレーションシップ
 
 ```swift
 class TagService {
@@ -1316,7 +1314,7 @@ class TagService {
 }
 ```
 
-### 11.6.3 自己参照リレーションシップ
+### 15.6.3 自己参照リレーションシップ
 
 ```swift
 class CommentService {
@@ -1381,9 +1379,9 @@ struct CommentNode: Identifiable {
 }
 ```
 
-## 11.7 バッチ操作
+## 15.7 バッチ操作
 
-### 11.7.1 バッチ挿入
+### 15.7.1 バッチ挿入
 
 ```swift
 class BatchInsertService {
@@ -1437,7 +1435,7 @@ class BatchInsertService {
 }
 ```
 
-### 11.7.2 バッチ更新
+### 15.7.2 バッチ更新
 
 ```swift
 extension UserRepository {
@@ -1484,7 +1482,7 @@ extension PostRepository {
 }
 ```
 
-### 11.7.3 バッチ削除
+### 15.7.3 バッチ削除
 
 ```swift
 extension UserRepository {
@@ -1525,387 +1523,9 @@ extension PostRepository {
 }
 ```
 
-## 11.8 マイグレーション
+## 15.8 まとめ
 
-### 11.8.1 軽量マイグレーション
-
-```swift
-class MigrationManager {
-    static let shared = MigrationManager()
-
-    private init() {}
-
-    func setupPersistentStoreWithMigration(container: NSPersistentContainer) {
-        guard let storeDescription = container.persistentStoreDescriptions.first else {
-            fatalError("No store description found")
-        }
-
-        // 軽量マイグレーションを有効化
-        storeDescription.shouldMigrateStoreAutomatically = true
-        storeDescription.shouldInferMappingModelAutomatically = true
-
-        container.loadPersistentStores { description, error in
-            if let error = error {
-                fatalError("Failed to load Core Data stack: \(error)")
-            }
-
-            print("Successfully loaded persistent store")
-        }
-    }
-
-    // マイグレーションが必要かチェック
-    func needsMigration(at storeURL: URL, for model: NSManagedObjectModel) -> Bool {
-        do {
-            let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(
-                ofType: NSSQLiteStoreType,
-                at: storeURL
-            )
-
-            return !model.isConfiguration(withName: nil, compatibleWithStoreMetadata: metadata)
-        } catch {
-            print("Error checking migration: \(error)")
-            return false
-        }
-    }
-}
-```
-
-### 11.8.2 カスタムマイグレーション
-
-```swift
-class CustomMigrationManager {
-    func migrateStore(
-        at sourceURL: URL,
-        from sourceModel: NSManagedObjectModel,
-        to destinationModel: NSManagedObjectModel
-    ) throws {
-        // マッピングモデルを取得
-        guard let mappingModel = NSMappingModel(
-            from: [Bundle.main],
-            forSourceModel: sourceModel,
-            destinationModel: destinationModel
-        ) else {
-            throw MigrationError.mappingModelNotFound
-        }
-
-        // マイグレーションマネージャーを作成
-        let migrationManager = NSMigrationManager(
-            sourceModel: sourceModel,
-            destinationModel: destinationModel
-        )
-
-        // 一時的な宛先URLを作成
-        let destinationURL = sourceURL.deletingLastPathComponent()
-            .appendingPathComponent("temp_migration.sqlite")
-
-        // マイグレーションを実行
-        try migrationManager.migrateStore(
-            from: sourceURL,
-            sourceType: NSSQLiteStoreType,
-            options: nil,
-            with: mappingModel,
-            toDestinationURL: destinationURL,
-            destinationType: NSSQLiteStoreType,
-            destinationOptions: nil
-        )
-
-        // 古いストアを削除
-        try FileManager.default.removeItem(at: sourceURL)
-
-        // 新しいストアを移動
-        try FileManager.default.moveItem(at: destinationURL, to: sourceURL)
-    }
-
-    enum MigrationError: Error {
-        case mappingModelNotFound
-        case migrationFailed
-    }
-}
-```
-
-## 11.9 パフォーマンス最適化
-
-### 11.9.1 フェッチリクエストの最適化
-
-```swift
-class OptimizedRepository {
-    private let coreData = CoreDataManager.shared
-
-    // ❌ 非効率な実装
-    func inefficientFetch() async throws -> [Post] {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-            let posts = try context.fetch(request)
-
-            // すべてのリレーションシップがフォールトになっている
-            return posts
-        }
-    }
-
-    // ✅ 効率的な実装（プリフェッチ）
-    func efficientFetch() async throws -> [Post] {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-
-            // リレーションシップをプリフェッチ
-            request.relationshipKeyPathsForPrefetching = ["author", "tags", "comments"]
-
-            return try context.fetch(request)
-        }
-    }
-
-    // フェッチリミットとオフセット
-    func fetchWithPagination(page: Int, pageSize: Int = 20) async throws -> [Post] {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-            request.fetchLimit = pageSize
-            request.fetchOffset = page * pageSize
-            request.sortDescriptors = [
-                NSSortDescriptor(key: "createdAt", ascending: false)
-            ]
-
-            return try context.fetch(request)
-        }
-    }
-
-    // バッチサイズの設定
-    func fetchWithBatchSize() async throws -> [Post] {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-            request.fetchBatchSize = 20 // 20件ずつフェッチ
-            request.sortDescriptors = [
-                NSSortDescriptor(key: "createdAt", ascending: false)
-            ]
-
-            return try context.fetch(request)
-        }
-    }
-
-    // 特定のプロパティのみ取得
-    func fetchPostTitlesOnly() async throws -> [[String: Any]] {
-        try await coreData.performBackgroundTask { context in
-            let request = NSFetchRequest<NSDictionary>(entityName: "Post")
-            request.resultType = .dictionaryResultType
-            request.propertiesToFetch = ["id", "title", "createdAt"]
-
-            let results = try context.fetch(request)
-            return results as? [[String: Any]] ?? []
-        }
-    }
-
-    // カウントのみ取得
-    func countPosts() async throws -> Int {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-            request.resultType = .countResultType
-
-            return try context.count(for: request)
-        }
-    }
-}
-```
-
-### 11.9.2 インデックスの活用
-
-```swift
-/*
-データモデルエディタで設定:
-1. Entityを選択
-2. Data Model Inspectorを開く
-3. Indexesセクションで頻繁にクエリされる属性にインデックスを追加
-
-例:
-- User.username
-- User.email
-- Post.createdAt
-- Post.isPublished
-- Tag.name
-*/
-```
-
-### 11.9.3 メモリ管理
-
-```swift
-class MemoryEfficientRepository {
-    private let coreData = CoreDataManager.shared
-
-    // 大量データの処理
-    func processLargeDataset() async throws {
-        try await coreData.performBackgroundTask { context in
-            let request = Post.fetchRequest()
-            request.fetchBatchSize = 50
-
-            let posts = try context.fetch(request)
-
-            for (index, post) in posts.enumerated() {
-                // 処理
-                self.process(post)
-
-                // 定期的にメモリを解放
-                if index % 50 == 0 {
-                    context.refreshAllObjects()
-                }
-            }
-        }
-    }
-
-    private func process(_ post: Post) {
-        // 処理内容
-    }
-
-    // フォールト化
-    func refreshObjects(_ objects: [NSManagedObject]) {
-        let context = coreData.viewContext
-        for object in objects {
-            context.refresh(object, mergeChanges: false)
-        }
-    }
-}
-```
-
-## 11.10 SwiftUIとの統合
-
-### 11.10.1 @FetchRequestの使用
-
-```swift
-import SwiftUI
-
-struct PostListView: View {
-    @FetchRequest(
-        entity: Post.entity(),
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Post.createdAt, ascending: false)
-        ],
-        predicate: NSPredicate(format: "isPublished == true")
-    ) var posts: FetchedResults<Post>
-
-    @Environment(\.managedObjectContext) private var viewContext
-
-    var body: some View {
-        List(posts) { post in
-            PostRow(post: post)
-        }
-        .navigationTitle("Posts")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Add") {
-                    addPost()
-                }
-            }
-        }
-    }
-
-    private func addPost() {
-        withAnimation {
-            let newPost = Post(context: viewContext)
-            newPost.id = UUID()
-            newPost.title = "New Post"
-            newPost.content = "Content"
-            newPost.createdAt = Date()
-            newPost.updatedAt = Date()
-            newPost.isPublished = true
-
-            try? viewContext.save()
-        }
-    }
-}
-
-struct PostRow: View {
-    @ObservedObject var post: Post
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(post.title)
-                .font(.headline)
-
-            Text(post.content)
-                .font(.body)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-
-            HStack {
-                Image(systemName: "heart.fill")
-                Text("\(post.likeCount)")
-
-                Image(systemName: "eye.fill")
-                Text("\(post.viewCount)")
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-    }
-}
-```
-
-### 11.10.2 動的フィルタリング
-
-```swift
-struct FilterablePostListView: View {
-    @State private var searchText = ""
-    @State private var showPublishedOnly = true
-
-    var body: some View {
-        PostListWithFilter(
-            searchText: searchText,
-            showPublishedOnly: showPublishedOnly
-        )
-        .searchable(text: $searchText)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Toggle("Published", isOn: $showPublishedOnly)
-            }
-        }
-    }
-}
-
-struct PostListWithFilter: View {
-    let searchText: String
-    let showPublishedOnly: Bool
-
-    @Environment(\.managedObjectContext) private var viewContext
-
-    var fetchRequest: FetchRequest<Post>
-
-    init(searchText: String, showPublishedOnly: Bool) {
-        self.searchText = searchText
-        self.showPublishedOnly = showPublishedOnly
-
-        var predicates: [NSPredicate] = []
-
-        if showPublishedOnly {
-            predicates.append(NSPredicate(format: "isPublished == true"))
-        }
-
-        if !searchText.isEmpty {
-            predicates.append(
-                NSPredicate(format: "title CONTAINS[cd] %@ OR content CONTAINS[cd] %@",
-                           searchText, searchText)
-            )
-        }
-
-        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-
-        self.fetchRequest = FetchRequest<Post>(
-            entity: Post.entity(),
-            sortDescriptors: [
-                NSSortDescriptor(keyPath: \Post.createdAt, ascending: false)
-            ],
-            predicate: predicates.isEmpty ? nil : compound
-        )
-    }
-
-    var body: some View {
-        List(fetchRequest.wrappedValue) { post in
-            PostRow(post: post)
-        }
-    }
-}
-```
-
-## 11.11 まとめ
-
-この章では、Core Dataの基礎から高度な実装まで詳しく学びました。
+この章では、Core Dataの基礎から実践的なCRUD操作までを詳しく学びました。
 
 ### 重要なポイント
 
@@ -1913,25 +1533,24 @@ struct PostListWithFilter: View {
    - 適切なセットアップと設定
    - バックグラウンドコンテキストの活用
 
-2. **CRUD操作**
+2. **データモデル設計**
+   - エンティティの定義と拡張
+   - 型安全なプロパティアクセス
+
+3. **CRUD操作**
    - 型安全なリポジトリパターン
    - async/awaitを使った非同期処理
 
-3. **NSFetchedResultsController**
+4. **NSFetchedResultsController**
    - 効率的なデータ表示
    - 自動的な変更の監視
 
-4. **リレーションシップ**
-   - 1対多、多対多の実装
-   - カスケード削除の設定
+5. **リレーションシップ**
+   - 1対多、多対多、自己参照の実装
+   - リレーションシップの管理
 
-5. **パフォーマンス最適化**
-   - プリフェッチ
-   - バッチ操作
-   - インデックスの活用
+6. **バッチ操作**
+   - 効率的な大量データ処理
+   - パフォーマンスの最適化
 
-6. **SwiftUI統合**
-   - @FetchRequestの活用
-   - 動的フィルタリング
-
-次の章では、より軽量で高速なデータベースであるRealmについて学びます。
+次の章（Chapter 16）では、マイグレーション、パフォーマンス最適化、SwiftUIとの統合など、Core Dataの高度なトピックについて学びます。

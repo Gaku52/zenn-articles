@@ -1,23 +1,22 @@
 ---
-title: "Chapter 10: UserDefaultsとKeychain - データ永続化の基礎"
+title: "Chapter 13: UserDefaultsとKeychain Part 1 - UserDefaultsと設定管理"
 ---
 
-# Chapter 10: UserDefaultsとKeychain - データ永続化の基礎
+# Chapter 13: UserDefaultsとKeychain Part 1 - UserDefaultsと設定管理
 
-## 10.1 概要
+## 13.1 概要
 
 iOSアプリケーション開発において、データの永続化は避けて通れない重要なテーマです。ユーザーの設定、認証情報、一時的なデータなど、様々な種類の情報を適切に保存・管理する必要があります。
 
-この章では、最も基本的で広く使われている2つのデータ永続化手段、UserDefaultsとKeychainについて詳しく解説します。
+この章では、最も基本的で広く使われているデータ永続化手段であるUserDefaultsについて詳しく解説します。
 
 ### 本章で学べること
 
 - UserDefaultsの基本的な使い方と高度な実装パターン
-- Keychainを使った機密情報の安全な保存
 - PropertyWrapperによる型安全な実装
+- Codableを使った複雑なデータ管理
 - iCloud同期の実装方法
 - パフォーマンス最適化とベストプラクティス
-- 実践的なエラーハンドリング
 
 ### UserDefaultsとKeychainの使い分け
 
@@ -65,9 +64,9 @@ enum DataType {
 }
 ```
 
-## 10.2 UserDefaults - 基本実装
+## 13.2 UserDefaults - 基本実装
 
-### 10.2.1 基本的なデータ型の保存と取得
+### 13.2.1 基本的なデータ型の保存と取得
 
 UserDefaultsは、小さな設定値やユーザー設定を保存するための軽量なキーバリューストアです。
 
@@ -170,7 +169,7 @@ class BasicUserDefaultsExample {
 }
 ```
 
-### 10.2.2 デフォルト値の登録
+### 13.2.2 デフォルト値の登録
 
 アプリケーション起動時に、デフォルト値を登録することで、キーが存在しない場合のフォールバック値を設定できます。
 
@@ -220,7 +219,7 @@ struct MyApp: App {
 }
 ```
 
-### 10.2.3 型安全なUserDefaults実装
+### 13.2.3 型安全なUserDefaults実装
 
 生の文字列キーを使うとタイプミスやキーの重複が発生しやすいため、型安全な実装を行います。
 
@@ -321,9 +320,9 @@ class TypeSafeUserDefaults {
 }
 ```
 
-## 10.3 PropertyWrapperによる高度な実装
+## 13.3 PropertyWrapperによる高度な実装
 
-### 10.3.1 基本的なPropertyWrapper
+### 13.3.1 基本的なPropertyWrapper
 
 PropertyWrapperを使用することで、よりクリーンで保守しやすいコードを書けます。
 
@@ -365,7 +364,7 @@ settings.isDarkMode = true
 print(settings.isDarkMode) // true
 ```
 
-### 10.3.2 Optional値対応のPropertyWrapper
+### 13.3.2 Optional値対応のPropertyWrapper
 
 Optional値を扱えるPropertyWrapperの実装です。
 
@@ -406,7 +405,7 @@ profile.profileImageURL = "https://example.com/avatar.jpg"
 profile.profileImageURL = nil // 値を削除
 ```
 
-### 10.3.3 Codable対応のPropertyWrapper
+### 13.3.3 Codable対応のPropertyWrapper
 
 複雑な型をJSONとして保存するPropertyWrapperです。
 
@@ -486,7 +485,7 @@ settings.theme.isDark = true
 print(settings.theme.primaryColor) // "#007AFF"
 ```
 
-### 10.3.4 Enum対応のPropertyWrapper
+### 13.3.4 Enum対応のPropertyWrapper
 
 Enumを安全に保存・取得するPropertyWrapperです。
 
@@ -549,7 +548,7 @@ displaySettings.fontSize = .large
 print(displaySettings.appTheme) // dark
 ```
 
-### 10.3.5 観測可能なPropertyWrapper
+### 13.3.5 観測可能なPropertyWrapper
 
 値の変更を監視できるPropertyWrapperです。
 
@@ -602,9 +601,9 @@ class ObservableSettings {
 }
 ```
 
-## 10.4 Codableを使った高度なデータ管理
+## 13.4 Codableを使った高度なデータ管理
 
-### 10.4.1 複雑な構造体の保存
+### 13.4.1 複雑な構造体の保存
 
 ```swift
 // モデル定義
@@ -774,7 +773,7 @@ let currentTheme = manager.preferences.displaySettings.theme
 print("Current theme: \(currentTheme)")
 ```
 
-### 10.4.2 バージョン管理とマイグレーション
+### 13.4.2 バージョン管理とマイグレーション
 
 ```swift
 struct VersionedUserPreferences: Codable {
@@ -855,599 +854,9 @@ class VersionedPreferencesManager {
 }
 ```
 
-## 10.5 Keychain - 機密情報の安全な保存
+## 13.5 iCloud同期
 
-### 10.5.1 Keychainの基本実装
-
-Keychainは、パスワード、トークン、証明書などの機密情報を安全に保存するためのシステムです。
-
-```swift
-import Security
-import Foundation
-
-class KeychainManager {
-    static let shared = KeychainManager()
-
-    private init() {}
-
-    // MARK: - Save
-    func save(_ data: Data, service: String, account: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: data
-        ]
-
-        // 既存のアイテムを削除
-        SecItemDelete(query as CFDictionary)
-
-        // 新しいアイテムを追加
-        let status = SecItemAdd(query as CFDictionary, nil)
-
-        guard status == errSecSuccess else {
-            throw KeychainError.saveFailed(status)
-        }
-    }
-
-    func save(_ string: String, service: String, account: String) throws {
-        guard let data = string.data(using: .utf8) else {
-            throw KeychainError.stringConversionFailed
-        }
-        try save(data, service: service, account: account)
-    }
-
-    // MARK: - Load
-    func load(service: String, account: String) throws -> Data {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess else {
-            if status == errSecItemNotFound {
-                throw KeychainError.itemNotFound
-            }
-            throw KeychainError.loadFailed(status)
-        }
-
-        guard let data = result as? Data else {
-            throw KeychainError.dataConversionFailed
-        }
-
-        return data
-    }
-
-    func loadString(service: String, account: String) throws -> String {
-        let data = try load(service: service, account: account)
-        guard let string = String(data: data, encoding: .utf8) else {
-            throw KeychainError.stringConversionFailed
-        }
-        return string
-    }
-
-    // MARK: - Update
-    func update(_ data: Data, service: String, account: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
-        ]
-
-        let attributes: [String: Any] = [
-            kSecValueData as String: data
-        ]
-
-        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-
-        guard status == errSecSuccess else {
-            if status == errSecItemNotFound {
-                // アイテムが存在しない場合は新規作成
-                try save(data, service: service, account: account)
-                return
-            }
-            throw KeychainError.updateFailed(status)
-        }
-    }
-
-    func update(_ string: String, service: String, account: String) throws {
-        guard let data = string.data(using: .utf8) else {
-            throw KeychainError.stringConversionFailed
-        }
-        try update(data, service: service, account: account)
-    }
-
-    // MARK: - Delete
-    func delete(service: String, account: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
-        ]
-
-        let status = SecItemDelete(query as CFDictionary)
-
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.deleteFailed(status)
-        }
-    }
-
-    // MARK: - Exists
-    func exists(service: String, account: String) -> Bool {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: false
-        ]
-
-        let status = SecItemCopyMatching(query as CFDictionary, nil)
-        return status == errSecSuccess
-    }
-
-    // MARK: - List All
-    func listAll(service: String) throws -> [String] {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecReturnAttributes as String: true,
-            kSecMatchLimit as String: kSecMatchLimitAll
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess else {
-            if status == errSecItemNotFound {
-                return []
-            }
-            throw KeychainError.loadFailed(status)
-        }
-
-        guard let items = result as? [[String: Any]] else {
-            return []
-        }
-
-        return items.compactMap { $0[kSecAttrAccount as String] as? String }
-    }
-
-    // MARK: - Delete All
-    func deleteAll(service: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service
-        ]
-
-        let status = SecItemDelete(query as CFDictionary)
-
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.deleteFailed(status)
-        }
-    }
-}
-
-// MARK: - Keychain Errors
-enum KeychainError: Error, LocalizedError {
-    case saveFailed(OSStatus)
-    case loadFailed(OSStatus)
-    case updateFailed(OSStatus)
-    case deleteFailed(OSStatus)
-    case itemNotFound
-    case stringConversionFailed
-    case dataConversionFailed
-    case unexpectedData
-
-    var errorDescription: String? {
-        switch self {
-        case .saveFailed(let status):
-            return "Failed to save to keychain: \(status) - \(statusMessage(status))"
-        case .loadFailed(let status):
-            return "Failed to load from keychain: \(status) - \(statusMessage(status))"
-        case .updateFailed(let status):
-            return "Failed to update keychain: \(status) - \(statusMessage(status))"
-        case .deleteFailed(let status):
-            return "Failed to delete from keychain: \(status) - \(statusMessage(status))"
-        case .itemNotFound:
-            return "Item not found in keychain"
-        case .stringConversionFailed:
-            return "String conversion failed"
-        case .dataConversionFailed:
-            return "Data conversion failed"
-        case .unexpectedData:
-            return "Unexpected data format"
-        }
-    }
-
-    private func statusMessage(_ status: OSStatus) -> String {
-        switch status {
-        case errSecSuccess:
-            return "Success"
-        case errSecItemNotFound:
-            return "Item not found"
-        case errSecDuplicateItem:
-            return "Duplicate item"
-        case errSecAuthFailed:
-            return "Authentication failed"
-        case errSecParam:
-            return "Invalid parameter"
-        default:
-            return "Unknown error"
-        }
-    }
-}
-```
-
-### 10.5.2 認証情報マネージャー
-
-```swift
-class AuthenticationManager {
-    static let shared = AuthenticationManager()
-
-    private let keychain = KeychainManager.shared
-    private let service = Bundle.main.bundleIdentifier ?? "com.example.app"
-
-    private enum Account {
-        static let accessToken = "accessToken"
-        static let refreshToken = "refreshToken"
-        static let username = "username"
-        static let password = "password"
-        static let apiKey = "apiKey"
-        static let userID = "userID"
-    }
-
-    private init() {}
-
-    // MARK: - Access Token
-    func saveAccessToken(_ token: String) throws {
-        try keychain.save(token, service: service, account: Account.accessToken)
-    }
-
-    func loadAccessToken() throws -> String {
-        try keychain.loadString(service: service, account: Account.accessToken)
-    }
-
-    func deleteAccessToken() throws {
-        try keychain.delete(service: service, account: Account.accessToken)
-    }
-
-    var hasAccessToken: Bool {
-        keychain.exists(service: service, account: Account.accessToken)
-    }
-
-    // MARK: - Refresh Token
-    func saveRefreshToken(_ token: String) throws {
-        try keychain.save(token, service: service, account: Account.refreshToken)
-    }
-
-    func loadRefreshToken() throws -> String {
-        try keychain.loadString(service: service, account: Account.refreshToken)
-    }
-
-    func deleteRefreshToken() throws {
-        try keychain.delete(service: service, account: Account.refreshToken)
-    }
-
-    // MARK: - Credentials
-    func saveCredentials(username: String, password: String) throws {
-        try keychain.save(username, service: service, account: Account.username)
-        try keychain.save(password, service: service, account: Account.password)
-    }
-
-    func loadCredentials() throws -> (username: String, password: String) {
-        let username = try keychain.loadString(service: service, account: Account.username)
-        let password = try keychain.loadString(service: service, account: Account.password)
-        return (username, password)
-    }
-
-    func deleteCredentials() throws {
-        try keychain.delete(service: service, account: Account.username)
-        try keychain.delete(service: service, account: Account.password)
-    }
-
-    // MARK: - API Key
-    func saveAPIKey(_ key: String) throws {
-        try keychain.save(key, service: service, account: Account.apiKey)
-    }
-
-    func loadAPIKey() throws -> String {
-        try keychain.loadString(service: service, account: Account.apiKey)
-    }
-
-    func deleteAPIKey() throws {
-        try keychain.delete(service: service, account: Account.apiKey)
-    }
-
-    // MARK: - User ID
-    func saveUserID(_ id: String) throws {
-        try keychain.save(id, service: service, account: Account.userID)
-    }
-
-    func loadUserID() throws -> String {
-        try keychain.loadString(service: service, account: Account.userID)
-    }
-
-    func deleteUserID() throws {
-        try keychain.delete(service: service, account: Account.userID)
-    }
-
-    // MARK: - Session Management
-    func saveSession(accessToken: String, refreshToken: String, userID: String) throws {
-        try saveAccessToken(accessToken)
-        try saveRefreshToken(refreshToken)
-        try saveUserID(userID)
-    }
-
-    func clearSession() throws {
-        try? deleteAccessToken()
-        try? deleteRefreshToken()
-        try? deleteUserID()
-    }
-
-    func isLoggedIn() -> Bool {
-        hasAccessToken
-    }
-
-    // MARK: - Complete Logout
-    func logout() throws {
-        try clearSession()
-        try? deleteCredentials()
-        try? deleteAPIKey()
-    }
-}
-
-// 使用例
-let authManager = AuthenticationManager.shared
-
-// ログイン時
-do {
-    try authManager.saveSession(
-        accessToken: "eyJhbGciOiJIUzI1NiIs...",
-        refreshToken: "eyJhbGciOiJIUzI1NiIs...",
-        userID: "user123"
-    )
-    print("Session saved successfully")
-} catch {
-    print("Failed to save session: \(error)")
-}
-
-// トークン取得
-do {
-    let accessToken = try authManager.loadAccessToken()
-    print("Access token: \(accessToken)")
-} catch {
-    print("Failed to load access token: \(error)")
-}
-
-// ログアウト
-do {
-    try authManager.logout()
-    print("Logged out successfully")
-} catch {
-    print("Failed to logout: \(error)")
-}
-```
-
-### 10.5.3 生体認証付きKeychain
-
-Face IDやTouch IDを使った生体認証を必要とするKeychainアイテムの実装です。
-
-```swift
-import LocalAuthentication
-
-class BiometricKeychainManager {
-    static let shared = BiometricKeychainManager()
-
-    private init() {}
-
-    // MARK: - Biometric Authentication
-    func canUseBiometrics() -> Bool {
-        let context = LAContext()
-        var error: NSError?
-        return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
-    }
-
-    func biometricType() -> LABiometryType {
-        let context = LAContext()
-        _ = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
-        return context.biometryType
-    }
-
-    // MARK: - Save with Biometric Protection
-    func savewithBiometric(
-        _ data: Data,
-        service: String,
-        account: String,
-        reason: String = "Authenticate to save data"
-    ) async throws {
-        // 生体認証を実行
-        try await authenticate(reason: reason)
-
-        // アクセスコントロールを作成
-        guard let access = SecAccessControlCreateWithFlags(
-            kCFAllocatorDefault,
-            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            .biometryAny,
-            nil
-        ) else {
-            throw BiometricKeychainError.accessControlCreationFailed
-        }
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: data,
-            kSecAttrAccessControl as String: access
-        ]
-
-        // 既存のアイテムを削除
-        SecItemDelete(query as CFDictionary)
-
-        // 新しいアイテムを追加
-        let status = SecItemAdd(query as CFDictionary, nil)
-
-        guard status == errSecSuccess else {
-            throw BiometricKeychainError.saveFailed(status)
-        }
-    }
-
-    func saveWithBiometric(
-        _ string: String,
-        service: String,
-        account: String,
-        reason: String = "Authenticate to save data"
-    ) async throws {
-        guard let data = string.data(using: .utf8) else {
-            throw BiometricKeychainError.stringConversionFailed
-        }
-        try await savewithBiometric(data, service: service, account: account, reason: reason)
-    }
-
-    // MARK: - Load with Biometric Protection
-    func loadWithBiometric(
-        service: String,
-        account: String,
-        reason: String = "Authenticate to access data"
-    ) async throws -> Data {
-        let context = LAContext()
-        context.localizedReason = reason
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecUseAuthenticationContext as String: context
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess else {
-            if status == errSecItemNotFound {
-                throw BiometricKeychainError.itemNotFound
-            }
-            throw BiometricKeychainError.loadFailed(status)
-        }
-
-        guard let data = result as? Data else {
-            throw BiometricKeychainError.dataConversionFailed
-        }
-
-        return data
-    }
-
-    func loadStringWithBiometric(
-        service: String,
-        account: String,
-        reason: String = "Authenticate to access data"
-    ) async throws -> String {
-        let data = try await loadWithBiometric(service: service, account: account, reason: reason)
-        guard let string = String(data: data, encoding: .utf8) else {
-            throw BiometricKeychainError.stringConversionFailed
-        }
-        return string
-    }
-
-    // MARK: - Authentication Helper
-    private func authenticate(reason: String) async throws {
-        let context = LAContext()
-
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else {
-            throw BiometricKeychainError.biometricsNotAvailable
-        }
-
-        do {
-            let success = try await context.evaluatePolicy(
-                .deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: reason
-            )
-
-            guard success else {
-                throw BiometricKeychainError.authenticationFailed
-            }
-        } catch {
-            throw BiometricKeychainError.authenticationFailed
-        }
-    }
-}
-
-// MARK: - Biometric Keychain Errors
-enum BiometricKeychainError: Error, LocalizedError {
-    case biometricsNotAvailable
-    case authenticationFailed
-    case accessControlCreationFailed
-    case saveFailed(OSStatus)
-    case loadFailed(OSStatus)
-    case itemNotFound
-    case stringConversionFailed
-    case dataConversionFailed
-
-    var errorDescription: String? {
-        switch self {
-        case .biometricsNotAvailable:
-            return "Biometric authentication is not available"
-        case .authenticationFailed:
-            return "Biometric authentication failed"
-        case .accessControlCreationFailed:
-            return "Failed to create access control"
-        case .saveFailed(let status):
-            return "Failed to save to keychain: \(status)"
-        case .loadFailed(let status):
-            return "Failed to load from keychain: \(status)"
-        case .itemNotFound:
-            return "Item not found in keychain"
-        case .stringConversionFailed:
-            return "String conversion failed"
-        case .dataConversionFailed:
-            return "Data conversion failed"
-        }
-    }
-}
-
-// 使用例
-Task {
-    let manager = BiometricKeychainManager.shared
-
-    // 生体認証の可用性確認
-    if manager.canUseBiometrics() {
-        let biometryType = manager.biometricType()
-        print("Biometry type: \(biometryType)")
-
-        // 機密データを保存
-        do {
-            try await manager.saveWithBiometric(
-                "SecretPassword123",
-                service: "com.example.app",
-                account: "masterPassword",
-                reason: "Save your master password"
-            )
-            print("Password saved with biometric protection")
-
-            // データを読み込み（生体認証が必要）
-            let password = try await manager.loadStringWithBiometric(
-                service: "com.example.app",
-                account: "masterPassword",
-                reason: "Access your master password"
-            )
-            print("Password loaded: \(password)")
-        } catch {
-            print("Error: \(error)")
-        }
-    }
-}
-```
-
-## 10.6 iCloud同期
-
-### 10.6.1 NSUbiquitousKeyValueStoreの実装
+### 13.5.1 NSUbiquitousKeyValueStoreの実装
 
 iCloudを使ってUserDefaultsのような設定をデバイス間で同期できます。
 
@@ -1641,7 +1050,7 @@ NotificationCenter.default.addObserver(
 }
 ```
 
-### 10.6.2 iCloud同期とローカル設定の統合
+### 13.5.2 iCloud同期とローカル設定の統合
 
 ```swift
 class SyncedSettingsManager {
@@ -1757,9 +1166,9 @@ class SyncedSettingsManager {
 }
 ```
 
-## 10.7 パフォーマンス最適化
+## 13.6 パフォーマンス最適化
 
-### 10.7.1 バッチ更新
+### 13.6.1 バッチ更新
 
 ```swift
 class BatchUpdateManager {
@@ -1800,7 +1209,7 @@ class BatchUpdateManager {
 }
 ```
 
-### 10.7.2 キャッシュ戦略
+### 13.6.2 キャッシュ戦略
 
 ```swift
 class CachedUserDefaults {
@@ -1838,224 +1247,34 @@ class CachedUserDefaults {
 }
 ```
 
-## 10.8 テストとデバッグ
+## 13.7 まとめ
 
-### 10.8.1 ユニットテスト
-
-```swift
-import XCTest
-
-class UserDefaultsTests: XCTestCase {
-    var suiteName: String!
-    var defaults: UserDefaults!
-
-    override func setUp() {
-        super.setUp()
-        suiteName = "TestDefaults"
-        defaults = UserDefaults(suiteName: suiteName)
-    }
-
-    override func tearDown() {
-        defaults.removePersistentDomain(forName: suiteName)
-        defaults = nil
-        suiteName = nil
-        super.tearDown()
-    }
-
-    func testSaveAndLoadString() {
-        // Given
-        let key = "testString"
-        let value = "Hello, World!"
-
-        // When
-        defaults.set(value, forKey: key)
-        let loaded = defaults.string(forKey: key)
-
-        // Then
-        XCTAssertEqual(loaded, value)
-    }
-
-    func testSaveAndLoadBool() {
-        // Given
-        let key = "testBool"
-        let value = true
-
-        // When
-        defaults.set(value, forKey: key)
-        let loaded = defaults.bool(forKey: key)
-
-        // Then
-        XCTAssertEqual(loaded, value)
-    }
-
-    func testRemoveValue() {
-        // Given
-        let key = "testRemove"
-        defaults.set("value", forKey: key)
-
-        // When
-        defaults.removeObject(forKey: key)
-        let loaded = defaults.string(forKey: key)
-
-        // Then
-        XCTAssertNil(loaded)
-    }
-}
-
-class KeychainTests: XCTestCase {
-    var keychain: KeychainManager!
-    var service: String!
-
-    override func setUp() {
-        super.setUp()
-        keychain = KeychainManager.shared
-        service = "TestService"
-    }
-
-    override func tearDown() {
-        try? keychain.deleteAll(service: service)
-        keychain = nil
-        service = nil
-        super.tearDown()
-    }
-
-    func testSaveAndLoadString() throws {
-        // Given
-        let account = "testAccount"
-        let value = "SecretPassword"
-
-        // When
-        try keychain.save(value, service: service, account: account)
-        let loaded = try keychain.loadString(service: service, account: account)
-
-        // Then
-        XCTAssertEqual(loaded, value)
-    }
-
-    func testUpdateString() throws {
-        // Given
-        let account = "testAccount"
-        let initialValue = "InitialPassword"
-        let updatedValue = "UpdatedPassword"
-
-        // When
-        try keychain.save(initialValue, service: service, account: account)
-        try keychain.update(updatedValue, service: service, account: account)
-        let loaded = try keychain.loadString(service: service, account: account)
-
-        // Then
-        XCTAssertEqual(loaded, updatedValue)
-    }
-
-    func testDeleteString() throws {
-        // Given
-        let account = "testAccount"
-        try keychain.save("value", service: service, account: account)
-
-        // When
-        try keychain.delete(service: service, account: account)
-
-        // Then
-        XCTAssertThrowsError(try keychain.loadString(service: service, account: account)) { error in
-            XCTAssertTrue(error is KeychainError)
-        }
-    }
-}
-```
-
-## 10.9 ベストプラクティス
-
-### 10.9.1 設計原則
-
-```swift
-// ✅ 良い例：責任の分離
-class SettingsManager {
-    private let userDefaults: UserDefaults
-    private let keychain: KeychainManager
-
-    init(userDefaults: UserDefaults = .standard, keychain: KeychainManager = .shared) {
-        self.userDefaults = userDefaults
-        self.keychain = keychain
-    }
-
-    // 設定値はUserDefaults
-    func saveSetting(_ value: String, forKey key: String) {
-        userDefaults.set(value, forKey: key)
-    }
-
-    // 機密情報はKeychain
-    func saveCredential(_ value: String, forKey key: String) throws {
-        try keychain.save(value, service: "com.example.app", account: key)
-    }
-}
-
-// ❌ 悪い例：責任が混在
-class BadSettingsManager {
-    func save(_ value: String, forKey key: String, isSecret: Bool) {
-        if isSecret {
-            // Keychainに保存
-        } else {
-            // UserDefaultsに保存
-        }
-    }
-}
-```
-
-### 10.9.2 エラーハンドリング
-
-```swift
-class RobustSettingsManager {
-    func loadAccessToken() -> Result<String, SettingsError> {
-        do {
-            let token = try AuthenticationManager.shared.loadAccessToken()
-            return .success(token)
-        } catch KeychainError.itemNotFound {
-            return .failure(.tokenNotFound)
-        } catch {
-            return .failure(.keychainError(error))
-        }
-    }
-
-    enum SettingsError: Error, LocalizedError {
-        case tokenNotFound
-        case keychainError(Error)
-
-        var errorDescription: String? {
-            switch self {
-            case .tokenNotFound:
-                return "Access token not found"
-            case .keychainError(let error):
-                return "Keychain error: \(error.localizedDescription)"
-            }
-        }
-    }
-}
-```
-
-## 10.10 まとめ
-
-この章では、UserDefaultsとKeychainを使ったデータ永続化の基礎から高度な実装まで学びました。
+この章では、UserDefaultsを使ったデータ永続化の基礎から高度な実装まで学びました。
 
 ### 重要なポイント
 
-1. **適切な使い分け**
-   - UserDefaults: 小さな設定値、ユーザー設定
-   - Keychain: パスワード、トークン、機密情報
+1. **基本的な使い方**
+   - 様々なデータ型の保存と取得
+   - デフォルト値の登録
+   - 型安全な実装
 
-2. **型安全性**
-   - PropertyWrapperの活用
-   - Codableによる複雑なデータの保存
+2. **PropertyWrapper**
+   - 基本的なPropertyWrapper
+   - Optional値対応
+   - Codable対応
+   - Enum対応
+   - 観測可能なPropertyWrapper
 
-3. **セキュリティ**
-   - 機密情報は必ずKeychainに保存
-   - 生体認証の活用
+3. **高度なデータ管理**
+   - Codableを使った複雑な構造体の保存
+   - バージョン管理とマイグレーション
 
-4. **パフォーマンス**
-   - バッチ更新の実装
-   - キャッシュ戦略の適用
+4. **iCloud同期**
+   - NSUbiquitousKeyValueStoreの実装
+   - ローカル設定との統合
 
-5. **テスト**
-   - ユニットテストの実装
-   - テスト用のUserDefaults suiteの使用
+5. **パフォーマンス最適化**
+   - バッチ更新
+   - キャッシュ戦略
 
-次の章では、より高度なデータ永続化手段であるCore Dataについて詳しく学びます。
+次の章では、Keychainを使った機密情報の安全な保存方法について詳しく学びます。

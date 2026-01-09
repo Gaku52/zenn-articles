@@ -7,23 +7,31 @@ chapters:
   - 00-introduction
   # Part 1: SwiftUI基礎
   - 01-swiftui-basics
-  - 02-state-management
-  - 03-layout-navigation
+  - 02-state-management-part1
+  - 03-state-management-part2
+  - 04-layout-navigation-part1
+  - 05-layout-navigation-part2
   # Part 2: アーキテクチャ
-  - 04-mvvm-pattern
-  - 05-clean-architecture
-  - 06-dependency-injection
+  - 06-mvvm-pattern-part1
+  - 07-mvvm-pattern-part2
+  - 08-clean-architecture-part1
+  - 09-clean-architecture-part2
+  - 10-dependency-injection
   # Part 3: ネットワーキング
-  - 07-urlsession-api
-  - 08-authentication
-  - 09-websocket-realtime
+  - 11-urlsession-api
+  - 12-authentication
+  - 13-websocket-realtime
   # Part 4: データ永続化
-  - 10-userdefaults-keychain
-  - 11-core-data
-  - 12-realm
+  - 14-userdefaults-keychain-part1
+  - 15-userdefaults-keychain-part2
+  - 16-core-data-part1
+  - 17-core-data-part2
+  - 18-realm-part1
+  - 19-realm-part2
   # Part 5: セキュリティ
-  - 13-ios-security
-  - 14-encryption-jailbreak
+  - 20-ios-security
+  - 21-encryption-jailbreak
   # Part 6: 実践
-  - 15-project-setup
-  - 16-real-world-case-study
+  - 22-project-setup
+  - 23-real-world-case-study-part1
+  - 24-real-world-case-study-part2
