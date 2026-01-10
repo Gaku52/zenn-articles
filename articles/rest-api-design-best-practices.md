@@ -3,7 +3,7 @@ title: "REST API設計で後悔しないために"
 emoji: "🌐"
 type: "tech"
 topics: ["api", "backend", "rest", "nodejs"]
-published: false
+published: true
 ---
 
 # REST API設計で後悔しないために

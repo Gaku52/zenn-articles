@@ -3,7 +3,7 @@ title: "Next.js 15 App Router完全理解"
 emoji: "⚡"
 type: "tech"
 topics: ["nextjs", "react", "frontend", "approuter"]
-published: false
+published: true
 ---
 
 ## はじめに
