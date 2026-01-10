@@ -3,7 +3,7 @@ title: "PostgreSQL vs MySQL、どっち選ぶ？"
 emoji: "🗄️"
 type: "tech"
 topics: ["database", "postgresql", "mysql", "backend"]
-published: false
+published: true
 ---
 
 # PostgreSQL vs MySQL、どっち選ぶ？バックエンド開発者のためのデータベース選定ガイド

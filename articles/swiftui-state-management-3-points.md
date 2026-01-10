@@ -3,7 +3,7 @@ title: "SwiftUIの状態管理で詰まった3つのポイント"
 emoji: "📱"
 type: "tech"
 topics: ["ios", "swift", "swiftui", "mobile"]
-published: false
+published: true
 ---
 
 ## はじめに

@@ -3,7 +3,7 @@ title: "App Store審査、セキュリティで落ちないために"
 emoji: "🔒"
 type: "tech"
 topics: ["ios", "security", "appstore", "swift"]
-published: false
+published: true
 ---
 
 ## はじめに

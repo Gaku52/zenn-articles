@@ -3,7 +3,7 @@ title: "Server Components vs Client Components"
 emoji: "🖥️"
 type: "tech"
 topics: ["nextjs", "react", "servercomponents", "rsc"]
-published: false
+published: true
 ---
 
 ## はじめに

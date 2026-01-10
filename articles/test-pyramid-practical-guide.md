@@ -3,7 +3,7 @@ title: "テストピラミッド、実務での使い方"
 emoji: "🔺"
 type: "tech"
 topics: ["test", "jest", "playwright", "quality"]
-published: false
+published: true
 ---
 
 ## テスト、どこまで書く？
