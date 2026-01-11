@@ -1,0 +1,26 @@
+title: "Database設計完全ガイド 2026 - 正規化/インデックス/SQL最適化"
+summary: "正規化(第1〜3正規形、BCNF)、インデックス戦略、SQL最適化、マイグレーション管理、Prisma/TypeORM実践まで、データベース設計の全てを実測データと失敗事例で学ぶ完全ガイド。PostgreSQL、MySQL対応。"
+topics: ["database", "sql", "prisma", "postgresql", "mysql"]
+published: true
+price: 800
+chapters:
+  - 00-introduction
+  # Part 1: 正規化の基礎
+  - 01-normalization-basics
+  - 02-normalization-advanced
+  - 03-relation-design
+  # Part 2: パフォーマンス最適化
+  - 04-index-strategy
+  - 05-query-optimization
+  # Part 3: マイグレーション管理
+  - 06-migration-management
+  - 07-schema-evolution
+  # Part 4: ORM実践
+  - 08-prisma-mastery
+  - 09-typeorm-mastery
+  # Part 5: 最適化とセキュリティ
+  - 10-performance-tuning
+  - 11-security
+  # Part 6: 実践
+  - 12-real-world-case-study-part1
+  - 13-real-world-case-study-part2
