@@ -1,7 +1,7 @@
 title: "Database設計完全ガイド 2026 - 正規化/インデックス/SQL最適化"
 summary: "正規化(第1〜3正規形、BCNF)、インデックス戦略、SQL最適化、マイグレーション管理、Prisma/TypeORM実践まで、データベース設計の全てを実測データと失敗事例で学ぶ完全ガイド。PostgreSQL、MySQL対応。"
 topics: ["database", "sql", "prisma", "postgresql", "mysql"]
-published: true
+published: false
 price: 800
 chapters:
   - 00-introduction
