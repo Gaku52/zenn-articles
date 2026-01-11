@@ -1,0 +1,24 @@
+title: "Git Workflow完全ガイド 2026 - ブランチ戦略/コミット規約/PR管理"
+summary: "Git Flow、GitHub Flow、Trunk-Based Development徹底比較。Conventional Commits、PR管理、コンフリクト解決、Rebase vs Merge、Git Hooks活用まで、Git運用の全てを実測データと失敗事例で学ぶ完全ガイド。"
+topics: ["git", "github", "workflow", "cicd", "team"]
+published: true
+price: 500
+chapters:
+  - 00-introduction
+  # Part 1: ブランチ戦略
+  - 01-branch-strategies
+  - 02-git-flow
+  - 03-github-flow
+  - 04-trunk-based
+  # Part 2: コミット管理
+  - 05-commit-conventions
+  - 06-pr-management
+  # Part 3: コンフリクト解決
+  - 07-conflict-resolution
+  - 08-rebase-vs-merge
+  # Part 4: 高度な運用
+  - 09-git-hooks
+  - 10-team-workflow
+  - 11-monorepo-management
+  # Part 5: 実践
+  - 12-real-world-case-studies
