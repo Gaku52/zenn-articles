@@ -1,7 +1,7 @@
 title: "Python開発完全ガイド 2026 - FastAPI/Django/非同期処理の全て"
 summary: "FastAPI、Django、Flask徹底比較。型ヒント、非同期処理、データ処理(Pandas/NumPy)、API設計、SQLAlchemy ORM、テスト戦略まで、Python開発の全てを実測データと実践例で学ぶ完全ガイド。"
 topics: ["python", "fastapi", "django", "backend", "api"]
-published: true
+published: false
 price: 1000
 chapters:
   - 00-introduction
