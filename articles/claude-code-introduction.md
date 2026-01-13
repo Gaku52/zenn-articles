@@ -3,7 +3,7 @@ title: "Claude Codeを5分で始める方法"
 emoji: "🚀"
 type: "tech"
 topics: ["claude", "ai", "cli", "devtools"]
-published: true
+published: false
 ---
 
 ## はじめに
