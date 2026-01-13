@@ -4,7 +4,6 @@ emoji: "🚀"
 type: "tech"
 topics: ["claude", "ai", "cli", "devtools"]
 published: true
-published_at: 2026-01-13
 ---
 
 ## はじめに
