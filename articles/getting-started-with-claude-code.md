@@ -21,16 +21,30 @@ Claude Codeは、ターミナル上で動くClaudeのCLIツールです。コー
 
 ## インストール
 
-Homebrewを使用している場合は、以下のコマンドでインストールできます。
+### Homebrewを使用する場合（macOS）
 
 ```bash
 brew install --cask claude-code
 ```
 
-Homebrewを使っていない場合は、公式のインストールスクリプトを使用します。
+### 公式スクリプトを使用する場合
+
+**macOS / Linux / WSL:**
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+**Windows (コマンドプロンプト):**
+
+```batch
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
 どちらの方法も数秒で完了します。
