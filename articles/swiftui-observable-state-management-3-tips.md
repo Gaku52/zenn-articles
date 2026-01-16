@@ -37,6 +37,8 @@ class UserViewModel: ObservableObject {
 ### ✅ After: @Observable
 
 ```swift
+import Observation
+
 @Observable
 class UserViewModel {
     var name: String = ""
@@ -61,6 +63,8 @@ class UserViewModel {
 ### 実測データ
 
 ```swift
+import Observation
+
 @Observable
 class DashboardViewModel {
     var title: String = "Dashboard"       // Viewで使用
@@ -97,6 +101,10 @@ struct DashboardView: View {
 ### ❌ Before: @StateObject
 
 ```swift
+class ContentViewModel: ObservableObject {
+    @Published var count: Int = 0
+}
+
 struct ContentView: View {
     @StateObject private var viewModel = ContentViewModel()
 
@@ -109,6 +117,11 @@ struct ContentView: View {
 ### ✅ After: @State
 
 ```swift
+@Observable
+class ContentViewModel {
+    var count: Int = 0
+}
+
 struct ContentView: View {
     @State private var viewModel = ContentViewModel()
 
@@ -126,6 +139,9 @@ struct ContentView: View {
 ### 環境変数での共有
 
 ```swift
+import Observation
+import SwiftUI
+
 @Observable
 class AppState {
     var isAuthenticated: Bool = false
@@ -176,6 +192,19 @@ struct ContentView: View {
 ### 課題1: リスト表示での過剰な再描画
 
 ```swift
+import Observation
+
+// モデル定義
+struct Todo: Identifiable {
+    let id: UUID
+    var title: String
+    var isCompleted: Bool
+}
+
+enum TodoFilter {
+    case all, active, completed
+}
+
 @Observable
 class TodoListViewModel {
     var todos: [Todo] = []
@@ -195,7 +224,7 @@ struct TodoListView: View {
 
     var body: some View {
         List(viewModel.filteredTodos) { todo in
-            TodoRow(todo: todo)
+            Text(todo.title)
         }
     }
 }
@@ -206,6 +235,16 @@ struct TodoListView: View {
 ### 課題2: 複数のViewで状態を共有
 
 ```swift
+import Observation
+
+// モデル定義
+struct CartItem: Identifiable {
+    let id: UUID
+    var name: String
+    var price: Double
+    var quantity: Int
+}
+
 @Observable
 class ShoppingCartViewModel {
     var items: [CartItem] = []
@@ -237,7 +276,7 @@ struct ProductListView: View {
 
     var body: some View {
         List {
-            Text("Total: ¥\(cart.totalPrice)")
+            Text("Total: ¥\(cart.totalPrice, specifier: "%.0f")")
         }
     }
 }
