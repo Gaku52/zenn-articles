@@ -3,7 +3,7 @@ title: "DBインデックス設計で陥りやすい3つの失敗パターン"
 emoji: "🗄️"
 type: "tech"
 topics: ["database", "postgresql", "mysql", "sql", "backend"]
-published: true
+published: false
 ---
 
 ## はじめに
