@@ -3,6 +3,7 @@ summary: "FastAPI、Django、Flask徹底比較。型ヒント、非同期処理�
 topics: ["python", "fastapi", "django", "backend", "api"]
 published: false
 price: 1000
+cover: cover.png
 chapters:
   - 00-introduction
   # Part 1: Pythonフレームワーク基礎
