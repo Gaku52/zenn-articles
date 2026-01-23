@@ -481,6 +481,6 @@ FastAPI + async/await の適切な実装により、**API応答速度を約3倍�
 
 ## 参考リンク
 
-- [FastAPI公式ドキュメント - 非同期SQL](https://fastapi.tiangolo.com/advanced/async-sql-databases/)
+- [FastAPI公式ドキュメント - SQL Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
 - [SQLAlchemy 2.0 ドキュメント](https://docs.sqlalchemy.org/en/20/)
 - [asyncpg - 高速PostgreSQLドライバ](https://github.com/MagicStack/asyncpg)
