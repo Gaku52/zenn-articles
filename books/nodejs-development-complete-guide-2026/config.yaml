@@ -2,7 +2,7 @@ title: "Node.js開発完全ガイド 2026 - Express/NestJS/非同期処理の全
 summary: "Express、NestJS、Fastify徹底比較。非同期処理、ストリーム、パフォーマンス最適化、エラーハンドリング、セキュリティまで、Node.js開発の全てを想定効果と実践例で学ぶ完全ガイド。TypeScript完全対応。"
 topics: ["nodejs", "express", "nestjs", "backend", "typescript"]
 published: true
-price: 1000
+price: 500
 chapters:
   - 00-introduction
   # Part 1: Node.jsフレームワーク基礎
