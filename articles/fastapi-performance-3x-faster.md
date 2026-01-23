@@ -3,7 +3,7 @@ title: "FastAPI + async/awaitでAPI速度を3倍にする最適化手法"
 emoji: "⚡"
 type: "tech"
 topics: ["python", "fastapi", "async", "performance", "api"]
-published: false
+published: true
 ---
 
 ## はじめに

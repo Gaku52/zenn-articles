@@ -3,7 +3,7 @@ title: "Gitコンフリクト解決で挫折しないための3つのパター�
 emoji: "🔀"
 type: "tech"
 topics: ["git", "github", "conflict", "merge", "rebase"]
-published: false
+published: true
 ---
 
 ## はじめに
