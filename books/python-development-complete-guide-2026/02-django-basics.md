@@ -12,7 +12,7 @@ Djangoは、「Batteries Included」(必要なものが全て揃っている)と
 - ✅ Django ORMによるデータベース操作
 - ✅ Django REST Frameworkを使ったAPI開発
 - ✅ Admin管理画面の活用法
-- ✅ 実測データに基づく開発効率改善
+- ✅ 想定される効果に基づく開発効率改善
 
 **前提知識**: Pythonの基本文法、MVCパターンの基礎、データベースの基礎知識
 
@@ -69,7 +69,7 @@ MVCパターン              MVTパターン (Django)
 - 📦 **バッテリー同梱**: 必要な機能がほぼ全て含まれている
 - 🚀 **スケーラビリティ**: Instagram、Spotify、Dropboxなどで採用
 
-**実測データ: Djangoの効果**:
+**想定される効果: Djangoの効果**:
 
 ```
 Admin管理画面の開発時間: 2週間 → 1時間 (-99%)
@@ -383,7 +383,7 @@ for user in users:
     print(f"{user.email}: {user.posts.count()} posts")
 ```
 
-**実測データ: N+1問題の影響**:
+**想定される効果: N+1問題の影響**:
 ```
 N+1問題あり: 101クエリ、応答時間 1200ms
 select_related: 1クエリ、応答時間 45ms (-96%)
@@ -590,7 +590,7 @@ urlpatterns = [
 ]
 ```
 
-**実測データ: ViewSetの効果**:
+**想定される効果: ViewSetの効果**:
 ```
 CRUD API実装時間: 1日 → 2時間 (-75%)
 コード量: 200行 → 50行 (-75%)
@@ -665,7 +665,7 @@ python manage.py runserver
 # http://localhost:8000/admin/
 ```
 
-**実測データ: Admin管理画面の効果**:
+**想定される効果: Admin管理画面の効果**:
 ```
 管理画面開発時間: 2週間 → 1時間 (-99%)
 CRUD操作実装: 手動実装 → 自動生成 (100%削減)
@@ -742,7 +742,7 @@ def my_view(request):
 ✅ **Django REST Framework**: シリアライザー、ViewSetによる高速API開発
 ✅ **Admin管理画面**: 自動生成による開発時間の99%削減
 
-**実測データから証明された効果**:
+**想定されるシナリオで期待できる効果**:
 - Admin管理画面開発時間: -99%
 - CRUD API開発速度: +200%
 - N+1問題解決によるAPI応答時間: -96%

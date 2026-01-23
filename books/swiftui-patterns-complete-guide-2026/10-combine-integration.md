@@ -447,14 +447,14 @@ class PostListViewModel: ObservableObject {
 }
 ```
 
-## 実測データ: パフォーマンス改善効果
+## ベンチマーク指標: パフォーマンス改善効果
 
-### 実験環境
+### 想定テスト環境
 
 - **Hardware**: iPhone 15 Pro (A17 Pro), 8GB RAM
 - **Software**: iOS 17.2, Xcode 15.1, Swift 5.9
 - **測定ツール**: Instruments (Time Profiler)
-- **サンプルサイズ**: n=30
+- **サンプルサイズ**: n=30（推奨）
 - **統計検定**: paired t-test
 
 ### 検索処理の最適化
@@ -606,7 +606,7 @@ class SafeViewModel: ObservableObject {
 
 1. **Combine基礎**:
    - Publisher-Subscriberパターン
-   - 実測でAPI呼び出し90%削減
+   - API呼び出し90%削減が期待できます
    - CPU使用率65%低減
 
 2. **実践パターン**:

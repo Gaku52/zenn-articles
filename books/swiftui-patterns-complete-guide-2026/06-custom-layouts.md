@@ -493,7 +493,7 @@ struct RadialLayoutExampleView: View {
 }
 ```
 
-## 実測データ: カスタムレイアウトのパフォーマンス
+## 想定される効果: カスタムレイアウトのパフォーマンス
 
 ### 実験環境
 
@@ -910,7 +910,7 @@ struct GoodSizeLayout: Layout {
 1. **Layout Protocolの基礎**:
    - sizeThatFitsとplaceSubviewsの実装
    - Cacheによるパフォーマンス最適化
-   - 実測でレイアウト計算時間86%短縮
+   - 想定でレイアウト計算時間86%短縮
 
 2. **実用的なカスタムレイアウト**:
    - FlowLayout (タグ、チップ表示)

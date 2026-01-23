@@ -10,7 +10,7 @@ title: "Core Web Vitals概要"
 
 - Core Web Vitalsの3つの指標（LCP、INP、CLS）の詳細
 - なぜCore Web Vitalsが重要なのか
-- ビジネスへの影響と実測データ
+- ビジネスへの影響と想定される効果
 - 測定方法とツール（Lighthouse、PageSpeed Insights、CrUX）
 - 目標値の設定方法
 - ラボデータ vs フィールドデータの違い
@@ -179,7 +179,7 @@ observer.observe({ type: 'layout-shift', buffered: true })
 
 2021年6月から、Core Web VitalsはGoogleの検索ランキング要因として正式に組み込まれています。
 
-**実測データ:**
+**想定される効果:**
 
 - Core Web Vitalsがすべて「Good」のページは、検索結果の1ページ目に表示される確率が2.3倍高い
 - モバイル検索では影響がさらに大きく、3.1倍の差がある

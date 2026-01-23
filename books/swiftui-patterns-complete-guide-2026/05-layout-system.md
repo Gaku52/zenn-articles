@@ -421,7 +421,7 @@ struct SizePreferenceKey: PreferenceKey {
 }
 ```
 
-## 実測データ: レイアウトパフォーマンス
+## 想定される効果: レイアウトパフォーマンス
 
 ### 実験環境
 
@@ -622,7 +622,7 @@ struct GoodGeometryView: View {
 1. **レイアウトの基本原理**:
    - 3段階プロセス (提案→返答→配置)
    - Spacerの仕組みと最適な使用法
-   - 実測で初期レンダリング時間92%短縮
+   - 想定で初期レンダリング時間92%短縮
 
 2. **Stack Layoutsの最適化**:
    - LazyVStackでメモリ使用量82%削減

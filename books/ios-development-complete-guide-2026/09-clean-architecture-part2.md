@@ -614,7 +614,7 @@ class FetchUsersUseCaseTests: XCTestCase {
 
         // Then
         // Note: フィルタリングはRepositoryで行われるので、すべてのユーザーが返される
-        // 実際のプロジェクトでは、Repositoryのモックでフィルタリングをシミュレートする
+        // 想定シナリオでは、Repositoryのモックでフィルタリングをシミュレートする
         XCTAssertEqual(result.count, 3)
     }
 
@@ -915,9 +915,9 @@ Test Coverage:
 
 ## パフォーマンス最適化
 
-### 実測データ
+### ベンチマーク指標
 
-**プロジェクトC: エンタープライズアプリ（20万行）**
+**想定シナリオ: エンタープライズアプリ（20万行規模）**
 
 | 指標 | Before | After | 改善率 |
 |------|--------|-------|--------|

@@ -561,7 +561,7 @@ const apiUrl = env.NEXT_PUBLIC_API_URL  // 型安全
 
 ## 6. 実践例
 
-### 実際のプロジェクト構成（E-Commerceサイト）
+### 想定シナリオ構成（E-Commerceサイト）
 
 ```
 ecommerce-app/

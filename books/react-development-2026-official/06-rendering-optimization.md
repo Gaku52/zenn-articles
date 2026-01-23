@@ -13,7 +13,7 @@ title: "レンダリング最適化とCore Web Vitals"
 - ✅ Core Web Vitals（LCP、INP、CLS）の完全理解
 - ✅ Next.jsのレンダリング戦略（SSG、SSR、ISR）の使い分け
 - ✅ 画像・フォント最適化の実践
-- ✅ 実測値に基づいた改善手法
+- ✅ 想定値に基づいた改善手法
 
 **前提知識**: Chapter 01-05の内容、Next.jsの基礎
 

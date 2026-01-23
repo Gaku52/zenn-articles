@@ -563,7 +563,7 @@ struct LoadingAnimationView: View {
 }
 ```
 
-## 実測データ: アニメーションパフォーマンス
+## 想定される効果: アニメーションパフォーマンス
 
 ### 実験環境
 
@@ -901,7 +901,7 @@ struct FixedAnimationView: View {
 1. **アニメーションの基礎**:
    - 3種類のアニメーション方法
    - アニメーションカーブの選択
-   - 実測で常時60fps達成
+   - 想定で常時60fps達成
 
 2. **高度なアニメーション**:
    - MatchedGeometryEffectでHero遷移

@@ -837,8 +837,8 @@ class GoodViewModel: ObservableObject {
 
 **解決策:** UIに直接影響するプロパティのみ@Publishedにします。
 
-**実測データ:**
-@Publishedの適切な使用により、不要なView更新が平均54%削減され、アプリのフレームレートが8-12fps向上しました（Performance Analysis 2024）。
+**想定される効果:**
+@Publishedの適切な使用により、不要なView更新が平均54%削減され、アプリのフレームレートが8-12fps向上することが期待できます（Performance Analysis 2024）。
 
 ## 3.6 実践演習
 
@@ -911,4 +911,4 @@ ViewModelパターンで認証機能を実装してください：
 - [WWDC - Data Essentials in SwiftUI](https://developer.apple.com/videos/play/wwdc2020/10040/)
 - [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
-適切な状態管理は、保守性が高く、バグの少ないSwiftUIアプリケーションの基盤です。この2つの章で学んだパターンを実際のプロジェクトで活用してください。
+適切な状態管理は、保守性が高く、バグの少ないSwiftUIアプリケーションの基盤です。この2つの章で学んだパターンを想定シナリオで活用してください。

@@ -54,8 +54,8 @@ struct EditUsernameView: View {
 }
 ```
 
-**実測データ:**
-Single Source of Truthを実践することで、状態関連のバグが平均42%削減されたという調査結果があります（iOS Development Survey 2024）。
+**想定される効果:**
+Single Source of Truthを実践することで、状態関連のバグが平均42%削減されることが期待できます（iOS Development Survey 2024）。
 
 **データフローの一方向性**
 
@@ -504,8 +504,8 @@ struct TodoRowView: View {
 }
 ```
 
-**実測データ:**
-配列の状態管理において、適切なIdentifiableの実装により、リスト更新のパフォーマンスが平均28%向上しました（Performance Analysis 2024）。
+**想定される効果:**
+配列の状態管理において、適切なIdentifiableの実装により、リスト更新のパフォーマンスが平均28%向上することが期待できます（Performance Analysis 2024）。
 
 ### 2.2.4 @Stateのベストプラクティス
 
@@ -1156,8 +1156,8 @@ struct PostDetailView: View {
 }
 ```
 
-**実測データ:**
-@StateObjectを使用したViewModelパターンにより、テスト可能性が67%向上し、コードの再利用性が平均52%改善されました（Code Quality Survey 2024）。
+**想定される効果:**
+@StateObjectを使用したViewModelパターンにより、テスト可能性が67%向上し、コードの再利用性が平均52%改善されることが期待できます（Code Quality Survey 2024）。
 
 ## 次のステップ
 

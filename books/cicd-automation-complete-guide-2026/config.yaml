@@ -1,5 +1,5 @@
 title: "CI/CD自動化完全ガイド 2026 - GitHub Actions/Fastlane/自動デプロイ"
-summary: "GitHub Actions完全マスター、Fastlane(iOS)、Web自動デプロイ、セキュリティ、シークレット管理、モノレポ対応まで、CI/CD自動化の全てを実測データと実践例で学ぶ完全ガイド。iOS/Web両対応。"
+summary: "GitHub Actions完全マスター、Fastlane(iOS)、Web自動デプロイ、セキュリティ、シークレット管理、モノレポ対応まで、CI/CD自動化の全てをベンチマーク指標と実践例で学ぶ完全ガイド。iOS/Web両対応。"
 topics: ["cicd", "githubactions", "fastlane", "devops", "automation"]
 published: true
 price: 800

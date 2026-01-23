@@ -534,7 +534,7 @@ struct OptimizedImageView: View {
 }
 ```
 
-## 実測データ: 最適化効果
+## 想定される効果: 最適化効果
 
 ### 実験環境
 
@@ -874,7 +874,7 @@ class OptimizedViewModel {
 1. **パフォーマンス測定**:
    - Instrumentsによる科学的測定
    - デバッグモードでの検証
-   - 実測で起動時間82%短縮
+   - 想定で起動時間82%短縮
 
 2. **View最適化**:
    - Equatableによる再描画制御

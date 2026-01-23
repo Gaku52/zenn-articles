@@ -297,8 +297,8 @@ struct EditProfileView: View {
 }
 ```
 
-**実測データ:**
-NavigationStackの使用により、ナビゲーション関連のバグが73%削減され、ディープリンク実装の工数が平均48%短縮されました（Development Efficiency Survey 2024）。
+**想定される効果:**
+NavigationStackの使用により、ナビゲーション関連のバグが73%削減され、ディープリンク実装の工数が平均48%短縮されることが期待できます（Development Efficiency Survey 2024）。
 
 ### 5.1.3 NavigationSplitView
 

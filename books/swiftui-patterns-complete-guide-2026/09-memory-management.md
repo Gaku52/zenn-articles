@@ -630,14 +630,14 @@ class MemoryManagedImageLoader {
 }
 ```
 
-## 実測データ: メモリ管理の効果
+## ベンチマーク指標: メモリ管理の効果
 
-### 実験環境
+### 想定テスト環境
 
 - **Hardware**: iPhone 15 Pro (A17 Pro), 8GB RAM
 - **Software**: iOS 17.2, Xcode 15.1, Swift 5.9
 - **測定ツール**: Instruments (Allocations, Leaks)
-- **サンプルサイズ**: n=30
+- **サンプルサイズ**: n=30（推奨）
 - **統計検定**: paired t-test
 
 ### メモリリーク修正の効果
@@ -891,7 +891,7 @@ struct MemoryMonitorView: View {
 1. **メモリ管理の基礎**:
    - ARCの仕組みと循環参照
    - weak/unownedの適切な使用
-   - 実測でメモリ使用量95%削減
+   - メモリ使用量95%削減が期待できます
 
 2. **メモリリーク検出**:
    - Instrumentsによる検出

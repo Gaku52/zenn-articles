@@ -485,7 +485,7 @@ struct FullScreenContentView: View {
 }
 ```
 
-## 実測データ: パフォーマンス効果
+## 想定される効果: パフォーマンス効果
 
 ### 実験環境
 

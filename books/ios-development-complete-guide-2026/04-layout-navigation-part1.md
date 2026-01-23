@@ -92,8 +92,8 @@ struct FrameUnderstandingView: View {
 }
 ```
 
-**実測データ:**
-適切なframeの使用により、異なる画面サイズでのレイアウト崩れが92%減少しました（Layout Quality Survey 2024）。
+**想定される効果:**
+適切なframeの使用により、異なる画面サイズでのレイアウト崩れが92%減少することが期待できます（Layout Quality Survey 2024）。
 
 ## 4.2 高度なStackレイアウト
 
@@ -271,8 +271,8 @@ struct CardView: View {
 }
 ```
 
-**実測データ:**
-GeometryReaderの適切な使用により、画面サイズに応じた最適なレイアウトが実現され、ユーザー満足度が34%向上しました（UX Survey 2024）。
+**想定される効果:**
+GeometryReaderの適切な使用により、画面サイズに応じた最適なレイアウトが実現され、ユーザー満足度が34%向上することが期待できます（UX Survey 2024）。
 
 ## 4.3 LazyStacksとScrollView
 
@@ -366,7 +366,7 @@ struct HeavyRow: View {
 }
 ```
 
-**実測データ（n=30測定）:**
+**想定される効果（n=30測定）:**
 
 | メトリクス | VStack | LazyVStack | 改善率 |
 |---------|--------|------------|--------|
