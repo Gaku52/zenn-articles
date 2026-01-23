@@ -1,0 +1,39 @@
+title: "フロントエンドパフォーマンス完全ガイド 2026 - Core Web Vitals/最適化の全て"
+summary: "Core Web Vitals完全攻略、バンドルサイズ削減、レンダリング最適化、画像・フォント最適化まで、フロントエンドパフォーマンスの全てを実測データと実践例で学ぶ完全ガイド。React/Next.js/Vue対応。"
+topics: ["frontend", "performance", "webvitals", "react", "nextjs"]
+published: false
+price: 1000
+chapters:
+  - 00-introduction
+  # Part 1: Core Web Vitals完全攻略
+  - 01-core-web-vitals-overview
+  - 02-lcp-optimization
+  - 03-inp-optimization
+  - 04-cls-optimization
+  # Part 2: バンドル最適化
+  - 05-bundle-size-analysis
+  - 06-code-splitting-strategies
+  - 07-tree-shaking-dead-code
+  - 08-dynamic-imports
+  # Part 3: レンダリング最適化
+  - 09-critical-rendering-path
+  - 10-ssr-vs-csr-vs-ssg
+  - 11-react-performance-patterns
+  - 12-virtual-dom-optimization
+  # Part 4: アセット最適化
+  - 13-image-optimization
+  - 14-font-loading-strategies
+  - 15-css-optimization
+  - 16-javascript-optimization
+  # Part 5: ネットワーク最適化
+  - 17-caching-strategies
+  - 18-cdn-configuration
+  - 19-http2-http3
+  - 20-preload-prefetch
+  # Part 6: 計測とモニタリング
+  - 21-lighthouse-webpagetest
+  - 22-real-user-monitoring
+  - 23-performance-budgets
+  # Part 7: 実践
+  - 24-real-world-case-study-part1
+  - 25-real-world-case-study-part2
