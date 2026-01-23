@@ -413,7 +413,7 @@ async def get_timeline(user_id: int, db: AsyncSession = Depends(get_db)):
 ### 通知一覧の最適化
 
 ```python
-# ✅ 通知一覧（最も遅かったAPI）を最適化
+# ✅ 通知一覧（最も遅くなりがちなAPI）を最適化
 @app.get("/users/{user_id}/notifications")
 @cache(expire=30)
 async def get_notifications(
