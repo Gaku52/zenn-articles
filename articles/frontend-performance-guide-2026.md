@@ -25,7 +25,7 @@ Webサイトの表示速度は、ユーザー体験とビジネス成果に直�
 
 そこで、**フロントエンドパフォーマンス最適化の全てを体系的にまとめた本**を執筆しました。
 
-https://zenn.dev/books/frontend-performance-complete-guide-2026
+https://zenn.dev/gaku52/books/frontend-performance-complete-guide-2026
 
 ## なぜパフォーマンス最適化が重要なのか
 
@@ -463,7 +463,7 @@ Core Web Vitalsの基礎から、実践的な最適化手法、測定・モニ�
 
 導入部分とCore Web Vitals概要の章は無料で読めます。ぜひご覧ください！
 
-https://zenn.dev/books/frontend-performance-complete-guide-2026
+https://zenn.dev/gaku52/books/frontend-performance-complete-guide-2026
 
 ## もう1つのケーススタディ: SaaSダッシュボード
 
@@ -728,5 +728,5 @@ ROI: 480,000円 ÷ 500円 = 960倍
 
 **関連リンク**
 
-- [本書の詳細・購入はこちら](https://zenn.dev/books/frontend-performance-complete-guide-2026)
+- [本書の詳細・購入はこちら](https://zenn.dev/gaku52/books/frontend-performance-complete-guide-2026)
 - [Claude Code Skills - Frontend Performance](https://github.com/Gaku52/claude-code-skills/tree/main/frontend-performance)
