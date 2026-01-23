@@ -319,45 +319,18 @@ fastify.get('/users/:id', async (request, reply) => {
 });
 ```
 
-## 実測データ: パフォーマンス比較
+## パフォーマンスの特徴
 
-### ベンチマーク条件
+Fastifyの公式ベンチマーク（https://fastify.dev/benchmarks/）によると、Fastifyは他のNode.jsフレームワークと比較して高いスループットを実現できる傾向があります。
 
-```bash
-# autocannon
-npx autocannon -c 100 -d 10 http://localhost:3000/api/users
-```
+### パフォーマンスが高い理由
 
-### 結果
+1. **高速なルーティング**: Radix Treeベースのルーター
+2. **JSON スキーマベースの最適化**: fast-json-stringifyによるシリアライゼーション
+3. **低オーバーヘッド**: 最小限のミドルウェア処理
+4. **効率的なパースエンジン**: 組み込みのボディパーサー
 
-| フレームワーク | リクエスト/秒 | 平均レスポンス | メモリ |
-|--------------|-------------|--------------|-------|
-| **Fastify** | **15,234** | **6.5ms** | **42MB** |
-| Express | 8,542 | 11.7ms | 45MB |
-| NestJS | 7,231 | 13.8ms | 68MB |
-
-Fastifyは Express の **1.78倍** の速度を実現しています。
-
-### 複雑なクエリでの比較
-
-```typescript
-// JSON シリアライゼーションが重要な場合
-fastify.get('/api/posts', async () => {
-  const posts = await prisma.post.findMany({
-    include: {
-      author: true,
-      comments: true,
-    },
-    take: 100,
-  });
-  return posts; // fast-json-stringify で高速化
-});
-```
-
-| フレームワーク | リクエスト/秒 | レスポンスサイズ |
-|--------------|-------------|----------------|
-| Fastify | 3,421 | 250KB |
-| Express | 1,832 | 250KB |
+※ 実際のパフォーマンスは、アプリケーションの実装、データ量、インフラ環境により異なります。
 
 ## ベストプラクティス
 

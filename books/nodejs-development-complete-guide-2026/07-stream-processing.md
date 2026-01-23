@@ -35,7 +35,7 @@ stream.on('data', (chunk) => {
 stream.on('end', () => {
   console.log('Finished reading');
 });
-// メモリ使用量: 数MB
+// チャンク単位で処理するため、ファイルサイズに関わらずメモリ使用量が一定
 ```
 
 ## Streamの種類
@@ -242,19 +242,23 @@ try {
 }
 ```
 
-## 実測データ: メモリ使用量
-
-### テスト条件: 1GB のファイル処理
+## Streamのメモリ効率
 
 ```typescript
-// ❌ readFileSync
-const data = fs.readFileSync('1gb-file.txt');
-// メモリ使用量: 1,024MB
+// ❌ readFileSync: ファイル全体をメモリにロード
+const data = fs.readFileSync('large-file.txt');
+// ファイルサイズと同等のメモリを消費
 
-// ✅ createReadStream
-const stream = fs.createReadStream('1gb-file.txt');
-// メモリ使用量: 16MB（デフォルトchunkサイズ: 64KB）
+// ✅ createReadStream: チャンク単位で処理
+const stream = fs.createReadStream('large-file.txt');
+// デフォルトchunkサイズ（64KB）分のメモリのみ使用
 ```
+
+**メモリ効率の特徴:**
+- `readFileSync`: メモリ使用量 = ファイルサイズ
+- `createReadStream`: メモリ使用量 ≒ チャンクサイズ（通常64KB）
+
+大容量ファイル（数GB）を処理する場合、Streamを使用することでメモリ使用量を大幅に削減できます。
 
 ## まとめ
 

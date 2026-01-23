@@ -182,23 +182,26 @@ const results = await Promise.all([
 pool.close();
 ```
 
-## 実測データ: パフォーマンス
-
-### テスト: 素数計算
+## パフォーマンス特性
 
 ```typescript
-// シングルスレッド
+// シングルスレッド: 全てメインスレッドで処理
 console.time('Single');
 const primes = findPrimes(1000000);
 console.timeEnd('Single');
-// Single: 2,456ms
 
-// Worker Threads (4コア)
+// Worker Threads: 複数コアに分散
 console.time('Workers');
 const primesParallel = await findPrimesParallel(1000000, 4);
 console.timeEnd('Workers');
-// Workers: 687ms (3.6倍高速)
 ```
+
+**期待される効果:**
+- CPU集約的な処理: Worker数（コア数）に比例して高速化
+- I/O処理: Worker Threadsの効果は限定的（非同期処理で十分）
+- メインスレッドをブロックしない: UIレスポンス向上
+
+一般的に、CPUコア数に応じた並列化により、CPU集約的な処理を大幅に高速化できます。
 
 ## まとめ
 

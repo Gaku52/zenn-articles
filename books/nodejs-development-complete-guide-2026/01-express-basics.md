@@ -278,24 +278,6 @@ router.delete('/:id', postController.deletePost);
 export default router;
 ```
 
-## 実測データ: パフォーマンス
-
-### ベンチマーク条件
-
-```bash
-# Apache Bench
-ab -n 10000 -c 100 http://localhost:3000/api/users
-```
-
-### 結果
-
-| 指標 | 値 |
-|------|-----|
-| リクエスト/秒 | 8,542 |
-| 平均レスポンス時間 | 11.7ms |
-| メモリ使用量 | 45MB |
-| CPU使用率 | 28% |
-
 ## ベストプラクティス
 
 ### 1. 環境変数の管理

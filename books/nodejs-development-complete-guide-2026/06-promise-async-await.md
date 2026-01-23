@@ -322,27 +322,27 @@ function flatPromiseChain() {
 }
 ```
 
-## 実測データ: パフォーマンス
-
-### 直列 vs 並列
+## 直列処理 vs 並列処理の比較
 
 ```typescript
-// テスト条件: 10個のユーザーを取得、各100ms
-
-// 直列処理
+// 直列処理: 一つずつ順番に処理
 console.time('Serial');
 for (const id of ids) {
-  await fetchUser(id);
+  await fetchUser(id);  // 前の処理が終わるまで待つ
 }
 console.timeEnd('Serial');
-// Serial: 1000ms
 
-// 並列処理
+// 並列処理: 同時に実行
 console.time('Parallel');
-await Promise.all(ids.map(fetchUser));
+await Promise.all(ids.map(fetchUser));  // 全て同時に開始
 console.timeEnd('Parallel');
-// Parallel: 100ms
 ```
+
+**パフォーマンス特性:**
+- 直列処理: 処理時間 = 各処理時間の合計
+- 並列処理: 処理時間 ≒ 最も遅い処理の時間
+
+一般的に、独立した複数の非同期処理は並列実行により大幅に高速化できます。
 
 ## まとめ
 
