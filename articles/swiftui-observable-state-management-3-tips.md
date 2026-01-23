@@ -3,7 +3,7 @@ title: "SwiftUIの@Observableで状態管理を劇的に改善する3つのポ�
 emoji: "🎯"
 type: "tech"
 topics: ["swiftui", "swift", "ios", "observable", "statemanagement"]
-published: false
+published: true
 ---
 
 # SwiftUIの@Observableで状態管理を劇的に改善する3つのポイント
