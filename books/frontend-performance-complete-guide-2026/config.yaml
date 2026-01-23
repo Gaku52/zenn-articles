@@ -2,7 +2,7 @@ title: "フロントエンドパフォーマンス完全ガイド 2026 - Core We
 summary: "Core Web Vitals完全攻略、バンドルサイズ削減、レンダリング最適化、画像・フォント最適化まで、フロントエンドパフォーマンスの全てを実測データと実践例で学ぶ完全ガイド。React/Next.js/Vue対応。"
 topics: ["frontend", "performance", "webvitals", "react", "nextjs"]
 published: false
-price: 1000
+price: 1200
 chapters:
   - 00-introduction
   # Part 1: Core Web Vitals完全攻略
