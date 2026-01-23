@@ -128,12 +128,23 @@ claude doctor
 
 パスが正しく設定されていない可能性があります。まず、ターミナルを再起動してみてください。
 
-```bash
-# ターミナルを再起動
-exit
+#### Windowsの場合
+
+npmのグローバルインストール先がPATH環境変数に登録されていないことが原因です。
+
+1. PowerShellで以下を実行して、npmのインストール先を確認します。
+
+```powershell
+npm config get prefix
 ```
 
-それでも解決しない場合は、再インストールを試してください。
+2. 表示されたパス（例: `C:\Users\ユーザー名\AppData\Roaming\npm`）をシステム環境変数のPATHに追加します。
+
+3. ターミナルを再起動して、`claude`コマンドを実行します。
+
+#### macOSの場合
+
+ターミナルを再起動しても解決しない場合は、再インストールを試してください。
 
 ```bash
 brew reinstall claude-code
