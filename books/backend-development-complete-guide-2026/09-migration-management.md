@@ -2005,7 +2005,7 @@ npx prisma db pull
 
 ### 参考資料
 
-- [Prisma Migrate Documentation](https://www.prisma.io/docs/concepts/components/prisma-migrate)
+- [Prisma Migrate Documentation](https://www.prisma.io/docs/orm/prisma-migrate)
 - [TypeORM Migrations](https://typeorm.io/migrations)
 - [Knex.js Migrations](https://knexjs.org/guide/migrations.html)
 - [Zero-Downtime Database Migrations](https://spring.io/blog/2016/05/31/zero-downtime-deployment-with-a-database)

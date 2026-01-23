@@ -250,4 +250,4 @@ const prisma = new PrismaClient({
 
 - [PostgreSQL公式ドキュメント - インデックス](https://www.postgresql.org/docs/current/indexes.html)
 - [MySQL公式ドキュメント - インデックス最適化](https://dev.mysql.com/doc/refman/8.0/en/optimization-indexes.html)
-- [Prisma公式ドキュメント - インデックス](https://www.prisma.io/docs/concepts/components/prisma-schema/indexes)
+- [Prisma公式ドキュメント - インデックス](https://www.prisma.io/docs/orm/prisma-schema/data-model/indexes)
