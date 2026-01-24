@@ -1,0 +1,36 @@
+title: "iOS開発応用編 2026 - プロジェクト設定からセキュリティまで"
+summary: "Xcodeプロジェクト設定、フォルダ構成、ビルド最適化、Keychain活用、証明書ピンニング、Core Data/Realm、API通信まで、iOS開発の応用テクニックを実践例で学ぶ完全ガイド。Swift完全対応。"
+topics: ["ios", "swift", "xcode", "セキュリティ", "coredata"]
+published: false
+price: 2800
+chapters:
+  - 00-introduction
+  # Part 1: プロジェクトセットアップ
+  - 01-xcode-project-setup
+  - 02-folder-structure-best-practices
+  - 03-build-configuration
+  - 04-build-settings-optimization
+  - 05-team-development-setup
+  - 06-ci-cd-integration
+  - 07-fastlane-automation
+  - 08-project-maintenance
+  # Part 2: セキュリティ実装
+  - 09-authentication-authorization
+  - 10-keychain-basics
+  - 11-keychain-advanced
+  - 12-certificate-pinning
+  - 13-app-transport-security
+  - 14-data-encryption
+  - 15-jailbreak-detection
+  # Part 3: ネットワーク・データ永続化
+  - 16-urlsession-basics
+  - 17-alamofire-advanced
+  - 18-api-error-handling
+  - 19-core-data-basics
+  - 20-core-data-advanced
+  - 21-realm-database
+  - 22-userdefaults-best-practices
+  # Part 4: 実践パターン
+  - 23-networking-layer-architecture
+  - 24-data-persistence-strategy
+  - 25-security-checklist

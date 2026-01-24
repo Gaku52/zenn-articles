@@ -1,0 +1,32 @@
+title: "コードレビュー完全ガイド 2026 - 開発速度と品質を両立する実践技術"
+summary: "TypeScript、Python、Swift、Go対応。レビュー観点チェックリスト、Danger.js/ReviewDog自動化、言語別ベストプラクティス、フィードバック技術まで、効果的なコードレビューの全てを実践例で学ぶ完全ガイド。"
+topics: ["codereview", "github", "typescript", "python", "swift"]
+published: false
+price: 2500
+chapters:
+  - 00-introduction
+  # Part 1: コードレビュー基礎
+  - 01-code-review-fundamentals
+  - 02-review-process-workflow
+  - 03-review-checklist-overview
+  - 04-effective-feedback
+  - 05-self-review-techniques
+  # Part 2: レビュー観点別ガイド
+  - 06-functionality-review
+  - 07-design-architecture-review
+  - 08-readability-maintainability
+  - 09-performance-review
+  - 10-security-review
+  - 11-testing-review
+  # Part 3: 言語別ベストプラクティス
+  - 12-typescript-review-guide
+  - 13-python-review-guide
+  - 14-swift-review-guide
+  - 15-go-review-guide
+  # Part 4: 自動化・ツール活用
+  - 16-dangerjs-automation
+  - 17-reviewdog-integration
+  - 18-github-actions-workflow
+  # Part 5: ケーススタディ
+  - 19-case-study-large-pr
+  - 20-case-study-team-onboarding

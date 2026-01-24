@@ -1,0 +1,30 @@
+title: "依存関係管理完全ガイド 2026 - npm/pnpm/SPM実践テクニック"
+summary: "npm、pnpm、yarn、Swift Package Manager、CocoaPods徹底比較。package.json最適化、セキュリティアップデート、モノレポ管理、ライセンス管理まで、依存関係管理の全てを実践例で学ぶ完全ガイド。"
+topics: ["npm", "pnpm", "依存関係", "セキュリティ", "package管理"]
+published: false
+price: 1800
+chapters:
+  - 00-introduction
+  # Part 1: パッケージマネージャー比較
+  - 01-package-manager-overview
+  - 02-npm-basics
+  - 03-pnpm-advantages
+  - 04-yarn-features
+  # Part 2: npm/pnpm/yarn実践
+  - 05-package-json-best-practices
+  - 06-lockfile-management
+  - 07-monorepo-management
+  - 08-workspace-configuration
+  - 09-scripts-automation
+  # Part 3: iOS依存関係管理
+  - 10-swift-package-manager
+  - 11-cocoapods-management
+  - 12-carthage-basics
+  - 13-ios-dependency-comparison
+  # Part 4: セキュリティ・バージョン管理
+  - 14-security-vulnerability-scan
+  - 15-dependency-update-strategy
+  - 16-license-management
+  # Part 5: トラブルシューティング
+  - 17-common-errors-solutions
+  - 18-performance-optimization

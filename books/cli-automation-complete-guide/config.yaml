@@ -1,0 +1,37 @@
+title: "CLI開発・自動化実践ガイド - Node.js/Python/Go完全対応"
+summary: "Commander.js、Inquirer、Click、Typer、Cobra完全対応。CLIアーキテクチャ設計、インタラクティブUI、配布方法、スクリプト自動化まで、CLI開発と自動化の全てを実践例で学ぶ完全ガイド。"
+topics: ["cli", "nodejs", "python", "go", "自動化"]
+published: false
+price: 2200
+chapters:
+  - 00-introduction
+  # Part 1: CLI設計・アーキテクチャ
+  - 01-cli-design-principles
+  - 02-cli-architecture-patterns
+  - 03-argument-parsing-basics
+  - 04-configuration-management
+  # Part 2: Node.js CLI開発
+  - 05-nodejs-cli-setup
+  - 06-commander-js-basics
+  - 07-inquirer-interactive-ui
+  - 08-nodejs-cli-testing
+  - 09-nodejs-cli-distribution
+  - 10-nodejs-cli-best-practices
+  # Part 3: Python CLI開発
+  - 11-python-cli-setup
+  - 12-click-framework
+  - 13-typer-modern-cli
+  - 14-python-cli-testing
+  - 15-python-cli-distribution
+  - 16-python-cli-best-practices
+  # Part 4: Go CLI開発
+  - 17-go-cli-setup
+  - 18-cobra-framework
+  - 19-go-cli-distribution
+  - 20-go-cli-best-practices
+  # Part 5: スクリプト自動化
+  - 21-shell-script-automation
+  - 22-nodejs-script-automation
+  - 23-python-script-automation
+  - 24-ci-cd-integration
+  - 25-automation-best-practices
