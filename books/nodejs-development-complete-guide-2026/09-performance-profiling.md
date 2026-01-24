@@ -107,7 +107,7 @@ async function getPostsWithAuthors() {
 
   return posts;
 }
-// 100件で 2,300ms（N+1問題）
+// 想定例: 100件で約2,300ms（N+1問題）
 ```
 
 ### After
@@ -119,7 +119,7 @@ async function getPostsWithAuthors() {
     include: { author: true },
   });
 }
-// 100件で 45ms（51倍高速）
+// 想定例: 100件で約45ms（最適化後、理論上約51倍高速）
 ```
 
 ## まとめ
