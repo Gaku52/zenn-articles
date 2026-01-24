@@ -8,9 +8,9 @@ published: false
 
 ## はじめに
 
-Node.jsの非同期処理は強力ですが、その仕組みを正しく理解していないと思わぬバグや パフォーマンス問題を引き起こします。
+「async/awaitを使っているのになぜか遅い」「Promise地獄から抜け出せない」「たまにアプリがクラッシュする」...こんな経験はありませんか？
 
-この記事では、Node.js開発においてよく見られる非同期処理の典型的な落とし穴と、それを回避するためのベストプラクティスを紹介します。
+Node.jsの非同期処理は強力ですが、その仕組みを正しく理解していないと思わぬバグやパフォーマンス問題を引き起こします。この記事では、実務でよく遭遇する5つの典型的な落とし穴と、その回避方法を紹介します。
 
 ## 1. Promise地獄 - async/awaitの誤った使い方
 
@@ -60,11 +60,11 @@ async function processUserData(userId: string) {
 複数の非同期処理を実行する際、不必要に直列化してしまい、パフォーマンスを損なうケースです。
 
 ```typescript
-// ❌ 不必要な直列処理（想定実行時間: 3秒）
+// ❌ 不必要な直列処理（全て完了するまで時間がかかる）
 async function fetchAllData() {
-  const users = await fetchUsers();      // 1秒
-  const products = await fetchProducts(); // 1秒
-  const orders = await fetchOrders();     // 1秒
+  const users = await fetchUsers();
+  const products = await fetchProducts();
+  const orders = await fetchOrders();
 
   return { users, products, orders };
 }
@@ -73,7 +73,7 @@ async function fetchAllData() {
 ### 解決策: Promise.allで並列化
 
 ```typescript
-// ✅ 並列処理（想定実行時間: 1秒）
+// ✅ 並列処理（大幅に高速化）
 async function fetchAllData() {
   const [users, products, orders] = await Promise.all([
     fetchUsers(),
@@ -103,7 +103,7 @@ async function fetchUserRelatedData(userId: string) {
 **学習ポイント:**
 - 独立した処理は`Promise.all`で並列化
 - 依存関係がある処理は直列化
-- 理論的には最大3倍のパフォーマンス向上が見込める
+- 適切な並列化により大幅なパフォーマンス向上が見込める
 
 ## 3. エラーハンドリングの抜け - 未処理のPromise拒否
 
