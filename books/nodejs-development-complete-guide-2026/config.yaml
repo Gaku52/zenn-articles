@@ -3,7 +3,7 @@ summary: "Express、NestJS、Fastify徹底比較。非同期処理、ストリ�
 topics: ["nodejs", "express", "nestjs", "backend", "typescript"]
 published: false
 price: 500
-cover: cover.png
+cover: cover.jpg
 chapters:
   - 00-introduction
   # Part 1: Node.jsフレームワーク基礎
