@@ -1,7 +1,7 @@
 title: "Web品質・アクセシビリティ完全ガイド 2026 - WCAG 2.1準拠の実践"
 summary: "WCAG 2.1 AA準拠、セマンティックHTML、ARIA属性、スクリーンリーダー対応、React/Vue/Next.js選定、技術ドキュメント作成まで、Web品質向上とアクセシビリティの全てを実践例で学ぶ完全ガイド。"
 topics: ["アクセシビリティ", "wcag", "react", "web開発", "ドキュメント"]
-published: false
+published: true
 price: 1500
 chapters:
   - 00-introduction
