@@ -1,12 +1,12 @@
 ---
-title: "【2026年版】SwiftUI実践パターン集 - 状態管理とレイアウトの完全ガイドを公開しました"
+title: "【2026年版】SwiftUI開発パターン完全ガイドを公開しました"
 emoji: "🎨"
 type: "tech"
-topics: ["swiftui", "swift", "ios", "レイアウト", "アニメーション"]
+topics: ["swiftui", "swift", "ios", "mobile", "design"]
 published: true
 ---
 
-# SwiftUI実践パターン集 - 状態管理とレイアウトの完全ガイドを公開しました
+# SwiftUI開発パターン完全ガイド 2026 を公開しました
 
 ## SwiftUI開発、こんな悩みありませんか？
 

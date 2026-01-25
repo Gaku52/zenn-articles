@@ -1,5 +1,5 @@
-title: "SwiftUI実践パターン集 - 状態管理とレイアウトが一気にわかる"
-summary: "「@Stateと@Bindingの違いは？」「レイアウトが思い通りにならない」そんな悩みを解決。SwiftUIの状態管理からカスタムレイアウト、アニメーションまで、実践的なパターンを25万字で解説。"
+title: "SwiftUI開発パターン完全ガイド 2026 - 状態管理/レイアウト/パフォーマンス"
+summary: "@State/@Binding/@Observable完全マスター、ナビゲーションパターン、Custom Layouts、アニメーション、パフォーマンス最適化、Combine統合まで、SwiftUI開発の全てを実測データと実践例で学ぶ完全ガイド。Swift 5.9+、iOS 17+対応。"
 topics: ["swiftui", "swift", "ios", "mobile", "design"]
 published: true
 price: 800

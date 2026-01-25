@@ -1,12 +1,12 @@
 ---
-title: "【2026年版】GitHub Actionsで自動化する実践ガイドを公開しました"
+title: "【2026年版】CI/CD自動化完全ガイドを公開しました"
 emoji: "⚙️"
 type: "tech"
-topics: ["githubactions", "cicd", "fastlane", "devops", "automation"]
+topics: ["cicd", "githubactions", "fastlane", "devops", "automation"]
 published: true
 ---
 
-# GitHub Actionsで自動化する実践ガイドを公開しました
+# CI/CD自動化完全ガイド 2026 を公開しました
 
 ## CI/CD、こんな悩みありませんか？
 

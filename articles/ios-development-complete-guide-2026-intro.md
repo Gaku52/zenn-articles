@@ -1,12 +1,12 @@
 ---
-title: "【2026年版】SwiftUI完全マスター - iOS開発完全ガイドを公開しました"
+title: "【2026年版】iOS開発完全ガイドを公開しました"
 emoji: "📱"
 type: "tech"
-topics: ["swiftui", "ios", "swift", "mvvm", "初心者"]
+topics: ["ios", "swift", "swiftui", "mobile", "security"]
 published: true
 ---
 
-# SwiftUI完全マスター - iOS開発完全ガイドを公開しました
+# iOS開発完全ガイド 2026 を公開しました
 
 ## SwiftUI開発、こんな悩みありませんか？
 

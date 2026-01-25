@@ -1,12 +1,12 @@
 ---
-title: "【2026年版】Node.js開発の教科書 - 実践完全ガイドを公開しました"
+title: "【2026年版】Node.js開発完全ガイドを公開しました"
 emoji: "⚡"
 type: "tech"
-topics: ["nodejs", "express", "nestjs", "typescript", "backend"]
+topics: ["nodejs", "express", "nestjs", "backend", "typescript"]
 published: true
 ---
 
-# Node.js開発の教科書 - 実践完全ガイドを公開しました
+# Node.js開発完全ガイド 2026 を公開しました
 
 ## Node.js開発、こんな悩みありませんか？
 
