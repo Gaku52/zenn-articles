@@ -289,7 +289,11 @@ struct ProductListView: View {
 この記事では、`@Observable`の3つの重要ポイントと実践パターンを紹介しました。SwiftUIの状態管理に悩んでいる方は、ぜひ試してみてください。
 
 :::message
-より詳しい内容（NavigationStack、Custom Layouts、パフォーマンス最適化など）は、[SwiftUI開発パターン完全ガイド 2026](https://zenn.dev/gaku52/books/swiftui-patterns-complete-guide-2026)で解説しています。
+**もっと深く学びたい方へ**
+
+SwiftUIの状態管理からMVVM設計、セキュリティ実装まで体系的に学べる本を書きました：
+- [iOS開発完全ガイド 2026 - SwiftUI/MVVM/セキュリティの全て](https://zenn.dev/gaku/books/ios-development-complete-guide-2026)（80万字・1,000円）
+- [SwiftUI開発パターン完全ガイド 2026](https://zenn.dev/gaku/books/swiftui-patterns-complete-guide-2026)（25万字・800円）
 :::
 
 この記事が役に立ったら、**いいね**や**ストック**をいただけると嬉しいです！

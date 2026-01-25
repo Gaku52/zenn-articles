@@ -1,8 +1,8 @@
-title: "iOS開発完全ガイド 2026 - SwiftUI/MVVM/セキュリティの全て"
-summary: "SwiftUI、MVVM/Clean Architecture、API通信、Core Data/Realm、Keychain/暗号化、プロジェクト構成まで、iOS開発の全てを想定効果に基づく実践例で学ぶ完全ガイド。Swift 5.9+、iOS 17+対応。"
-topics: ["ios", "swift", "swiftui", "mobile", "security"]
+title: "【80万字】SwiftUI完全マスター 2026 - 実務で使えるiOS開発の教科書"
+summary: "SwiftUIの基礎から、MVVM設計、データ永続化、セキュリティ実装まで。全25章・80万字で、実務で本当に使える知識を学べます。「なぜそうするのか」まで丁寧に解説。Swift/iOS初心者から中級者まで対応。"
+topics: ["swiftui", "ios", "swift", "初心者", "実践"]
 published: true
-price: 1500
+price: 1000
 chapters:
   - 00-introduction
   # Part 1: SwiftUI基礎
