@@ -2,7 +2,7 @@ title: "CLI開発・自動化実践ガイド - Node.js/Python/Go完全対応"
 summary: "Commander.js、Inquirer、Click、Typer、Cobra完全対応。CLIアーキテクチャ設計、インタラクティブUI、配布方法、スクリプト自動化まで、CLI開発と自動化の全てを実践例で学ぶ完全ガイド。"
 topics: ["cli", "nodejs", "python", "go", "自動化"]
 published: false
-price: 2200
+price: 1800
 chapters:
   - 00-introduction
   # Part 1: CLI設計・アーキテクチャ
