@@ -3,7 +3,7 @@ title: "iOSアプリにMVVMを導入して開発速度67%UPを目指す"
 emoji: "🚀"
 type: "tech"
 topics: ["ios", "swift", "mvvm", "architecture"]
-published: true
+published: false
 ---
 
 ## はじめに：MVVM導入前によくある課題

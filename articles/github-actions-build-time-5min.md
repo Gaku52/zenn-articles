@@ -3,7 +3,7 @@ title: "GitHub ActionsでCI/CDを5分に短縮した3つの最適化手法"
 emoji: "⚡"
 type: "tech"
 topics: ["githubactions", "cicd", "devops", "fastlane", "automation"]
-published: true
+published: false
 ---
 
 ## はじめに
