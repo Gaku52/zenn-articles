@@ -1,3 +1,7 @@
+---
+title: "Next.jsベストプラクティス - App Routerの活用"
+---
+
 # Next.jsベストプラクティス - App Routerの活用
 
 ## Next.js App Routerとは

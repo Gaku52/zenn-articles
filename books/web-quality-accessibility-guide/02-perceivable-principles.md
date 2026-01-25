@@ -1,3 +1,7 @@
+---
+title: "Perceivable（知覚可能） - 情報を認識できるようにする"
+---
+
 # Perceivable（知覚可能） - 情報を認識できるようにする
 
 ## Perceivableとは
