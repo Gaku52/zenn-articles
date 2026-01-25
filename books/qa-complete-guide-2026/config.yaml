@@ -2,7 +2,7 @@ title: "品質保証・QA実践ガイド 2026 - メトリクス駆動の品質�
 summary: "テスト計画、QAメトリクス、KPIダッシュボード、リリース判定基準、バグ管理プロセスまで、品質保証の全てを実践的なテンプレートとツールで学ぶ完全ガイド。Grafana/Prometheus設定例付き。"
 topics: ["qa", "品質保証", "テスト", "メトリクス", "リリース管理"]
 published: true
-price: 1500
+price: 1000
 chapters:
   - 00-introduction
   # Part 1: QAプロセス基礎
