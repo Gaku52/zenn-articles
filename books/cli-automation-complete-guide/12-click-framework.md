@@ -1,3 +1,7 @@
+---
+title: "Clickフレームワーク"
+---
+
 # Clickフレームワーク
 
 Clickは、Pythonで最も人気のあるCLIフレームワークの一つです。[Flask](https://flask.palletsprojects.com/)の開発者としても知られるArmin Ronacherによって開発され、Ansible、pipx、AWS SAM CLIなど多くの著名プロジェクトで採用されています。

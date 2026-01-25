@@ -1,3 +1,7 @@
+---
+title: "Node.js CLI配布"
+---
+
 # Node.js CLI配布
 
 CLIツールを多くのユーザーに届けるには、適切な配布方法が重要です。本章では、npm公開、バイナリ配布、GitHub Releasesなど、様々な配布手法を学びます。

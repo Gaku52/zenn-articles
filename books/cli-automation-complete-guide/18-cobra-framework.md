@@ -1,3 +1,7 @@
+---
+title: "Cobraフレームワーク"
+---
+
 # Cobraフレームワーク
 
 Cobraは、Goで最も人気のあるCLIフレームワークで、kubectl、Hugo、GitHub CLIなど、多くの著名なツールで採用されています。本章では、Cobraを使った高機能なCLIツールの開発方法を学びます。

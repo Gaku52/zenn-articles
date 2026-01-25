@@ -1,3 +1,7 @@
+---
+title: "Go CLIの配布"
+---
+
 # Go CLIの配布
 
 Goで開発したCLIツールは、単一バイナリとして配布できるため、ユーザーへの提供が非常に簡単です。本章では、クロスコンパイル、GoReleaser、Homebrew、GitHub Releasesなど、Go CLIツールの配布方法を学びます。

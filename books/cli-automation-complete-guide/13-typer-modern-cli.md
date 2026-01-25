@@ -1,3 +1,7 @@
+---
+title: "Typer - モダンなPython CLI"
+---
+
 # Typer - モダンなPython CLI
 
 Typerは、Pythonの型ヒントを最大限に活用したモダンなCLIフレームワークです。FastAPIと同じ開発者によって作成され、型安全性と開発者体験を重視した設計が特徴です。本章では、Typerの基本から実践的な使い方まで学びます。

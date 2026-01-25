@@ -1,3 +1,7 @@
+---
+title: "Python CLIセットアップ"
+---
+
 # Python CLIセットアップ
 
 本章では、Pythonでプロフェッショナルなc
