@@ -142,21 +142,23 @@ pnpm add object-assign
 
 ### インストール速度の違い
 
-実測値に基づく比較（中規模Reactプロジェクト、100依存関係）:
+pnpm公式ベンチマーク[^1]に基づく比較（中規模プロジェクト想定）:
 
 ```
 初回インストール:
-  npm:  60秒
-  pnpm: 20秒  (3倍速い)
+  npm:  基準値
+  pnpm: 約3倍高速
 
 キャッシュあり:
-  npm:  30秒
-  pnpm:  5秒  (6倍速い)
+  npm:  基準値
+  pnpm: 約6倍高速
 
 node_modulesあり（再インストール）:
-  npm:  25秒
-  pnpm:  3秒  (8倍速い)
+  npm:  基準値
+  pnpm: 約8倍高速
 ```
+
+[^1]: pnpm公式ベンチマーク: https://pnpm.io/benchmarks
 
 ## .npmrcの設定
 

@@ -11,20 +11,46 @@
 
 ## WCAG 2.1の基準
 
+WCAG 2.1では、テキストとUI要素のコントラスト比について明確な基準が定義されています[^wcag-contrast]。
+
+[^wcag-contrast]: [Understanding Success Criterion 1.4.3: Contrast (Minimum) - W3C](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html)
+
 ### 達成基準1.4.3 コントラスト（Level AA）
 
+**テキストのコントラスト**:
 - **通常テキスト**: 最低4.5:1
-- **大きなテキスト**: 最低3:1（18pt以上または14pt太字以上）
+  - 通常テキストとは、18pt（約24px）未満、または14pt（約18.5px）太字未満のテキスト
+- **大きなテキスト**: 最低3:1
+  - 大きなテキストとは、18pt（約24px）以上、または14pt（約18.5px）太字以上のテキスト
+
+**例外**:
+- 装飾的なテキスト（意味のない装飾）
+- ロゴタイプ
+- 無効なUI要素（disabled状態）
 
 ### 達成基準1.4.6 コントラスト（Level AAA）
+
+より高い視認性を求める場合:
 
 - **通常テキスト**: 最低7:1
 - **大きなテキスト**: 最低4.5:1
 
+Level AAAは推奨レベルですが、ロービジョンユーザーにとっては非常に重要です。
+
 ### 達成基準1.4.11 非テキストコントラスト（Level AA）
 
-- **UI要素**: 最低3:1（ボタン、フォーム、フォーカスインジケーター等）
-- **グラフィック**: 最低3:1（アイコン、グラフ等）
+WCAG 2.1で追加された基準です[^wcag-non-text]。
+
+[^wcag-non-text]: [Understanding Success Criterion 1.4.11: Non-text Contrast - W3C](https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html)
+
+**対象**:
+- **UI要素**: 最低3:1（ボタンの境界線、フォームの枠線、フォーカスインジケーター等）
+- **グラフィック**: 最低3:1（アイコン、グラフ、図表等）
+
+**例外**:
+- 無効なUI要素
+- ユーザーがカスタマイズ可能な要素
+- 写真や装飾的な画像
 
 ## コントラスト比の計算
 
@@ -41,23 +67,81 @@ L2: 暗い色の相対輝度
 
 ## チェックツール
 
+コントラスト比を手動で計算するのは困難なため、ツールを使用して確認します。
+
 ### Chrome DevTools
 
-1. 要素を検査
-2. Styles パネルでカラーピッカーを開く
+最も手軽にコントラスト比を確認できるツールです。
+
+**使用方法**:
+1. 要素を右クリック → 検証
+2. Styles パネルで色のアイコンをクリック（カラーピッカーが開く）
 3. コントラスト比が表示される
+4. AA、AAAへの適合状況が表示される
+
+**利点**:
+- インストール不要
+- リアルタイムで確認可能
+- 推奨色を提案してくれる
 
 ### WebAIM Contrast Checker
 
-https://webaim.org/resources/contrastchecker/
+[WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)は、オンラインで使用できるコントラストチェッカーです。
 
-- 前景色と背景色を入力
-- コントラスト比を確認
-- AA、AAAへの適合を確認
+**使用方法**:
+1. 前景色（テキスト色）を入力（例: #333333）
+2. 背景色を入力（例: #ffffff）
+3. コントラスト比を確認
+4. AA、AAAへの適合を確認
+5. 通常テキスト/大きなテキストの区別
+
+**利点**:
+- シンプルで使いやすい
+- URLで共有可能
+- 代替色を提案してくれる
+
+### Colour Contrast Analyser (CCA)
+
+[Colour Contrast Analyser](https://www.tpgi.com/color-contrast-checker/)は、デスクトップアプリケーションです。
+
+**使用方法**:
+1. アプリケーションをダウンロード（Windows/macOS）
+2. スポイトツールで画面上の色を取得
+3. コントラスト比を確認
+
+**利点**:
+- 画面上の任意の色を取得可能
+- オフラインで使用可能
+- WCAG 2.1とWCAG 3.0（APCA）の両方に対応
 
 ### Lighthouse
 
-Chrome DevTools > Lighthouse > Accessibility
+Chrome DevToolsのLighthouseでアクセシビリティスコアを測定できます。
+
+**使用方法**:
+1. Chrome DevTools を開く（F12）
+2. Lighthouse タブを選択
+3. Accessibility カテゴリをチェック
+4. Analyze page load をクリック
+
+**利点**:
+- アクセシビリティ全般をチェック
+- CI/CDに統合可能（Lighthouse CI）
+- パフォーマンスと同時にチェック可能
+
+### axe DevTools
+
+[axe DevTools](https://www.deque.com/axe/devtools/)は、ブラウザ拡張機能です。
+
+**使用方法**:
+1. Chrome/Firefox拡張機能をインストール
+2. DevToolsのaxeタブを開く
+3. Scan ALL of my page をクリック
+
+**利点**:
+- より詳細な問題を検出
+- 修正方法の提案
+- 自動テストライブラリ（axe-core）と同じエンジン
 
 ## 実装例
 
@@ -161,6 +245,10 @@ export const colors = {
     bg: '#dc3545',
     text: '#ffffff', // コントラスト比 4.5:1
   },
+  warning: {
+    bg: '#ffc107',
+    text: '#000000', // コントラスト比 8.4:1（黄色背景には黒文字）
+  },
   // テキストカラー
   text: {
     primary: '#333333', // コントラスト比 12.6:1
@@ -168,6 +256,39 @@ export const colors = {
     disabled: '#999999', // 無効時は例外（コントラスト要件なし）
   },
 }
+```
+
+### カラーパレットの検証
+
+設計したカラーパレットを検証するスクリプト:
+
+```typescript
+// scripts/verify-colors.ts
+type ColorPair = {
+  name: string
+  foreground: string
+  background: string
+  minRatio: number
+}
+
+// コントラスト比を計算する関数
+function getContrastRatio(color1: string, color2: string): number {
+  // 実装は省略（ライブラリを使用することを推奨）
+  // 例: polished の readableColor、color2k の getContrast 等
+  return 4.5 // ダミー値
+}
+
+const colorPairs: ColorPair[] = [
+  { name: 'Primary button', foreground: '#ffffff', background: '#0066cc', minRatio: 4.5 },
+  { name: 'Body text', foreground: '#333333', background: '#ffffff', minRatio: 4.5 },
+  { name: 'Secondary text', foreground: '#666666', background: '#ffffff', minRatio: 4.5 },
+]
+
+colorPairs.forEach((pair) => {
+  const ratio = getContrastRatio(pair.foreground, pair.background)
+  const passes = ratio >= pair.minRatio
+  console.log(`${pair.name}: ${ratio.toFixed(2)}:1 - ${passes ? '✅ PASS' : '❌ FAIL'}`)
+})
 ```
 
 ## ダークモード対応

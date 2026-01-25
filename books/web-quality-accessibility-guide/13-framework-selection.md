@@ -152,37 +152,82 @@ SEOが最重要？
 
 ## 評価基準
 
+フレームワーク選定では、複数の観点から総合的に評価する必要があります。
+
 ### 1. SEO要件
 
-| 要件 | 推奨 |
-|-----|-----|
-| SEO最重要 | Next.js、Nuxt.js、Astro |
-| SEO不要（認証後の画面）| React + Vite |
-| 部分的にSEO必要 | Next.js（SSG） |
+SEOが重要な場合、サーバーサイドレンダリング（SSR）または静的サイト生成（SSG）が必要です。
+
+| 要件 | 推奨 | 理由 |
+|-----|-----|-----|
+| SEO最重要 | Next.js、Nuxt.js、Astro | SSR/SSG標準搭載、メタタグ管理が容易 |
+| SEO不要（認証後の画面）| React + Vite | シンプルで高速な開発が可能 |
+| 部分的にSEO必要 | Next.js（SSG） | ページごとにSSG/CSRを選択可能 |
+
+**参考**: Googleは2021年より、Core Web Vitalsをランキング要因に含めています[^core-web-vitals]。
+
+[^core-web-vitals]: [Page experience update - Google Search Central](https://developers.google.com/search/blog/2021/04/more-details-page-experience)
 
 ### 2. パフォーマンス
 
-| 優先度 | 推奨 |
-|-------|-----|
-| 最速 | Astro |
-| 高速 | Next.js（SSG）、Remix |
-| 標準 | React + Vite、Nuxt.js |
+Webパフォーマンスは、ユーザー体験とSEOの両方に影響します。
 
-### 3. 開発体験
+| 優先度 | 推奨 | 初期表示時間（想定） | JavaScriptバンドルサイズ（想定） |
+|-------|-----|-----------------|--------------------------|
+| 最速 | Astro | 0.5秒未満 | 〜50KB |
+| 高速 | Next.js（SSG）、Remix | 1秒未満 | 〜100KB |
+| 標準 | React + Vite、Nuxt.js | 1〜2秒 | 〜150KB |
 
-| 重視する点 | 推奨 |
-|----------|-----|
-| 学習容易 | Vue + Nuxt、React + Vite |
-| 柔軟性 | React + Vite |
-| 標準化 | Next.js |
+**注**: 実際のパフォーマンスは、アプリケーションの実装により大きく異なります。
+
+**パフォーマンス測定の参考資料**:
+- [Web.dev Performance](https://web.dev/explore/learn-performance) - Googleによるパフォーマンスガイド
+- [Next.js Performance](https://nextjs.org/docs/app/building-your-application/optimizing) - Next.js公式のパフォーマンス最適化ガイド
+
+### 3. 開発体験（DX: Developer Experience）
+
+開発体験は、チームの生産性と保守性に直結します。
+
+| 重視する点 | 推奨 | 特徴 |
+|----------|-----|-----|
+| 学習容易 | Vue + Nuxt、React + Vite | ドキュメントが充実、日本語情報が豊富 |
+| 柔軟性 | React + Vite | 自由度が高い、カスタマイズ可能 |
+| 標準化 | Next.js | ベストプラクティスが定まっている |
+| HMR速度 | Vite系（React + Vite、Nuxt） | 高速なホットリロード |
+
+**開発体験の指標**:
+- ビルド時間（想定）:
+  - Vite: 1〜5秒
+  - Next.js: 10〜30秒（アプリサイズによる）
+- HMR（Hot Module Replacement）:
+  - Vite: 〜100ms
+  - Next.js: 〜500ms
 
 ### 4. エコシステム
 
-| 要件 | 推奨 |
-|-----|-----|
-| 豊富なライブラリ | React系（Next.js、Vite）|
-| 日本語情報 | Vue系（Nuxt.js）|
-| 最新技術 | Remix、Astro |
+エコシステムの大きさは、開発時のライブラリ選択肢と問題解決の容易さに影響します。
+
+| 要件 | 推奨 | npm週間ダウンロード数（2026年1月時点の想定） |
+|-----|-----|----------------------------------------|
+| 豊富なライブラリ | React系（Next.js、Vite）| React: 2000万+ |
+| 日本語情報 | Vue系（Nuxt.js）| Vue: 500万+ |
+| 最新技術 | Remix、Astro | Astro: 100万+ |
+
+**参考資料**:
+- [npm trends](https://npmtrends.com/) - パッケージのダウンロード数比較
+- [State of JS 2023](https://2023.stateofjs.com/) - JavaScriptエコシステムの調査結果
+
+### 5. TypeScript対応
+
+全ての主要フレームワークがTypeScriptに対応していますが、サポート度合いは異なります。
+
+| フレームワーク | TypeScript対応 | 型推論の強さ |
+|-------------|--------------|------------|
+| Next.js | ✅ 完全対応 | 強い |
+| React + Vite | ✅ 完全対応 | 強い |
+| Nuxt.js | ✅ 完全対応 | 強い |
+| Remix | ✅ 完全対応 | 強い |
+| Astro | ✅ 完全対応 | 中程度 |
 
 ## 実践的な選定例
 
