@@ -536,7 +536,7 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 10
     reviewers:
-      - 'your-username'
+      - 'Gaku52'
     labels:
       - 'dependencies'
       - 'security'

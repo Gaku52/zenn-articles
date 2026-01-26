@@ -154,7 +154,7 @@ Next.js、Webpack/Viteの経験は必須ではありませんが、本書の一�
 本書のサンプルコードは、以下のリポジトリで公開しています：
 
 ```
-https://github.com/[your-username]/frontend-performance-guide-2026
+https://github.com/Gaku52/zenn-articles/tree/main/books/frontend-performance-complete-guide-2026
 ```
 
 各章ごとにブランチが分かれており、段階的に学習できるようになっています。
@@ -234,8 +234,8 @@ Lighthouseスコアは指標の一つですが、最終的にはユーザー体�
 
 本書の内容に関するご質問、誤りの指摘、改善提案などは、以下までお寄せください：
 
-- **GitHub Issues**: [リポジトリのIssues](https://github.com/[your-username]/frontend-performance-guide-2026/issues)
-- **Twitter**: [@your_twitter](https://twitter.com/your_twitter)
+- **GitHub Issues**: [リポジトリのIssues](https://github.com/Gaku52/zenn-articles/issues)
+- **Twitter**: [@gk_egr32](https://twitter.com/gk_egr32)
 - **Zenn**: コメント欄
 
 読者の皆様からのフィードバックをお待ちしています。
@@ -252,6 +252,6 @@ Lighthouseスコアは指標の一つですが、最終的にはユーザー体�
 
 フロントエンドエンジニア。React/Next.js を使った高速 Web アプリケーション開発を専門とし、Core Web Vitals 最適化とユーザー体験向上に情熱を注いでいる。
 
-- **GitHub**: [your-username](https://github.com/your-username)
-- **Zenn**: [@your_zenn](https://zenn.dev/your_zenn)
-- **Twitter**: [@your_twitter](https://twitter.com/your_twitter)
+- **GitHub**: [Gaku52](https://github.com/Gaku52)
+- **Zenn**: [@gaku1234](https://zenn.dev/gaku1234)
+- **Twitter**: [@gk_egr32](https://twitter.com/gk_egr32)

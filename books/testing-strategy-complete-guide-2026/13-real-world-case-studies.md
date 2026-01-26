@@ -1829,9 +1829,9 @@ await page.getByLabel('Email'); // label
 
 本書に関するご意見、ご質問、改善提案がありましたら、以下までお寄せください:
 
-- GitHub Issues: https://github.com/Gaku52/testing-strategy-examples/issues
-- Twitter: @your_twitter_handle
-- Email: feedback@example.com
+- GitHub Issues: https://github.com/Gaku52/zenn-articles/issues
+- Twitter: @gk_egr32
+- Zenn: コメント欄
 
 皆様のフィードバックをもとに、本書を継続的に改善していきます。
 

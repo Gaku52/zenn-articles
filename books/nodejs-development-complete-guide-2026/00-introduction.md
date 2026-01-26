@@ -117,7 +117,7 @@ TypeScriptの経験は必須ではありませんが、本書の大部分でType
 本書のサンプルコードは、以下のリポジトリで公開しています：
 
 ```
-https://github.com/[your-username]/nodejs-complete-guide-2026
+https://github.com/Gaku52/zenn-articles/tree/main/books/nodejs-development-complete-guide-2026
 ```
 
 各章ごとにブランチが分かれており、段階的に学習できるようになっています。
@@ -161,8 +161,8 @@ Part 4（エラーハンドリング）、Part 5（セキュリティとテス�
 
 本書の内容に関するご質問、誤りの指摘、改善提案などは、以下までお寄せください：
 
-- **GitHub Issues**: [リポジトリのIssues](https://github.com/[your-username]/nodejs-complete-guide-2026/issues)
-- **Twitter**: [@your_twitter](https://twitter.com/your_twitter)
+- **GitHub Issues**: [リポジトリのIssues](https://github.com/Gaku52/zenn-articles/issues)
+- **Twitter**: [@gk_egr32](https://twitter.com/gk_egr32)
 - **Zenn**: コメント欄
 
 読者の皆様からのフィードバックをお待ちしています。
@@ -183,5 +183,5 @@ Node.js、TypeScript、バックエンド開発に関心を持つ技術者。本
 📚 **本書の位置づけ**: 本書は学習・研究目的で作成された教材です。記載されているパフォーマンス数値は想定値・理論値であり、実際の結果は環境により異なります。実装時は必ずご自身の環境でテスト・検証を行ってください。
 :::
 
-- **GitHub**: [your-username](https://github.com/your-username)
-- **Zenn**: [@your_zenn](https://zenn.dev/your_zenn)
+- **GitHub**: [Gaku52](https://github.com/Gaku52)
+- **Zenn**: [@gaku1234](https://zenn.dev/gaku1234)
