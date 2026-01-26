@@ -1,7 +1,7 @@
 title: "依存関係管理完全ガイド 2026 - npm/pnpm/SPM実践テクニック"
 summary: "npm、pnpm、yarn、Swift Package Manager、CocoaPods徹底比較。package.json最適化、セキュリティアップデート、モノレポ管理、ライセンス管理まで、依存関係管理の全てを実践例で学ぶ完全ガイド。"
 topics: ["npm", "pnpm", "依存関係", "セキュリティ", "package管理"]
-published: false
+published: true
 price: 1500
 chapters:
   - 00-introduction

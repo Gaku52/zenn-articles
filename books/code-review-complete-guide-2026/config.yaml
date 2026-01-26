@@ -1,7 +1,7 @@
 title: "コードレビュー完全ガイド 2026 - 開発速度と品質を両立する実践技術"
 summary: "TypeScript、Python、Swift、Go対応。レビュー観点チェックリスト、Danger.js/ReviewDog自動化、言語別ベストプラクティス、フィードバック技術まで、効果的なコードレビューの全てを実践例で学ぶ完全ガイド。"
 topics: ["codereview", "github", "typescript", "python", "swift"]
-published: false
+published: true
 price: 1800
 chapters:
   - 00-introduction
