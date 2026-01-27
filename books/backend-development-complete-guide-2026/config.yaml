@@ -3,6 +3,7 @@ summary: "REST API設計、Node.js(Express/NestJS)、データベース設計、
 topics: ["nodejs", "api", "database", "backend", "typescript"]
 published: true
 price: 1000
+cover: cover.jpg
 chapters:
   - 00-introduction
   # Part 1: API設計の基礎
