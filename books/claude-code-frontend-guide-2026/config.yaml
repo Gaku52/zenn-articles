@@ -2,7 +2,7 @@ title: "Claude Codeガイド: モダンフロントエンド開発 2026"
 summary: "React、Next.js、パフォーマンス最適化まで。実務で使えるモダンフロントエンド開発の完全ガイド。400万字の知識ベースから厳選した実践的な内容をお届けします。"
 topics: ["react", "javascript", "typescript", "frontend", "nextjs"]
 published: true
-price: 0 # 無料公開で信頼構築
+price: 500 # 高品質なカバーと実践的な内容
 # 本に含めるチャプターを順番に並べましょう
 chapters:
   - 00-introduction
