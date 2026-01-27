@@ -3,6 +3,7 @@ summary: "SwiftUI、MVVM/Clean Architecture、API通信、Core Data/Realm、Keyc
 topics: ["ios", "swift", "swiftui", "mobile", "security"]
 published: true
 price: 500
+cover: cover.jpg
 chapters:
   - 00-introduction
   # Part 1: SwiftUI基礎
