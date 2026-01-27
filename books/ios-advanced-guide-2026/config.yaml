@@ -1,7 +1,7 @@
 title: "iOS開発応用編 2026 - プロジェクト設定からセキュリティまで"
 summary: "Xcodeプロジェクト設定、フォルダ構成、ビルド最適化、Keychain活用、証明書ピンニング、Core Data/Realm、API通信まで、iOS開発の応用テクニックを実践例で学ぶ完全ガイド。Swift完全対応。"
 topics: ["ios", "swift", "xcode", "セキュリティ", "coredata"]
-published: false
+published: true
 price: 500
 chapters:
   - 00-introduction
