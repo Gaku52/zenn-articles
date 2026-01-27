@@ -3,6 +3,7 @@ summary: "Next.js 14/15のApp Routerを完全マスター。Server Components、
 topics: ["nextjs", "react", "typescript", "frontend", "servercomponents"]
 published: true
 price: 500 # 専門的な内容のため有料
+cover: cover.jpg
 # 本に含めるチャプターを順番に並べましょう
 chapters:
   - 00-introduction
