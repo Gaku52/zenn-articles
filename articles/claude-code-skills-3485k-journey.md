@@ -289,16 +289,29 @@ cp -r claude-code-skills/ios-development .claude/skills/
 
 Claude Codeとの会話で、自動的に高度な前提知識を持った状態で会話できます。
 
-### Zenn本としての活用
+### 📘 Zenn本で体系的に学ぶ
 
-このプロジェクトをベースに、Zenn本を執筆中です：
+このOSSプロジェクトをベースに、**初学者でも実践できる形に再構成**した本を公開しました：
 
-**📘 Claude Codeガイド: モダンフロントエンド開発 2026**
-- React、Next.js、TypeScriptの実践テクニック
-- パフォーマンス最適化の完全ガイド
-- 348万字の知識ベースから厳選した内容
+**Claude Codeガイド: モダンフロントエンド開発 2026**（500円）
 
-詳細はZennプロフィールをご確認ください: https://zenn.dev/gaku52
+**Zenn本だけの特徴：**
+- ✅ 348万字から厳選した「すぐ使える」内容に絞り込み
+- ✅ チュートリアル形式で段階的に学べる構成
+- ✅ 初学者向けに専門用語を丁寧に解説
+- ✅ コピペで使えるコード例が充実
+- ✅ 実務での失敗例とその対策を追加
+- ✅ Reactの基礎から最適化まで一貫した学習パス
+
+**GitHub（無料）との使い分け：**
+| | GitHub（無料） | Zenn本（500円） |
+|---|---|---|
+| **対象者** | 上級者・研究者向け | 初〜中級者向け |
+| **内容** | 網羅的な技術知識ベース | 実践的な学習ガイド |
+| **形式** | 34個の数学的証明、255+論文 | チュートリアル形式 |
+| **目的** | 深い理解・参照資料 | 今すぐ使える実践スキル |
+
+[📘 Zenn本を読む（500円）](https://zenn.dev/gaku52/books/claude-code-frontend-guide-2026)
 
 ## これから
 
@@ -329,29 +342,67 @@ Claude Codeと一緒に、**348万字の技術知識ベース**を作り上げ�
 
 **GitHub:** https://github.com/Gaku52/claude-code-skills
 
-ぜひ使ってみて、フィードバックをいただけると嬉しいです！
-
 ---
 
-## 📘 関連リソース
+## 🎯 あなたへのおすすめ
 
-### Zenn
-- プロフィール: [https://zenn.dev/gaku52](https://zenn.dev/gaku52)
-- 執筆中の本: 「Claude Codeガイド: モダンフロントエンド開発 2026」
+### 🔰 React/Next.jsをこれから学びたい方、実践スキルを身につけたい方
 
-### GitHub
-- [claude-code-skills](https://github.com/Gaku52/claude-code-skills) - 25個のSkills、34個の証明
+👉 **[Zenn本「Claude Codeガイド」を読む（500円）](https://zenn.dev/gaku52/books/claude-code-frontend-guide-2026)**
 
-### npmパッケージ（開発完了、公開準備中）
-- `@claude-code-skills/stats` - 統計分析ライブラリ
-- `@claude-code-skills/crdt` - CRDT実装
-- リポジトリからローカルで利用可能
+- チュートリアル形式で段階的に学べる
+- すぐ使えるコード例が充実
+- 初学者にも優しい丁寧な解説
+- React Hooks、Next.js App Router、パフォーマンス最適化を網羅
 
-### インタラクティブデモ（開発中）
-- Statistics Playground - ブラウザで統計分析（リポジトリに含まれています）
-- CRDT Demo - 分散データ型の動作確認（リポジトリに含まれています）
+### 🚀 深い技術知識を求める上級者・研究者の方
+
+👉 **[GitHubリポジトリを探索する（無料）](https://github.com/Gaku52/claude-code-skills)**
+
+- 34個の数学的証明を読む
+- 255+の論文引用を参照する
+- アルゴリズムの理論的裏付けを学ぶ
+- 統計的検証手法を理解する
+
+### 💡 Claude Code用の自分専用Skillsを作りたい方
+
+👉 **GitHubをForkして、あなた専用のSkillsを作成**
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/Gaku52/claude-code-skills.git
+
+# 必要なSkillを.claude/skills/にコピー
+cp -r claude-code-skills/react-development .claude/skills/
+```
 
 ---
 
 **質問・フィードバック大歓迎です！**
-GitHubのIssueでお待ちしています。
+GitHubのIssueやZennのコメントでお待ちしています。
+
+## 📘 関連リソース
+
+### 📕 Zenn本（公開中）
+**[Claude Codeガイド: モダンフロントエンド開発 2026](https://zenn.dev/gaku52/books/claude-code-frontend-guide-2026)** - 500円
+
+- React、Next.js、TypeScriptの実践ガイド
+- チュートリアル形式で初学者にも優しい
+- 348万字から厳選した「今すぐ使える」内容
+
+### 💻 GitHub（無料）
+**[claude-code-skills](https://github.com/Gaku52/claude-code-skills)**
+
+- 25個のSkills（iOS、React、バックエンド等）
+- 34個の数学的証明
+- 255+の論文引用
+- MITライセンス（商用利用可）
+
+### 📦 npmパッケージ（開発完了、公開準備中）
+- `@claude-code-skills/stats` - 統計分析ライブラリ
+- `@claude-code-skills/crdt` - CRDT実装
+- リポジトリからローカルで利用可能
+
+### 🎮 インタラクティブデモ（リポジトリ内）
+- Statistics Playground - ブラウザで統計分析
+- CRDT Demo - 分散データ型の動作確認
