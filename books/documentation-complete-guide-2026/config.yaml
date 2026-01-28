@@ -1,0 +1,31 @@
+title: "ドキュメント作成完全ガイド 2026 - 誠実性と正確性を重視した技術文書の書き方"
+summary: "README、API仕様書、アーキテクチャ図まで。実測データの扱い方、情報源の明記、誠実な技術文書作成のベストプラクティスを体系的に学ぶ完全ガイド。MIT修士論文レベルの品質基準準拠。"
+topics: ["documentation", "readme", "api", "技術文書", "ベストプラクティス"]
+published: false
+price: 500
+chapters:
+  - 00-introduction
+  # Part 1: ドキュメント作成の基礎原則
+  - 01-documentation-principles
+  - 02-honesty-accuracy
+  - 03-information-sources
+  # Part 2: README作成
+  - 04-readme-basics
+  - 05-project-description
+  - 06-setup-instructions
+  - 07-readme-patterns
+  # Part 3: API仕様書
+  - 08-api-documentation-basics
+  - 09-endpoint-documentation
+  - 10-request-response-examples
+  - 11-openapi-swagger
+  # Part 4: アーキテクチャドキュメント
+  - 12-architecture-diagrams
+  - 13-design-decisions
+  - 14-adr-pattern
+  # Part 5: コード内ドキュメント
+  - 15-code-comments
+  - 16-jsdoc-tsdoc
+  # Part 6: 実践・運用
+  - 17-documentation-strategy
+  - 18-team-documentation
