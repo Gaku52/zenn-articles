@@ -1,7 +1,7 @@
 title: "ドキュメント作成完全ガイド 2026 - 誠実性と正確性を重視した技術文書の書き方"
 summary: "README、API仕様書、アーキテクチャ図まで。実測データの扱い方、情報源の明記、誠実な技術文書作成のベストプラクティスを体系的に学ぶ完全ガイド。MIT修士論文レベルの品質基準準拠。"
 topics: ["documentation", "readme", "api", "技術文書", "ベストプラクティス"]
-published: false
+published: true
 price: 500
 chapters:
   - 00-introduction
