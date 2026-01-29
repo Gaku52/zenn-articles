@@ -806,7 +806,7 @@ log "Deployment completed successfully"
 
 ### Chapter 8: 実践事例
 
-- 実際のプロジェクトでの活用例
+- 想定されるプロジェクトでの活用例
 - トラブルシューティング
 - パフォーマンス最適化
 - 段階的な改善
