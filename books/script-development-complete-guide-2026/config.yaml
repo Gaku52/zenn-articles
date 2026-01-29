@@ -1,0 +1,14 @@
+title: "スクリプト開発完全ガイド 2026【Shell・Python・Node.js自動化の実践】"
+summary: "Shell、Python、Node.jsを使った効率的なスクリプト開発のベストプラクティス。自動化、バッチ処理、デプロイメント、メンテナンススクリプトの実装方法を実践的なコード例とともに解説します。"
+topics: ["bash", "python", "nodejs", "automation", "devops"]
+published: true
+price: 1000
+chapters:
+  - 00-introduction
+  - 01-shell-scripting-fundamentals
+  - 02-python-scripting-advanced
+  - 03-nodejs-scripting-modern
+  - 04-automation-deployment
+  - 05-maintenance-operations
+  - 06-cicd-integration
+  - 07-best-practices

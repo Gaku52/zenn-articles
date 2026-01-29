@@ -1,0 +1,18 @@
+title: "iOS ネットワーク通信・データ永続化 完全ガイド 2026"
+summary: "URLSessionを使った型安全なAPI通信からCore Data、Realm、Keychainまで、iOS開発におけるネットワーク通信とデータ永続化の実践的なパターンとベストプラクティスを網羅的に解説します。"
+topics: ["iOS", "Swift", "ネットワーク", "データベース", "キャッシュ"]
+published: true
+price: 1000
+chapters:
+  - 00-introduction
+  - 01-urlsession-basics
+  - 02-api-architecture
+  - 03-error-handling
+  - 04-websocket-realtime
+  - 05-userdefaults-filemanager
+  - 06-keychain-security
+  - 07-core-data
+  - 08-realm-sqlite
+  - 09-caching-strategy
+  - 10-offline-first
+  - 11-best-practices
