@@ -1,12 +1,12 @@
 ---
-title: "【2026年版】iOS ネットワーク通信・データ永続化 完全ガイドを公開しました"
+title: "【2026年版】iOS通信・データ永続化完全ガイド - URLSession/Core Dataで後悔しない実装"
 emoji: "📡"
 type: "tech"
-topics: ["ios", "swift", "ネットワーク", "coredata", "realm"]
+topics: ["ios", "swift", "ネットワーク", "coredata", "urlsession"]
 published: false
 ---
 
-# iOS ネットワーク通信・データ永続化 完全ガイド 2026 を公開しました
+# iOS通信・データ永続化完全ガイド 2026 - URLSession/Core Dataで後悔しない実装
 
 ## こんな状況、経験ありませんか？
 
