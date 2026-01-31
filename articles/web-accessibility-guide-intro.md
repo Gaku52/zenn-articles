@@ -1,5 +1,5 @@
 ---
-title: "Webアクセシビリティ対応、何から始める？法令対応から実装まで完全ガイド"
+title: "【2026年版】Webアクセシビリティ完全ガイドを公開しました - WCAG 2.1法令対応とReact/Vue実装"
 emoji: "♿"
 type: "tech"
 topics: ["アクセシビリティ", "wcag", "react", "vue", "nextjs"]
