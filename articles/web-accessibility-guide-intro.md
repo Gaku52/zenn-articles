@@ -246,7 +246,7 @@ https://zenn.dev/gaku/books/web-quality-accessibility-guide
 - CI/CDへのアクセシビリティテスト統合
 - 継続的な品質改善
 
-### 💰 価格：1,500円
+### 💰 価格：500円
 
 全23章、204,473文字のボリュームで、明日から実務で使える実践的な内容です。
 
