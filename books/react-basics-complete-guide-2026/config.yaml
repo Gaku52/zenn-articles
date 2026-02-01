@@ -1,0 +1,19 @@
+title: "React開発完全ガイド: ゼロから始める基礎入門 2026"
+summary: "React初学者のための体系的な基礎ガイド。環境構築からコンポーネント、Hooks、実践まで。ゼロから始めて確実にステップアップできる構成です。"
+topics: ["react", "javascript", "typescript", "frontend", "初心者"]
+published: false
+price: 500
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - 00-introduction
+  - 01-what-is-react
+  - 02-setup-environment
+  - 03-jsx-fundamentals
+  - 04-components-intro
+  - 05-props-basics
+  - 06-state-basics
+  - 07-events-lists
+  - 08-hooks-usestate
+  - 09-hooks-useeffect
+  - 10-hooks-custom
+  - 11-next-steps
