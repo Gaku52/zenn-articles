@@ -4,6 +4,7 @@ emoji: "🚀"
 type: "idea"
 topics: ["claudecode", "ai", "開発生産性", "ios", "skills"]
 published: true
+publication_name: "gaku52"
 ---
 
 # 2026年1月31日、私の開発人生が変わった日
