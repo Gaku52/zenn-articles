@@ -3,7 +3,7 @@ title: "実働1-2時間でiOSアプリを完成させた私が、529万字のSki
 emoji: "🚀"
 type: "idea"
 topics: ["claudecode", "ai", "開発生産性", "ios", "skills"]
-published: false
+published: true
 ---
 
 # 2026年1月31日、私の開発人生が変わった日
