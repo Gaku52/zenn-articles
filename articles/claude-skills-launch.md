@@ -210,4 +210,4 @@ https://zenn.dev/gaku/books/claude-code-skills-production-guide-2026
 
 ---
 
-*2026年2月*
+*2026年2月4日*
