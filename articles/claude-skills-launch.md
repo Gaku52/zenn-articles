@@ -4,7 +4,6 @@ emoji: "🚀"
 type: "idea"
 topics: ["claudecode", "ai", "開発生産性", "ios", "skills"]
 published: true
-publication_name: "gaku52"
 ---
 
 # アプリを高速で作れる体系的な情報基盤を作りたかった
