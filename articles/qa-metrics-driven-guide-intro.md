@@ -3,7 +3,7 @@ title: "「このくらいテストすれば大丈夫」を卒業する - メト
 emoji: "📊"
 type: "tech"
 topics: ["qa", "品質保証", "テスト", "メトリクス", "grafana"]
-published: true
+published: false
 ---
 
 # 品質を「感覚」で判断していませんか？

@@ -3,7 +3,7 @@ title: "本番バグを87%削減するテスト戦略"
 emoji: "🐛"
 type: "tech"
 topics: ["test", "quality", "ci", "playwright"]
-published: true
+published: false
 ---
 
 # 本番バグを87%削減するテスト戦略

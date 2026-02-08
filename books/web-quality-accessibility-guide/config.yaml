@@ -1,7 +1,7 @@
 title: "Webアクセシビリティ完全ガイド 2026 - WCAG 2.1法令対応とReact/Vue実装"
 summary: "WCAG 2.1 AA準拠、セマンティックHTML、ARIA属性、スクリーンリーダー対応、React/Vue/Next.js選定、技術ドキュメント作成まで、Web品質向上とアクセシビリティの全てを実践例で学ぶ完全ガイド。"
 topics: ["アクセシビリティ", "wcag", "react", "web開発", "ドキュメント"]
-published: true
+published: false
 price: 500
 chapters:
   - 00-introduction

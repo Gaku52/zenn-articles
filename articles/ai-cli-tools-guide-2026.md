@@ -3,7 +3,7 @@ title: "AI開発ツールの次のステップ - UI型からCLI型へ移行す�
 emoji: "⚡"
 type: "tech"
 topics: ["ai", "cli", "claude", "gemini", "productivity"]
-published: true
+published: false
 ---
 
 # AI開発ツールの次のステップ - UI型からCLI型へ移行すべき5つの理由

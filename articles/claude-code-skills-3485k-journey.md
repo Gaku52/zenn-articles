@@ -3,7 +3,7 @@ title: "Claude Codeと1ヶ月で348万字の技術知識ベースを作った話
 emoji: "🚀"
 type: "tech"
 topics: ["claudecode", "ai", "個人開発", "oss", "技術書"]
-published: true
+published: false
 ---
 
 ## 1ヶ月で348万字、25個のSkills、34個の数学的証明

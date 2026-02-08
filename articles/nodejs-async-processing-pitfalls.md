@@ -3,7 +3,7 @@ title: "Node.js初心者が必ず躓く非同期処理の罠5選と解決策"
 emoji: "🪤"
 type: "tech"
 topics: ["nodejs", "javascript", "async", "promise", "typescript"]
-published: false
+published: true
 ---
 
 ## はじめに

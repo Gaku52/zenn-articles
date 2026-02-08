@@ -3,7 +3,7 @@ title: "【2026年版】npm/pnpm/SPM完全ガイド - ビルド高速化とセ�
 emoji: "📦"
 type: "tech"
 topics: ["npm", "pnpm", "依存関係", "セキュリティ", "swift"]
-published: true
+published: false
 ---
 
 # npm/pnpm/SPM依存関係管理完全ガイド
