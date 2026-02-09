@@ -1,0 +1,18 @@
+title: "Python開発完全ガイド: ゼロから始める基礎入門 2026"
+summary: "Python初学者のための体系的な基礎ガイド。環境構築から基本構文、データ構造、型ヒント、クラス、実践まで。ゼロから始めて確実にステップアップできる構成です。"
+topics: ["python", "プログラミング", "入門", "初心者", "backend"]
+published: true
+price: 500
+chapters:
+  - 00-introduction
+  - 01-what-is-python
+  - 02-setup-environment
+  - 03-basic-syntax
+  - 04-control-flow
+  - 05-functions
+  - 06-data-structures
+  - 07-type-hints
+  - 08-classes-oop
+  - 09-modules-packages
+  - 10-file-io-exceptions
+  - 11-next-steps
