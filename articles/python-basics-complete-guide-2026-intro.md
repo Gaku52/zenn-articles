@@ -8,7 +8,7 @@ published: true
 
 # Python開発完全ガイド: ゼロから始める基礎入門 2026 を公開しました
 
-> **まずは無料サンプルで中身を確認できます** → [サンプルを読む](https://zenn.dev/gaku/books/python-basics-complete-guide-2026)
+> **まずは書籍ページで目次・概要を確認できます** → [書籍ページを見る](https://zenn.dev/gaku/books/python-basics-complete-guide-2026)
 
 ## 日曜の午後、あなたはこんな状況に陥っていませんか？
 
@@ -183,7 +183,7 @@ except Exception:
 
 **これらは本書で扱う内容のほんの一部です。**
 
-👉 詳しいコード例と解説は本書で → [無料サンプルを読む](https://zenn.dev/gaku/books/python-basics-complete-guide-2026)
+👉 詳しいコード例と解説は本書で → [書籍ページを見る](https://zenn.dev/gaku/books/python-basics-complete-guide-2026)
 
 ## 本の内容を一部公開
 
