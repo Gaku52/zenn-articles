@@ -37,6 +37,19 @@ Claude Code が画像を読み取って回答
 
 **所要時間：約3秒。**
 
+## 前提条件
+
+- macOS（Ventura以降推奨）
+- [Homebrew](https://brew.sh/) がインストール済み
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) がインストール済み
+
+:::message
+Homebrewが未インストールの場合は、先に以下を実行してください。
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+:::
+
 ## セットアップ（3ステップ）
 
 ### Step 1: スクショ専用フォルダを作成
@@ -64,20 +77,27 @@ killall SystemUIServer
 brew install fswatch
 ```
 
-次に、監視スクリプトを作成します。
+次に、監視スクリプトを作成します。以下のコマンドをそのままコピペで実行できます。
 
 ```bash
-cat << 'EOF' > ~/.claude/screenshot-watcher.sh
+# スクリプトの保存先ディレクトリを作成
+mkdir -p ~/.claude
+
+# fswatch のフルパスを自動取得してスクリプトを生成
+FSWATCH_PATH=$(which fswatch)
+cat << EOF > ~/.claude/screenshot-watcher.sh
 #!/bin/bash
-# Screenshot watcher: monitors ~/Desktop/Screenshots for new screenshots
-# and copies the file path to clipboard automatically
+WATCH_DIR="\$HOME/Desktop/Screenshots"
 
-WATCH_DIR="$HOME/Desktop/Screenshots"
-
-/opt/homebrew/bin/fswatch -0 "$WATCH_DIR" | while IFS= read -r -d '' file; do
-  if [[ "$file" == *.png ]] && [[ -f "$file" ]]; then
+${FSWATCH_PATH} -0 "\$WATCH_DIR" | while IFS= read -r -d '' file; do
+  # PNG, JPG, HEIC, TIFF, PDF に対応（macOSのスクショ形式は変更可能）
+  case "\$file" in
+    *.png|*.jpg|*.jpeg|*.heic|*.tiff|*.pdf) ;;
+    *) continue ;;
+  esac
+  if [[ -f "\$file" ]]; then
     sleep 0.5
-    /usr/bin/osascript -e "set the clipboard to \"$file\""
+    /usr/bin/osascript -e "set the clipboard to \"\$file\""
     /usr/bin/osascript -e "display notification \"パスをコピーしました\" with title \"Screenshot Watcher\" sound name \"Tink\""
   fi
 done
@@ -94,8 +114,12 @@ chmod +x ~/.claude/screenshot-watcher.sh
 
 Mac起動時に自動で監視が始まるよう、launchdエージェントを登録します。
 
+以下のコマンドもそのままコピペで実行できます。フルパスは自動で埋め込まれます。
+
 ```bash
-cat << 'EOF' > ~/Library/LaunchAgents/com.screenshot-watcher.plist
+# フルパスを自動取得して plist を生成
+SCRIPT_PATH="$HOME/.claude/screenshot-watcher.sh"
+cat << EOF > ~/Library/LaunchAgents/com.screenshot-watcher.plist
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -105,7 +129,7 @@ cat << 'EOF' > ~/Library/LaunchAgents/com.screenshot-watcher.plist
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>~/.claude/screenshot-watcher.sh</string>
+        <string>${SCRIPT_PATH}</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -120,14 +144,14 @@ cat << 'EOF' > ~/Library/LaunchAgents/com.screenshot-watcher.plist
 EOF
 ```
 
-:::message alert
-**注意**: plistファイル内の `~/.claude/screenshot-watcher.sh` は、実際にはフルパス（例: `/Users/yourname/.claude/screenshot-watcher.sh`）に書き換えてください。launchdは `~` を展開しません。
-:::
-
 サービスを起動します。
 
 ```bash
-launchctl load ~/Library/LaunchAgents/com.screenshot-watcher.plist
+# macOS Ventura以降の推奨コマンド
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.screenshot-watcher.plist
+
+# 上記でエラーが出る場合は従来のコマンドを使用
+# launchctl load ~/Library/LaunchAgents/com.screenshot-watcher.plist
 ```
 
 ## 動作確認
@@ -140,7 +164,7 @@ pbpaste
 # => /Users/yourname/Desktop/Screenshots/スクリーンショット 2026-02-11 20.58.33.png
 ```
 
-パスが表示されればOKです。
+パスが表示され、通知音が鳴ればOKです。
 
 ## 使い方
 
@@ -179,24 +203,54 @@ launchctl list | grep screenshot-watcher
 # ログを確認
 cat /tmp/screenshot-watcher.err
 
-# fswatch のパスを確認（Apple Silicon Mac の場合）
+# fswatch のパスを確認
 which fswatch
-# => /opt/homebrew/bin/fswatch
-
-# Intel Mac の場合はパスが異なるので、スクリプト内のパスを修正
-# /usr/local/bin/fswatch
+# Apple Silicon Mac => /opt/homebrew/bin/fswatch
+# Intel Mac         => /usr/local/bin/fswatch
 ```
+
+`fswatch: command not found` とログに出ている場合は、スクリプト内のパスが実際のインストール先と一致しているか確認してください。
 
 ### サービスを再起動したい場合
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.screenshot-watcher.plist
-launchctl load ~/Library/LaunchAgents/com.screenshot-watcher.plist
+launchctl bootout gui/$(id -u)/com.screenshot-watcher
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.screenshot-watcher.plist
+
+# 上記でエラーが出る場合は従来のコマンドを使用
+# launchctl unload ~/Library/LaunchAgents/com.screenshot-watcher.plist
+# launchctl load ~/Library/LaunchAgents/com.screenshot-watcher.plist
 ```
 
 ### 通知が表示されない場合
 
 **システム設定 → 通知 → スクリプトエディタ** の通知が許可されているか確認してください。
+
+### スクショフォルダを定期的に掃除したい場合
+
+30日以上前のスクショを自動削除するには、以下を crontab に追加します。
+
+```bash
+# crontab を編集
+crontab -e
+
+# 以下の行を追加（毎日AM3時に30日以上前のファイルを削除）
+0 3 * * * find ~/Desktop/Screenshots -type f -mtime +30 -delete
+```
+
+### アンインストールしたい場合
+
+```bash
+# サービスを停止・削除
+launchctl bootout gui/$(id -u)/com.screenshot-watcher 2>/dev/null
+launchctl unload ~/Library/LaunchAgents/com.screenshot-watcher.plist 2>/dev/null
+rm ~/Library/LaunchAgents/com.screenshot-watcher.plist
+rm ~/.claude/screenshot-watcher.sh
+
+# スクショの保存先をデフォルト（デスクトップ）に戻す場合
+defaults delete com.apple.screencapture location
+killall SystemUIServer
+```
 
 ## 仕組みの解説
 
