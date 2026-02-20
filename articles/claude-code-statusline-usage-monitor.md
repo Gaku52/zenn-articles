@@ -54,19 +54,21 @@ Desktopアプリには使用率の表示がありますが、CLIにはない。
 
 | 項目 | 詳細 |
 |------|------|
-| OS | macOS Ventura以降 |
+| OS | macOS / Windows / Linux |
 | Claude Code | インストール済み・ログイン済み |
 | プラン | Max Plan または Pro Plan |
 | jq | JSON処理コマンド |
 
 ```bash
-# jq が未インストールなら
+# macOS
 brew install jq
-```
 
-:::message
-**macOS限定です。** OAuthトークンの取得にmacOSキーチェーンを使用しています。Linux環境では認証トークンの取得方法を別途検討する必要があります。
-:::
+# Linux (Debian/Ubuntu)
+sudo apt install jq
+
+# Windows (PowerShellで実行)
+winget install jqlang.jq
+```
 
 ## セットアップ — コピペ2ステップ
 
@@ -91,11 +93,29 @@ if command -v jq >/dev/null 2>&1 && [[ -n "$input" ]]; then
   ctx_pct="$(echo "$input" | jq -r '.context_window.used_percentage // "N/A"')%"
 fi
 
-# --- Session / Weekly: APIからリアルタイム取得（60秒キャッシュ） ---
+# --- 5h / 7d: APIからリアルタイム取得（60秒キャッシュ） ---
+get_token() {
+  # macOS: Keychainから取得
+  if command -v security >/dev/null 2>&1; then
+    local creds
+    creds=$(security find-generic-password -s "Claude Code-credentials" -a "$(whoami)" -w 2>/dev/null) || return 1
+    echo "$creds" | jq -r '.claudeAiOauth.accessToken // empty'
+    return
+  fi
+
+  # Windows / Linux: .credentials.json から取得
+  local cred_file="$HOME/.claude/.credentials.json"
+  if [[ -f "$cred_file" ]]; then
+    jq -r '.claudeAiOauth.accessToken // empty' "$cred_file"
+    return
+  fi
+
+  return 1
+}
+
 fetch_usage() {
-  local creds token
-  creds=$(security find-generic-password -s "Claude Code-credentials" -a "$(whoami)" -w 2>/dev/null) || return 1
-  token=$(echo "$creds" | jq -r '.claudeAiOauth.accessToken // empty') || return 1
+  local token
+  token=$(get_token) || return 1
   [[ -z "$token" ]] && return 1
 
   curl --silent --max-time 5 \
@@ -104,11 +124,19 @@ fetch_usage() {
     "https://api.anthropic.com/api/oauth/usage" 2>/dev/null
 }
 
+# キャッシュの経過時間を取得（macOS / Linux 両対応）
+get_file_age() {
+  local file="$1"
+  local mtime
+  mtime=$(stat -f%m "$file" 2>/dev/null || stat -c%Y "$file" 2>/dev/null || echo 0)
+  echo $(( $(date +%s) - mtime ))
+}
+
 usage_json=""
 
 # キャッシュが有効ならそこから読む
 if [[ -f "$CACHE_FILE" ]] && command -v jq >/dev/null 2>&1; then
-  cache_age=$(( $(date +%s) - $(stat -f%m "$CACHE_FILE" 2>/dev/null || echo 0) ))
+  cache_age=$(get_file_age "$CACHE_FILE")
   if (( cache_age < CACHE_TTL )); then
     usage_json=$(cat "$CACHE_FILE")
   fi
@@ -205,7 +233,7 @@ bash ~/.claude/statusline.sh < /dev/null
                     │
  ┌──────────────────┴──────────────────────────┐
  │  データソース 2: Anthropic API               │
- │  → Session（5時間窓）/ Weekly（7日間窓）     │
+ │  → 5h（5時間窓）/ 7d（7日間窓）              │
  │  → 60秒キャッシュで負荷を最小化             │
  └─────────────────────────────────────────────┘
 ```
@@ -216,7 +244,7 @@ Claude CodeはステータスラインスクリプトにstdinでJSON データ�
 
 100%に近づいたら `/compact` で圧縮するか、新しいセッションを始める判断材料になります。
 
-### Session / Weekly（レート制限）
+### 5h / 7d（レート制限）
 
 Anthropic APIの非公開エンドポイント `https://api.anthropic.com/api/oauth/usage` から、Desktopアプリと同じレート制限データを取得しています。
 
@@ -233,7 +261,14 @@ Anthropic APIの非公開エンドポイント `https://api.anthropic.com/api/oa
 }
 ```
 
-認証にはClaude CodeがmacOSキーチェーンに保存しているOAuthトークンを使用します。自分のアカウントの使用量を、自分の認証情報で取得しているだけなので、スクレイピングとは根本的に異なります。
+認証にはClaude Codeが保存しているOAuthトークンを使用します。
+
+| OS | トークンの保存先 |
+|----|----------------|
+| **macOS** | Keychain（`security find-generic-password` で取得） |
+| **Windows / Linux** | `~/.claude/.credentials.json` |
+
+自分のアカウントの使用量を、自分の認証情報で読み取っているだけです。このエンドポイントは使用量の**参照のみ**を行うもので、Messages APIのようなトークン消費や追加課金は発生しません。スクレイピングとも根本的に異なります。
 
 **60秒キャッシュ**を実装しており、APIへの過度なリクエストを防いでいます。
 
@@ -294,20 +329,35 @@ echo "${ctx_pct}/${five_h_pct}/${seven_d_pct}"
 
 | 原因 | 対処 |
 |------|------|
-| `jq` が未インストール | `brew install jq` |
+| `jq` が未インストール | 下記のインストールコマンドを実行 |
 | Claude Codeに未ログイン | `claude` を起動してログイン |
 | OAuthトークンの期限切れ | Claude Code上で `/login` を実行 |
 
 ```bash
-# デバッグ実行
+# デバッグ実行（全OS共通）
 bash -x ~/.claude/statusline.sh < /dev/null
+```
 
+**macOSの場合:**
+```bash
 # キーチェーンにトークンがあるか確認
 security find-generic-password -s "Claude Code-credentials" -a "$(whoami)" 2>/dev/null && echo "OK" || echo "NOT FOUND"
 
 # APIを直接叩いて確認
 CRED=$(security find-generic-password -s "Claude Code-credentials" -a "$(whoami)" -w)
 TOKEN=$(echo "$CRED" | jq -r '.claudeAiOauth.accessToken')
+curl --silent --header "Authorization: Bearer $TOKEN" \
+  --header "anthropic-beta: oauth-2025-04-20" \
+  "https://api.anthropic.com/api/oauth/usage" | jq .
+```
+
+**Windows / Linuxの場合:**
+```bash
+# 認証ファイルが存在するか確認
+ls -la ~/.claude/.credentials.json 2>/dev/null && echo "OK" || echo "NOT FOUND"
+
+# APIを直接叩いて確認
+TOKEN=$(jq -r '.claudeAiOauth.accessToken' ~/.claude/.credentials.json)
 curl --silent --header "Authorization: Bearer $TOKEN" \
   --header "anthropic-beta: oauth-2025-04-20" \
   "https://api.anthropic.com/api/oauth/usage" | jq .
@@ -333,7 +383,13 @@ jq . ~/.claude/settings.json
 2. **公式にサポートされていません。** 問題が発生してもAnthropicのサポート対象外です。
 3. **将来、公式機能として実装される可能性があります。** Claude CodeのGitHubには同様のFeature Requestが多数提出されており（[#20636](https://github.com/anthropics/claude-code/issues/20636)、[#18121](https://github.com/anthropics/claude-code/issues/18121)、[#19385](https://github.com/anthropics/claude-code/issues/19385) 等）、statusLineのstdinにレート制限データが追加されれば、このワークアラウンドは不要になります。
 
-**公式対応がされるまでの「つなぎ」としてご利用ください。**
+**公式対応がされるまでの「つなぎ」としてご利用ください。** APIの仕様変更等で動作しなくなった場合は、本記事を随時修正します。
+:::
+
+:::message
+**検証環境について**
+
+本記事のスクリプトは**macOSで動作検証済み**です。Windows / Linuxについてはクロスプラットフォーム対応のコードを実装していますが、未検証です。環境固有の問題が発生した場合は、コメントでお知らせください。
 :::
 
 ## まとめ
