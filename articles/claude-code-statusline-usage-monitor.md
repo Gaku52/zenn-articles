@@ -2,7 +2,7 @@
 title: "Claude Codeで突然のレート制限、もう怖くない。使用率をフッターに常時表示する方法"
 emoji: "🔋"
 type: "tech"
-topics: ["claudecode", "cli", "productivity", "macos", "automation"]
+topics: ["claudecode", "cli", "productivity", "bash", "automation"]
 published: true
 ---
 
@@ -54,20 +54,22 @@ Desktopアプリには使用率の表示がありますが、CLIにはない。
 
 | 項目 | 詳細 |
 |------|------|
-| OS | macOS / Windows / Linux |
+| OS | macOS / Linux / Windows（WSL or Git Bash） |
 | Claude Code | インストール済み・ログイン済み |
 | プラン | Max Plan または Pro Plan |
+| bash | スクリプトの実行に必要 |
 | jq | JSON処理コマンド |
+
+:::message
+**Windowsの場合:** このスクリプトはbashで動作します。WSL（Windows Subsystem for Linux）または Git Bash 環境が必要です。PowerShell単体では動作しません。
+:::
 
 ```bash
 # macOS
 brew install jq
 
-# Linux (Debian/Ubuntu)
+# Linux / WSL (Debian/Ubuntu)
 sudo apt install jq
-
-# Windows (PowerShellで実行)
-winget install jqlang.jq
 ```
 
 ## セットアップ — コピペ2ステップ
