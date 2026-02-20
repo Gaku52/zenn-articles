@@ -10,9 +10,9 @@ published: true
 
 Claude Code（CLI）のヘビーユーザーなら、一度はこの画面を見たことがあるはずです。
 
-```
+:::message alert
 Rate limit exceeded. Please wait before making another request.
-```
+:::
 
 **前触れなく、突然来る。** 今どれくらい使っているのか、あとどれくらい使えるのか — Claude Codeには、それを常時確認する手段がありません。
 
