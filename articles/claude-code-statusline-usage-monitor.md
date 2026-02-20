@@ -50,29 +50,55 @@ Desktopアプリには使用率の表示がありますが、CLIにはない。
 
 チラッと見るだけで「まだ余裕がある」「そろそろ控えよう」「`/compact` すべき」が判断できます。
 
-## 必要なもの
+## 動作条件
 
-| 項目 | 詳細 |
-|------|------|
-| OS | macOS / Linux / Windows（WSL or Git Bash） |
-| Claude Code | インストール済み・ログイン済み |
-| プラン | Max Plan または Pro Plan |
-| bash | スクリプトの実行に必要 |
-| jq | JSON処理コマンド |
+このスクリプトを動かすには、以下の **3つの条件** を満たす必要があります。
 
-:::message
-**Windowsの場合:** このスクリプトはbashで動作します。WSL（Windows Subsystem for Linux）または Git Bash 環境が必要です。PowerShell単体では動作しません。
-:::
+### 1. Claude Code がログイン済みであること
+
+Claude Code（CLI）がインストールされ、ブラウザ経由でOAuthログインが完了している必要があります。契約プランは **Max Plan** または **Pro Plan** が対象です。
 
 ```bash
-# macOS
-brew install jq
+# Claude Codeが使えるか確認
+claude --version
+```
 
-# Linux / WSL (Debian/Ubuntu)
-sudo apt install jq
+### 2. bash が使えること
+
+スクリプトはbashで動作します。
+
+| OS | 対応状況 |
+|----|---------|
+| **macOS** | 標準で利用可能 |
+| **Linux** | 標準で利用可能 |
+| **Windows** | WSL（Windows Subsystem for Linux）または Git Bash が必要。**PowerShell単体では動作しません** |
+
+### 3. jq がインストールされていること
+
+JSONの解析に `jq` コマンドを使用します。
+
+```bash
+# インストール確認
+jq --version
+
+# 入っていなければインストール
+brew install jq          # macOS
+sudo apt install jq      # Linux / WSL (Debian/Ubuntu)
 ```
 
 ## セットアップ — コピペ2ステップ
+
+作成・編集するファイルは以下の2つだけです。
+
+```
+~/.claude/
+├── settings.json       ← Step 2 で編集（既存ファイル or 新規作成）
+└── statusline.sh       ← Step 1 で新規作成
+```
+
+:::message
+`~/.claude/` ディレクトリはClaude Codeのインストール時に自動生成されます。存在しない場合は `mkdir -p ~/.claude` で作成してください。
+:::
 
 ### Step 1. ステータスラインスクリプトを作る
 
@@ -373,6 +399,44 @@ jq . ~/.claude/settings.json
 ```
 
 エラーが出たらJSON構文に問題があります。カンマの過不足を確認してください。
+
+### よくあるエラーと対処法
+
+**`jq: command not found`**
+
+jqがインストールされていません。「必要なもの」セクションのコマンドでインストールしてください。
+
+**`authentication_error` が返る**
+
+```json
+{"type":"error","error":{"type":"authentication_error","message":"..."}}
+```
+
+OAuthトークンが期限切れです。Claude Code上で `/login` を実行してから再試行してください。
+
+**`Ctx: N/A%` のまま変わらない**
+
+手動テスト（`bash ~/.claude/statusline.sh < /dev/null`）では正常です。Ctx はClaude Codeが stdin で渡すデータから取得するため、Claude Code上でのみ表示されます。
+
+**スクリプト実行時に `Permission denied`**
+
+```bash
+chmod +x ~/.claude/statusline.sh
+```
+
+Step 1 の最後の `chmod` コマンドが実行されていない可能性があります。
+
+**`5h` と `7d` が更新されない**
+
+60秒キャッシュが効いています。前回の取得から60秒以内は同じ値が表示されます。すぐに最新値を確認したい場合は、キャッシュを削除してください。
+
+```bash
+rm /tmp/claude-usage-cache.json
+```
+
+**フッターの表示が変わるまで時間がかかる**
+
+`settings.json` を変更した後は、**Claude Codeの再起動が必要**です。既に起動中のセッションには反映されません。
 
 ## 注意事項
 
