@@ -1,6 +1,6 @@
-title: "セキュリティ完全ガイド 2026 - 脅威モデリングからクラウド防御まで実践で学ぶ包括的セキュリティ"
-summary: "OWASP Top 10、XSS/CSRF/SQLi対策、暗号技術、TLS、ネットワーク防御、コンテナセキュリティ、SAST/DAST、AWS/クラウドセキュリティ、インシデント対応、コンプライアンスまで。脅威モデリングに基づく実践的セキュリティの全てを網羅した完全ガイド。"
-topics: ["security", "web", "cloud", "aws", "devops"]
+title: "セキュリティ完全ガイド 2026 - 脅威モデリングからクラウド防御まで"
+summary: "Webアプリの脆弱性を自分で発見・修正できるようになる。OWASP Top 10対策からAWSクラウド防御、インシデント対応まで、実践的なコード例とともに体系的に学べるセキュリティの教科書。"
+topics: ["security", "web", "cloud", "aws", "cryptography"]
 published: true
 price: 1000
 # 本に含めるチャプターを順番に並べましょう

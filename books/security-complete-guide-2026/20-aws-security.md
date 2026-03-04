@@ -159,6 +159,7 @@ guardduty = boto3.client('guardduty', region_name='ap-northeast-1')
 # GuardDuty の有効化
 response = guardduty.create_detector(
     Enable=True,
+    # 注意: DataSourcesは非推奨。Featuresパラメータへの移行を推奨
     DataSources={
         'S3Logs': {'Enable': True},
         'Kubernetes': {'AuditLogs': {'Enable': True}},
@@ -187,6 +188,7 @@ resource "aws_guardduty_detector" "main" {
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
 
+  # 注意: datasourcesは非推奨。featureブロックへの移行を推奨
   datasources {
     s3_logs {
       enable = true
@@ -216,6 +218,7 @@ resource "aws_guardduty_organization_configuration" "main" {
   detector_id                      = aws_guardduty_detector.main.id
   auto_enable_organization_members = "ALL"
 
+  # 注意: datasourcesは非推奨。featureブロックへの移行を推奨
   datasources {
     s3_logs {
       auto_enable = true
@@ -748,6 +751,7 @@ resource "aws_s3_bucket_versioning" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
   versioning_configuration {
     status    = "Enabled"
+    # 注意: MFA Deleteの有効化にはルートアカウントの認証情報が必要。Terraformだけでは完結しない場合がある
     mfa_delete = "Enabled"
   }
 }
@@ -1306,9 +1310,9 @@ resource "aws_wafv2_web_acl" "main" {
     }
   }
 
-  # IP ブラックリスト
+  # IP ブロックリスト
   rule {
-    name     = "IPBlacklist"
+    name     = "IPBlocklist"
     priority = 0
 
     action {
@@ -1317,13 +1321,13 @@ resource "aws_wafv2_web_acl" "main" {
 
     statement {
       ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.blacklist.arn
+        arn = aws_wafv2_ip_set.blocklist.arn
       }
     }
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "IPBlacklist"
+      metric_name                = "IPBlocklist"
       sampled_requests_enabled   = true
     }
   }

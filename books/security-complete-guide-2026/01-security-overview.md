@@ -862,7 +862,7 @@ for risk in sorted(risks, key=lambda r: r.risk_score, reverse=True):
 
 | フレームワーク | 発行元 | 特徴 | 対象 | 認証 | コスト |
 |---------------|--------|------|------|------|-------|
-| NIST CSF | 米国NIST | 5つの機能、柔軟性が高い | 全業種 | なし | 無料 |
+| NIST CSF | 米国NIST | 6つの機能（v2.0でGovernが追加）、柔軟性が高い | 全業種 | なし | 無料 |
 | ISO 27001 | ISO/IEC | ISMS構築要求事項、国際標準 | 全業種（特に国際取引） | あり | 認証取得に費用要 |
 | CIS Controls | CIS | 優先順位付き具体的対策18項目 | IT運用チーム | なし | 無料 |
 | SOC 2 | AICPA | Trust Services Criteria | クラウドサービス提供者 | あり | 監査費用要 |

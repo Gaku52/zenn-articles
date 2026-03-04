@@ -200,7 +200,7 @@ except Exception as e:
 | CTR | なし | 可 | 不要 | 平文漏洩 | 条件付き |
 | GCM | あり | 可 | 不要 | 認証鍵漏洩 | 推奨 |
 | CCM | あり | 不可 | 不要 | 安全性低下 | 可 |
-| ChaCha20-Poly1305 | あり | 不可 | 不要 | 認証鍵漏洩 | 推奨 |
+| ChaCha20-Poly1305 | あり | 部分的（暗号化は可、認証は逐次） | 不要 | 認証鍵漏洩 | 推奨 |
 
 ```
 ECB モードの問題（同一平文ブロック → 同一暗号文ブロック）:
@@ -748,6 +748,8 @@ class HybridEncryption:
         )
 
         # 4. 平文データ鍵をゼロクリア（セキュリティのため）
+        # 注意: Pythonのbytesはimmutableなため、この再代入では元のメモリ内容は
+        # 消去されない。確実なゼロクリアにはC/Rust等の低レベル言語が必要
         data_key = b"\x00" * len(data_key)
 
         return {
@@ -813,9 +815,9 @@ print(f"復号成功: {decrypted.decode()}")
   +------------------+  +----------------------------------+
 
   NIST PQC 標準化（2024年発表）:
-  - ML-KEM (CRYSTALS-Kyber): 鍵カプセル化メカニズム
-  - ML-DSA (CRYSTALS-Dilithium): デジタル署名
-  - SLH-DSA (SPHINCS+): ハッシュベース署名（バックアップ）
+  - FIPS 203 ML-KEM (CRYSTALS-Kyber): 鍵カプセル化メカニズム
+  - FIPS 204 ML-DSA (CRYSTALS-Dilithium): デジタル署名
+  - FIPS 205 SLH-DSA (SPHINCS+): ハッシュベース署名（バックアップ）
 
   対応方針:
   1. 「Harvest Now, Decrypt Later」攻撃に備える
