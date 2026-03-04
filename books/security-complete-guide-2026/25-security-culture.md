@@ -293,44 +293,6 @@ class MaturityAssessment:
             return MaturityLevel.MANAGED
         return MaturityLevel.AD_HOC
 
-    def generate_roadmap(self) -> list[str]:
-        """次のレベルへのロードマップを生成"""
-        current = self.calculate_level()
-        recommendations = []
-
-        if current < MaturityLevel.MANAGED:
-            if not self.ci_cd_sast_enabled:
-                recommendations.append(
-                    "CI/CD に Semgrep (SAST) を導入する"
-                )
-            if not self.ci_cd_sca_enabled:
-                recommendations.append(
-                    "CI/CD に Trivy (SCA) を導入する"
-                )
-            if not self.security_champions_appointed:
-                recommendations.append(
-                    "各チームからセキュリティチャンピオンを1名任命する"
-                )
-        elif current < MaturityLevel.DEFINED:
-            if not self.threat_modeling_in_design:
-                recommendations.append(
-                    "設計フェーズで STRIDE 脅威モデリングを実施する"
-                )
-            if not self.secure_coding_training_complete:
-                recommendations.append(
-                    "全開発者にセキュアコーディング研修を受講させる"
-                )
-        elif current < MaturityLevel.MEASURED:
-            if not self.metrics_continuously_tracked:
-                recommendations.append(
-                    "セキュリティメトリクスの自動収集を設定する"
-                )
-            if not self.dashboard_exists:
-                recommendations.append(
-                    "セキュリティダッシュボードを構築する"
-                )
-
-        return recommendations
 ```
 
 ### セキュリティチャンピオン制度
@@ -360,88 +322,6 @@ class MaturityAssessment:
 |  +-- セキュリティチームとの橋渡し                          |
 |  +-- チーム内のセキュリティ意識向上                         |
 +----------------------------------------------------------+
-```
-
-### セキュリティチャンピオン育成プログラム
-
-```python
-# セキュリティチャンピオン管理システム
-from dataclasses import dataclass, field
-from datetime import date, timedelta
-from typing import Optional
-
-
-@dataclass
-class SecurityChampion:
-    """セキュリティチャンピオンの情報管理"""
-    name: str
-    team: str
-    appointed_date: date
-    skill_level: str = "beginner"  # beginner, intermediate, advanced
-    certifications: list[str] = field(default_factory=list)
-    completed_trainings: list[str] = field(default_factory=list)
-    mentored_reviews: int = 0
-    threat_models_led: int = 0
-
-    @property
-    def tenure_months(self) -> int:
-        return (date.today() - self.appointed_date).days // 30
-
-    def should_advance(self) -> bool:
-        """昇格条件の判定"""
-        if self.skill_level == "beginner":
-            return (
-                self.tenure_months >= 3
-                and len(self.completed_trainings) >= 3
-                and self.mentored_reviews >= 5
-            )
-        elif self.skill_level == "intermediate":
-            return (
-                self.tenure_months >= 9
-                and self.threat_models_led >= 3
-                and len(self.certifications) >= 1
-            )
-        return False
-
-
-CHAMPION_CURRICULUM = {
-    "month_1": {
-        "title": "基礎",
-        "topics": [
-            "OWASP Top 10 概要と実例",
-            "セキュリティレビューチェックリストの使い方",
-            "SAST/SCA ツールの結果の読み方",
-        ],
-        "hands_on": "自チームの直近PRから脆弱性パターンを3つ特定",
-    },
-    "month_2": {
-        "title": "実践",
-        "topics": [
-            "脅威モデリング (STRIDE) の実施方法",
-            "セキュアコーディングパターン",
-            "認証・認可の設計レビュー",
-        ],
-        "hands_on": "自チームのサービスで脅威モデリングを実施",
-    },
-    "month_3": {
-        "title": "応用",
-        "topics": [
-            "インシデント対応手順",
-            "脆弱性トリアージの実践",
-            "セキュリティメトリクスの分析",
-        ],
-        "hands_on": "月次セキュリティレポートの作成と発表",
-    },
-    "month_4_6": {
-        "title": "深化",
-        "topics": [
-            "CTF チャレンジへの参加",
-            "ペネトレーションテストの基礎",
-            "クラウドセキュリティの設計パターン",
-        ],
-        "hands_on": "新規機能の設計段階からセキュリティレビューをリード",
-    },
-}
 ```
 
 ### DevSecOps ツールチェーン選定ガイド
@@ -700,108 +580,7 @@ review_schedule:
     - "依存ライブラリの大規模アップデート"
 ```
 
-### 脅威モデリング自動化ツール
-
-```python
-# 脅威モデリングの自動化ヘルパー
-import json
-from pathlib import Path
-from typing import Optional
-
-
-class ThreatModelGenerator:
-    """OpenAPI仕様から脅威モデルの雛形を自動生成"""
-
-    STRIDE_PATTERNS = {
-        "authentication": {
-            "threats": [
-                {
-                    "category": "Spoofing",
-                    "template": "認証エンドポイント {endpoint} に対するクレデンシャルスタッフィング",
-                    "default_risk": "HIGH",
-                },
-                {
-                    "category": "Repudiation",
-                    "template": "認証イベントのログ不足による否認",
-                    "default_risk": "MEDIUM",
-                },
-            ],
-        },
-        "data_retrieval": {
-            "threats": [
-                {
-                    "category": "Information Disclosure",
-                    "template": "エンドポイント {endpoint} での過剰なデータ露出",
-                    "default_risk": "MEDIUM",
-                },
-                {
-                    "category": "Elevation of Privilege",
-                    "template": "エンドポイント {endpoint} での IDOR による他ユーザデータアクセス",
-                    "default_risk": "HIGH",
-                },
-            ],
-        },
-        "data_modification": {
-            "threats": [
-                {
-                    "category": "Tampering",
-                    "template": "エンドポイント {endpoint} でのリクエストボディ改竄",
-                    "default_risk": "HIGH",
-                },
-                {
-                    "category": "Denial of Service",
-                    "template": "エンドポイント {endpoint} への大量リクエストによるDoS",
-                    "default_risk": "MEDIUM",
-                },
-            ],
-        },
-    }
-
-    def generate_from_openapi(self, spec_path: str) -> dict:
-        """OpenAPI仕様から脅威モデルを生成"""
-        with open(spec_path) as f:
-            spec = json.load(f)
-
-        threats = []
-        threat_id = 1
-
-        for path, methods in spec.get("paths", {}).items():
-            for method, details in methods.items():
-                endpoint = f"{method.upper()} {path}"
-
-                # エンドポイントの特性を判定
-                if "auth" in path.lower() or "login" in path.lower():
-                    pattern_key = "authentication"
-                elif method in ("get", "head"):
-                    pattern_key = "data_retrieval"
-                else:
-                    pattern_key = "data_modification"
-
-                for threat_template in self.STRIDE_PATTERNS[pattern_key]["threats"]:
-                    threats.append({
-                        "id": f"T{threat_id:03d}",
-                        "category": threat_template["category"],
-                        "description": threat_template["template"].format(
-                            endpoint=endpoint
-                        ),
-                        "risk": threat_template["default_risk"],
-                        "status": "OPEN",
-                        "mitigation": [],
-                    })
-                    threat_id += 1
-
-        return {
-            "system": spec.get("info", {}).get("title", "Unknown"),
-            "version": spec.get("info", {}).get("version", "1.0"),
-            "threats": threats,
-            "total_threats": len(threats),
-            "by_risk": {
-                "HIGH": sum(1 for t in threats if t["risk"] == "HIGH"),
-                "MEDIUM": sum(1 for t in threats if t["risk"] == "MEDIUM"),
-                "LOW": sum(1 for t in threats if t["risk"] == "LOW"),
-            },
-        }
-```
+脅威モデリングの自動化には、OWASP Threat Dragon や Microsoft Threat Modeling Tool などの専用ツールが利用できる。OpenAPI 仕様からエンドポイントごとに STRIDE パターンを適用し、脅威の雛形を自動生成するアプローチも効果的である。
 
 ---
 
@@ -880,10 +659,16 @@ Phase 4: パブリックプログラム (12ヶ月以降)
 
 ### バグ報告の処理フロー
 
+```
+報告受領 → 自動応答 → 重複チェック → 重大度評価 → トリアージ
+                                              ↓
+                              内部チケット作成 → 修正 → 検証 → 報奨金支払い
+```
+
 ```python
-# バグバウンティ報告の処理自動化
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+# バグバウンティ報告の処理
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
 
@@ -891,185 +676,18 @@ class ReportStatus(Enum):
     NEW = "new"
     TRIAGED = "triaged"
     DUPLICATE = "duplicate"
-    INFORMATIVE = "informative"
-    NOT_APPLICABLE = "not_applicable"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     BOUNTY_PAID = "bounty_paid"
 
 
-@dataclass
-class BugReport:
-    """バグバウンティ報告"""
-    id: str
-    title: str
-    description: str
-    reporter_email: str
-    severity: str
-    submitted_at: datetime
-    status: ReportStatus = ReportStatus.NEW
-    assigned_to: str | None = None
-    bounty_amount: float | None = None
-    resolution_notes: str = ""
-    sla_breach: bool = False
-
-
-class BugBountyWorkflow:
-    """バグバウンティ報告の処理ワークフロー"""
-
-    SEVERITY_SLA = {
-        'critical': {'triage_hours': 4, 'fix_days': 7, 'bounty_range': (5000, 15000)},
-        'high': {'triage_hours': 24, 'fix_days': 30, 'bounty_range': (1000, 5000)},
-        'medium': {'triage_hours': 72, 'fix_days': 90, 'bounty_range': (500, 1000)},
-        'low': {'triage_hours': 168, 'fix_days': 180, 'bounty_range': (100, 500)},
-    }
-
-    def __init__(self):
-        self.reports: list[BugReport] = []
-        self.known_vulnerabilities: list[str] = []
-
-    def receive_report(self, report: dict) -> BugReport:
-        """報告の受領と初期対応"""
-        bug_report = BugReport(
-            id=f"BB-{len(self.reports) + 1:04d}",
-            title=report['title'],
-            description=report['description'],
-            reporter_email=report['reporter_email'],
-            severity="pending",
-            submitted_at=datetime.now(),
-        )
-        self.reports.append(bug_report)
-
-        # 1. 自動応答
-        self.send_acknowledgment(bug_report)
-
-        # 2. 重複チェック
-        if self.is_duplicate(bug_report):
-            bug_report.status = ReportStatus.DUPLICATE
-            self.notify_reporter(
-                "既知の脆弱性として報告済みです。ご報告ありがとうございます。",
-                bug_report,
-            )
-            return bug_report
-
-        # 3. 重大度評価とトリアージ
-        severity = self.assess_severity(bug_report)
-        bug_report.severity = severity
-        sla = self.SEVERITY_SLA[severity]
-        bug_report.status = ReportStatus.TRIAGED
-
-        # 4. 内部チケット作成
-        ticket = self.create_internal_ticket(bug_report, sla)
-
-        # 5. セキュリティチームに通知
-        self.notify_security_team(bug_report, severity)
-
-        # 6. SLA モニタリング開始
-        self.start_sla_monitoring(bug_report, sla)
-
-        return bug_report
-
-    def assess_severity(self, report: BugReport) -> str:
-        """CVSS ベースの重大度評価"""
-        title_lower = report.title.lower()
-        desc_lower = report.description.lower()
-        combined = f"{title_lower} {desc_lower}"
-
-        critical_indicators = ['rce', 'remote code execution', 'sqli', 'sql injection',
-                               'ssrf', 'authentication bypass', 'privilege escalation']
-        high_indicators = ['xss', 'cross-site scripting', 'idor', 'insecure direct',
-                          'csrf', 'path traversal', 'file upload']
-        medium_indicators = ['information disclosure', 'sensitive data', 'misconfiguration',
-                            'open redirect', 'clickjacking']
-
-        if any(indicator in combined for indicator in critical_indicators):
-            return 'critical'
-        elif any(indicator in combined for indicator in high_indicators):
-            return 'high'
-        elif any(indicator in combined for indicator in medium_indicators):
-            return 'medium'
-        return 'low'
-
-    def calculate_bounty(self, report: BugReport) -> float:
-        """報奨金の算出"""
-        sla = self.SEVERITY_SLA[report.severity]
-        base_min, base_max = sla['bounty_range']
-
-        # 影響範囲、再現性、報告品質で調整
-        quality_multiplier = 1.0
-
-        # 詳細な再現手順が含まれている場合
-        if len(report.description) > 500:
-            quality_multiplier += 0.1
-
-        # PoC コードが含まれている場合
-        if 'poc' in report.description.lower() or 'proof of concept' in report.description.lower():
-            quality_multiplier += 0.15
-
-        # 修正提案が含まれている場合
-        if 'fix' in report.description.lower() or 'recommendation' in report.description.lower():
-            quality_multiplier += 0.1
-
-        base = (base_min + base_max) / 2
-        return min(base * quality_multiplier, base_max)
-
-    def generate_monthly_report(self) -> dict:
-        """月次バグバウンティレポート"""
-        now = datetime.now()
-        month_start = now.replace(day=1)
-        monthly_reports = [
-            r for r in self.reports
-            if r.submitted_at >= month_start
-        ]
-
-        return {
-            'period': now.strftime('%Y-%m'),
-            'total_reports': len(monthly_reports),
-            'by_severity': {
-                sev: sum(1 for r in monthly_reports if r.severity == sev)
-                for sev in ['critical', 'high', 'medium', 'low']
-            },
-            'by_status': {
-                status.value: sum(1 for r in monthly_reports if r.status == status)
-                for status in ReportStatus
-            },
-            'total_bounty_paid': sum(
-                r.bounty_amount or 0 for r in monthly_reports
-                if r.status == ReportStatus.BOUNTY_PAID
-            ),
-            'avg_triage_hours': self._calc_avg_triage_time(monthly_reports),
-            'sla_breach_count': sum(1 for r in monthly_reports if r.sla_breach),
-        }
-
-    def _calc_avg_triage_time(self, reports: list[BugReport]) -> float:
-        triaged = [r for r in reports if r.status != ReportStatus.NEW]
-        if not triaged:
-            return 0.0
-        return sum(4.0 for _ in triaged) / len(triaged)  # simplified
-
-    def send_acknowledgment(self, report: BugReport):
-        """自動応答の送信"""
-        pass
-
-    def is_duplicate(self, report: BugReport) -> bool:
-        """重複チェック"""
-        return report.title in self.known_vulnerabilities
-
-    def notify_reporter(self, message: str, report: BugReport):
-        """報告者への通知"""
-        pass
-
-    def create_internal_ticket(self, report: BugReport, sla: dict) -> str:
-        """内部チケット作成"""
-        return f"SEC-{report.id}"
-
-    def notify_security_team(self, report: BugReport, severity: str):
-        """セキュリティチームへの通知"""
-        pass
-
-    def start_sla_monitoring(self, report: BugReport, sla: dict):
-        """SLAモニタリング開始"""
-        pass
+# 重大度別 SLA と報奨金レンジ
+SEVERITY_SLA = {
+    'critical': {'triage_hours': 4, 'fix_days': 7, 'bounty_range': (5000, 15000)},
+    'high': {'triage_hours': 24, 'fix_days': 30, 'bounty_range': (1000, 5000)},
+    'medium': {'triage_hours': 72, 'fix_days': 90, 'bounty_range': (500, 1000)},
+    'low': {'triage_hours': 168, 'fix_days': 180, 'bounty_range': (100, 500)},
+}
 ```
 
 ---
@@ -1151,144 +769,25 @@ Day 3: セキュリティテストとツール (4時間)
 
 ### フィッシングシミュレーション
 
-```python
-# フィッシング訓練の管理と分析
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Optional
+フィッシング訓練は、難易度を段階的に上げながら四半期ごとに実施する。
 
+| テンプレート | 難易度 | 見破りポイント |
+|------------|--------|-------------|
+| パスワードリセット要求 | 易 | 送信元ドメイン不一致、緊急性を煽る文言 |
+| 請求書確認依頼 | 中 | .xlsm添付、マクロ有効化の要求 |
+| 共有ドキュメント通知 | 中 | OAuth画面の模倣、微妙に異なるURL |
+| CEO緊急依頼 | 難 | 社内フォーマット模倣、返信先が外部 |
 
-@dataclass
-class PhishingCampaign:
-    """フィッシング訓練キャンペーン"""
-    name: str
-    template: str
-    targets: list[str]
-    launched_at: Optional[datetime] = None
-    results: dict = field(default_factory=dict)
+**結果の評価基準:**
 
+| クリック率 | リスクレベル | 対応 |
+|----------|-----------|------|
+| 30%超 | CRITICAL | 即座に全社研修を実施 |
+| 15-30% | HIGH | 対象部門の追加研修 |
+| 5-15% | MEDIUM | クリック者への個別フォロー |
+| 5%未満 | LOW | 現在のプログラムを継続 |
 
-class PhishingSimulator:
-    """フィッシング訓練の管理"""
-
-    TEMPLATES = {
-        "password_reset": {
-            "subject": "【重要】パスワードの再設定が必要です",
-            "difficulty": "easy",
-            "indicators": [
-                "送信元ドメインが正規と異なる",
-                "URLのドメインが正規と異なる",
-                "緊急性を煽る文言",
-            ],
-        },
-        "invoice_payment": {
-            "subject": "請求書のご確認をお願いいたします",
-            "difficulty": "medium",
-            "indicators": [
-                "添付ファイルの拡張子(.xlsm)",
-                "送信者名は正しいがアドレスが異なる",
-                "マクロの有効化を促す文言",
-            ],
-        },
-        "ceo_urgent": {
-            "subject": "至急対応をお願いします（社長より）",
-            "difficulty": "hard",
-            "indicators": [
-                "社内のメールに似せたフォーマット",
-                "役職者の名前を使用",
-                "返信先が外部アドレス",
-            ],
-        },
-        "shared_document": {
-            "subject": "共有ドキュメントが更新されました",
-            "difficulty": "medium",
-            "indicators": [
-                "Google/Microsoft風のフィッシングページ",
-                "OAuth認可画面を模倣",
-                "正規に見えるが微妙に異なるURL",
-            ],
-        },
-    }
-
-    def create_campaign(
-        self,
-        name: str,
-        template_key: str,
-        department: str,
-        targets: list[str],
-    ) -> PhishingCampaign:
-        """フィッシング訓練キャンペーンの作成"""
-        template = self.TEMPLATES[template_key]
-        campaign = PhishingCampaign(
-            name=name,
-            template=template_key,
-            targets=targets,
-        )
-        return campaign
-
-    def analyze_results(self, campaign: PhishingCampaign) -> dict:
-        """キャンペーン結果の分析"""
-        total = len(campaign.targets)
-        results = campaign.results
-
-        stats = {
-            'total_targets': total,
-            'emails_sent': results.get('sent', total),
-            'emails_opened': results.get('opened', 0),
-            'links_clicked': results.get('clicked', 0),
-            'credentials_submitted': results.get('submitted', 0),
-            'reported_phishing': results.get('reported', 0),
-        }
-
-        # 各率の計算
-        stats['open_rate'] = f"{stats['emails_opened'] / total * 100:.1f}%"
-        stats['click_rate'] = f"{stats['links_clicked'] / total * 100:.1f}%"
-        stats['submit_rate'] = f"{stats['credentials_submitted'] / total * 100:.1f}%"
-        stats['report_rate'] = f"{stats['reported_phishing'] / total * 100:.1f}%"
-
-        # リスクスコア
-        click_pct = stats['links_clicked'] / total * 100
-        if click_pct > 30:
-            stats['risk_level'] = "CRITICAL"
-            stats['recommendation'] = "即座に全社向けフィッシング研修を実施"
-        elif click_pct > 15:
-            stats['risk_level'] = "HIGH"
-            stats['recommendation'] = "対象部門の追加研修を実施"
-        elif click_pct > 5:
-            stats['risk_level'] = "MEDIUM"
-            stats['recommendation'] = "クリックした個人への個別フォローアップ"
-        else:
-            stats['risk_level'] = "LOW"
-            stats['recommendation'] = "現在の研修プログラムを継続"
-
-        return stats
-
-    def generate_trend_report(self, campaigns: list[PhishingCampaign]) -> dict:
-        """経時トレンドレポート"""
-        trend = []
-        for campaign in sorted(campaigns, key=lambda c: c.launched_at or datetime.min):
-            stats = self.analyze_results(campaign)
-            trend.append({
-                'campaign': campaign.name,
-                'date': campaign.launched_at,
-                'click_rate': stats['click_rate'],
-                'report_rate': stats['report_rate'],
-                'risk_level': stats['risk_level'],
-            })
-
-        # 改善率の計算
-        if len(trend) >= 2:
-            first_click = float(trend[0]['click_rate'].rstrip('%'))
-            last_click = float(trend[-1]['click_rate'].rstrip('%'))
-            improvement = first_click - last_click
-            return {
-                'trend': trend,
-                'improvement': f"{improvement:.1f}%",
-                'direction': 'improving' if improvement > 0 else 'degrading',
-            }
-
-        return {'trend': trend, 'improvement': 'N/A', 'direction': 'insufficient_data'}
-```
+四半期ごとのトレンドを追跡し、クリック率の改善傾向を確認する。
 
 ### CTF (Capture The Flag) 社内イベントの運営
 
@@ -1370,261 +869,42 @@ class PhishingSimulator:
 ### セキュリティダッシュボード実装
 
 ```python
-# セキュリティメトリクスの自動収集と可視化
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Optional
+# セキュリティリスクスコアの算出
+def calculate_risk_score(
+    open_critical: int, open_high: int,
+    open_medium: int, open_low: int,
+    security_review_rate: float,
+    patch_compliance_rate: float,
+    training_completion_rate: float,
+    phishing_click_rate: float,
+    mttr_hours: float,
+    sla_compliance_rate: float,
+) -> dict:
+    """組織のセキュリティリスクスコアを計算 (0-100, 低いほど良い)"""
+    vuln_score = min(
+        open_critical * 40 + open_high * 20 + open_medium * 5 + open_low, 100
+    )
+    process_score = 100 - (security_review_rate * 60 + patch_compliance_rate * 40)
+    people_score = 100 - (
+        training_completion_rate * 40
+        + (100 - phishing_click_rate) * 30
+    )
+    response_score = min(
+        (mttr_hours / 24) * 20 + (100 - sla_compliance_rate), 100
+    )
 
+    overall = (
+        vuln_score * 0.35 + process_score * 0.25
+        + people_score * 0.20 + response_score * 0.20
+    )
 
-@dataclass
-class SecurityMetrics:
-    """月次セキュリティメトリクス"""
-    period: str
+    ratings = [(20, "A"), (40, "B"), (60, "C"), (80, "D")]
+    rating = next((r for threshold, r in ratings if overall <= threshold), "F")
 
-    # 脆弱性メトリクス
-    open_critical: int = 0
-    open_high: int = 0
-    open_medium: int = 0
-    open_low: int = 0
-    vulnerabilities_found: int = 0
-    vulnerabilities_fixed: int = 0
-    avg_fix_days_critical: float = 0.0
-    avg_fix_days_high: float = 0.0
-    sla_compliance_rate: float = 0.0
-
-    # 検知・対応メトリクス
-    mttd_hours: float = 0.0
-    mttr_hours: float = 0.0
-    incidents_total: int = 0
-    incidents_critical: int = 0
-    false_positive_rate: float = 0.0
-
-    # プロセスメトリクス
-    security_review_rate: float = 0.0
-    threat_model_coverage: float = 0.0
-    patch_compliance_rate: float = 0.0
-
-    # 人材メトリクス
-    training_completion_rate: float = 0.0
-    phishing_click_rate: float = 0.0
-    champion_coverage: float = 0.0
-
-
-class SecurityDashboard:
-    """セキュリティダッシュボードのデータ収集"""
-
-    def __init__(self):
-        self.metrics_history: list[SecurityMetrics] = []
-
-    def collect_vulnerability_metrics(self) -> dict:
-        """脆弱性メトリクスの収集"""
-        # 各ソースからデータを収集
-        sast_findings = self._collect_sast_findings()
-        sca_findings = self._collect_sca_findings()
-        dast_findings = self._collect_dast_findings()
-        pentest_findings = self._collect_pentest_findings()
-
-        total = {
-            'sast': sast_findings,
-            'sca': sca_findings,
-            'dast': dast_findings,
-            'pentest': pentest_findings,
-        }
-
-        # 重複排除と統合
-        return self._deduplicate_and_merge(total)
-
-    def calculate_risk_score(self, metrics: SecurityMetrics) -> dict:
-        """組織のセキュリティリスクスコアを計算"""
-        # 重み付きスコアリング (0-100, 低いほど良い)
-        vuln_score = (
-            metrics.open_critical * 40
-            + metrics.open_high * 20
-            + metrics.open_medium * 5
-            + metrics.open_low * 1
-        )
-        vuln_score = min(vuln_score, 100)
-
-        process_score = 100 - (
-            metrics.security_review_rate * 30
-            + metrics.threat_model_coverage * 30
-            + metrics.patch_compliance_rate * 40
-        )
-
-        people_score = 100 - (
-            metrics.training_completion_rate * 40
-            + (100 - metrics.phishing_click_rate) * 30
-            + metrics.champion_coverage * 30
-        )
-
-        response_score = min(
-            (metrics.mttr_hours / 24) * 20  # 24時間以内が理想
-            + metrics.false_positive_rate * 30
-            + (100 - metrics.sla_compliance_rate),
-            100,
-        )
-
-        overall = (
-            vuln_score * 0.35
-            + process_score * 0.25
-            + people_score * 0.20
-            + response_score * 0.20
-        )
-
-        return {
-            'overall_risk_score': round(overall, 1),
-            'vulnerability_risk': round(vuln_score, 1),
-            'process_risk': round(process_score, 1),
-            'people_risk': round(people_score, 1),
-            'response_risk': round(response_score, 1),
-            'rating': self._score_to_rating(overall),
-        }
-
-    def _score_to_rating(self, score: float) -> str:
-        if score <= 20:
-            return "A (Excellent)"
-        elif score <= 40:
-            return "B (Good)"
-        elif score <= 60:
-            return "C (Acceptable)"
-        elif score <= 80:
-            return "D (Needs Improvement)"
-        return "F (Critical)"
-
-    def generate_executive_report(self, metrics: SecurityMetrics) -> dict:
-        """経営層向けサマリーレポート"""
-        risk = self.calculate_risk_score(metrics)
-
-        # 前月との比較
-        trend = {}
-        if len(self.metrics_history) >= 2:
-            prev = self.metrics_history[-2]
-            trend = {
-                'open_critical_change': metrics.open_critical - prev.open_critical,
-                'mttr_change_hours': metrics.mttr_hours - prev.mttr_hours,
-                'sla_compliance_change': (
-                    metrics.sla_compliance_rate - prev.sla_compliance_rate
-                ),
-                'phishing_click_change': (
-                    metrics.phishing_click_rate - prev.phishing_click_rate
-                ),
-            }
-
-        return {
-            'period': metrics.period,
-            'risk_score': risk,
-            'trend': trend,
-            'key_highlights': self._generate_highlights(metrics),
-            'action_items': self._generate_action_items(metrics),
-        }
-
-    def _generate_highlights(self, m: SecurityMetrics) -> list[str]:
-        highlights = []
-        if m.open_critical == 0:
-            highlights.append("Critical脆弱性ゼロを維持")
-        if m.sla_compliance_rate >= 95:
-            highlights.append(f"SLA遵守率 {m.sla_compliance_rate}% (目標達成)")
-        if m.phishing_click_rate < 5:
-            highlights.append(f"フィッシングクリック率 {m.phishing_click_rate}% (業界平均以下)")
-        return highlights
-
-    def _generate_action_items(self, m: SecurityMetrics) -> list[str]:
-        items = []
-        if m.open_critical > 0:
-            items.append(f"Critical脆弱性 {m.open_critical}件の即時対応")
-        if m.training_completion_rate < 90:
-            items.append(f"セキュリティ研修未完了者への督促 (完了率: {m.training_completion_rate}%)")
-        if m.patch_compliance_rate < 95:
-            items.append(f"パッチ適用率の改善 (現在: {m.patch_compliance_rate}%)")
-        return items
-
-    def _collect_sast_findings(self) -> list:
-        return []
-
-    def _collect_sca_findings(self) -> list:
-        return []
-
-    def _collect_dast_findings(self) -> list:
-        return []
-
-    def _collect_pentest_findings(self) -> list:
-        return []
-
-    def _deduplicate_and_merge(self, findings: dict) -> dict:
-        return findings
+    return {'overall': round(overall, 1), 'rating': rating}
 ```
 
-### メトリクス収集の自動化 (AWS)
-
-```python
-# AWS 環境でのセキュリティメトリクス自動収集
-import boto3
-from datetime import datetime, timedelta
-
-
-def collect_aws_security_metrics() -> dict:
-    """月次セキュリティメトリクスの収集 (AWS)"""
-    metrics = {}
-
-    # 脆弱性メトリクス (Security Hub)
-    securityhub = boto3.client('securityhub')
-    findings = securityhub.get_findings(
-        Filters={
-            'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
-            'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}],
-        },
-    )
-    severity_counts = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
-    for finding in findings['Findings']:
-        label = finding['Severity']['Label']
-        if label in severity_counts:
-            severity_counts[label] += 1
-
-    metrics['open_vulnerabilities'] = severity_counts
-
-    # パッチ適用率 (SSM)
-    ssm = boto3.client('ssm')
-    compliance = ssm.list_compliance_summaries(
-        Filters=[{'Key': 'ComplianceType', 'Values': ['Patch'], 'Type': 'EQUAL'}]
-    )
-    metrics['patch_compliance'] = compliance
-
-    # GuardDuty 検知数
-    guardduty = boto3.client('guardduty')
-    metrics['threat_detections'] = {
-        'period': 'last_30_days',
-        'count': len(guardduty.list_findings(
-            DetectorId='detector-id',
-            FindingCriteria={
-                'Criterion': {
-                    'updatedAt': {
-                        'GreaterThanOrEqual': int(
-                            (datetime.now() - timedelta(days=30)).timestamp() * 1000
-                        )
-                    }
-                }
-            },
-        ).get('FindingIds', [])),
-    }
-
-    # IAM Access Analyzer
-    analyzer = boto3.client('accessanalyzer')
-    findings_resp = analyzer.list_findings(
-        analyzerArn='arn:aws:access-analyzer:ap-northeast-1:123456789012:analyzer/my-analyzer',
-        filter={'status': {'eq': ['ACTIVE']}},
-    )
-    metrics['iam_findings'] = len(findings_resp.get('findings', []))
-
-    # Config ルール準拠率
-    config = boto3.client('config')
-    compliance_summary = config.get_compliance_summary_by_config_rule()
-    metrics['config_compliance'] = {
-        'compliant': compliance_summary['ComplianceSummary']['CompliantResourceCount']['CappedCount'],
-        'non_compliant': compliance_summary['ComplianceSummary']['NonCompliantResourceCount']['CappedCount'],
-    }
-
-    return metrics
-```
+AWS 環境では Security Hub、GuardDuty、SSM Patch Manager、IAM Access Analyzer、Config Rules などから自動的にメトリクスを収集し、統合ダッシュボードで可視化する。
 
 ---
 
@@ -1855,18 +1135,6 @@ OK:
 ### Q3. セキュリティ文化の効果をどう測定するか?
 
 定量的指標としてフィッシング訓練のクリック率の推移、脆弱性の平均修正時間 (MTTR)、セキュリティレビュー実施率を追跡する。定性的にはセキュリティに関する質問が開発チームから自発的に上がるか、インシデント報告が迅速に行われるかを観察する。半年に一度、全社アンケートでセキュリティ意識の変化を測定することも有効である。
-
-### Q4. セキュリティチャンピオンのモチベーションを維持するには?
-
-通常業務の 10-20% をセキュリティ活動に充てることを公式に認める。セキュリティカンファレンスへの参加費用を支援する。チャンピオン間のコミュニティを作り、定期的な知識共有の場を設ける。人事評価にセキュリティへの貢献を明示的に含める。資格取得の支援（費用補助、学習時間の確保）も効果的である。
-
-### Q5. 小規模チームでも DevSecOps は実践できるか?
-
-できる。小規模チームほど全員がセキュリティを意識する文化を作りやすい。まずは GitHub の Dependabot（無料）でSCAを、Semgrep（OSS）でSASTを導入する。専任のセキュリティチームがいなくても、全員がセキュリティチャンピオンとして機能する文化を目指す。重要なのはツールの数ではなく、セキュリティを開発プロセスの一部として組み込む意識である。
-
-### Q6. セキュリティ研修の効果が出ない場合はどうするか?
-
-座学中心の研修は効果が低い。ハンズオン形式（OWASP Juice Shop、TryHackMe、社内CTF）に切り替える。自社のコードベースから実際の脆弱性（修正済み）を題材にすると、開発者の当事者意識が高まる。研修は1回きりではなく、四半期ごとの反復が重要。学んだ内容をすぐにコードレビューで実践する場を設けることで定着率が大幅に向上する。
 
 ---
 

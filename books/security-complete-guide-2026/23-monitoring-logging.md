@@ -63,53 +63,15 @@ title: "第23章 監視とログ"
 
 セキュリティ監視を設計する際は、以下の3層を意識する必要がある:
 
-```
-+----------------------------------------------------------+
-|                   監視の3層モデル                           |
-|----------------------------------------------------------|
-|                                                          |
-|  Layer 1: コレクション (Collection)                        |
-|  +-- 目的: 生データの収集と転送                            |
-|  +-- ツール: Fluent Bit, Vector, CloudWatch Agent         |
-|  +-- 課題: データ量の制御、ネットワーク帯域               |
-|  +-- 設計原則: 「できるだけ早く、できるだけ完全に」        |
-|                                                          |
-|  Layer 2: ストレージ (Storage)                             |
-|  +-- 目的: ログの保存、インデックス化、検索性確保          |
-|  +-- ツール: OpenSearch, S3, Glacier                      |
-|  +-- 課題: コスト最適化、保持期間の管理                    |
-|  +-- 設計原則: 「階層化ストレージでコスト最適化」          |
-|                                                          |
-|  Layer 3: アナリティクス (Analytics)                       |
-|  +-- 目的: 相関分析、異常検知、可視化                     |
-|  +-- ツール: SIEM, ML エンジン, ダッシュボード             |
-|  +-- 課題: 偽陽性の制御、アラート疲れの防止               |
-|  +-- 設計原則: 「アクションにつながるアラートのみ」        |
-+----------------------------------------------------------+
-```
+| 層 | 目的 | ツール例 | 設計原則 |
+|----|------|---------|---------|
+| Layer 1: コレクション | 生データの収集と転送 | Fluent Bit, Vector, CloudWatch Agent | できるだけ早く、完全に |
+| Layer 2: ストレージ | ログの保存・インデックス化・検索性確保 | OpenSearch, S3, Glacier | 階層化ストレージでコスト最適化 |
+| Layer 3: アナリティクス | 相関分析・異常検知・可視化 | SIEM, ML エンジン, ダッシュボード | アクションにつながるアラートのみ |
 
-### ログの分類と優先度マトリクス
+### ログの分類と優先度
 
-```
-+----------------------------------------------------------+
-|             ログ分類マトリクス                              |
-|----------------------------------------------------------|
-|                                                          |
-|      高頻度     +-----------+-----------+                |
-|                 | 認証ログ  | アプリ    |                |
-|                 | (重要)    | アクセス  |                |
-|                 |           | ログ      |                |
-|                 +-----------+-----------+                |
-|                 | ネット    | デバッグ  |                |
-|                 | フロー    | ログ      |                |
-|      低頻度     | ログ      | (低優先)  |                |
-|                 +-----------+-----------+                |
-|                  高セキュリティ  低セキュリティ              |
-|                  価値            価値                     |
-|                                                          |
-|  優先度: 認証ログ > ネットフロー > アプリログ > デバッグ    |
-+----------------------------------------------------------+
-```
+ログの優先度は **セキュリティ価値** と **頻度** の2軸で判断する。優先度順: 認証ログ > ネットワークフローログ > アプリケーションログ > デバッグログ。
 
 ---
 
@@ -477,92 +439,7 @@ end
 
 ### Vector による高性能ログ収集
 
-Fluent Bit の代替として、Rust 製の Vector は高いパフォーマンスと柔軟な設定が特徴である。
-
-```toml
-# /etc/vector/vector.toml
-
-[api]
-enabled = true
-address = "127.0.0.1:8686"
-
-# ソース: アプリケーションログ
-[sources.app_logs]
-type = "file"
-include = ["/var/log/app/*.log"]
-read_from = "beginning"
-
-# ソース: Kubernetes ログ
-[sources.k8s_logs]
-type = "kubernetes_logs"
-auto_partial_merge = true
-
-# トランスフォーム: JSON パース
-[transforms.parse_json]
-type = "remap"
-inputs = ["app_logs"]
-source = '''
-. = parse_json!(string!(.message))
-.timestamp = to_timestamp!(.timestamp)
-.environment = "production"
-.cluster = "prod-ap-northeast-1"
-'''
-
-# トランスフォーム: 機密データのリダクション
-[transforms.redact_sensitive]
-type = "remap"
-inputs = ["parse_json"]
-source = '''
-if exists(.details.password) {
-    .details.password = "***REDACTED***"
-}
-if exists(.details.token) {
-    .details.token = "***REDACTED***"
-}
-# クレジットカード番号のマスク
-if exists(.details.card_number) {
-    card = string!(.details.card_number)
-    .details.card_number = "****-****-****-" + slice!(card, -4)
-}
-'''
-
-# トランスフォーム: セキュリティイベントのフィルタリング
-[transforms.security_filter]
-type = "filter"
-inputs = ["redact_sensitive"]
-condition = '''
-.level == "ERROR" || .level == "WARN" ||
-.event_type == "authentication" ||
-.event_type == "access_control"
-'''
-
-# シンク: OpenSearch
-[sinks.opensearch]
-type = "elasticsearch"
-inputs = ["redact_sensitive"]
-endpoints = ["https://opensearch.internal.example.com:443"]
-bulk.index = "app-logs-%Y-%m-%d"
-auth.strategy = "basic"
-auth.user = "vector"
-auth.password = "${OPENSEARCH_PASSWORD}"
-
-# シンク: セキュリティイベントを専用インデックスに
-[sinks.security_opensearch]
-type = "elasticsearch"
-inputs = ["security_filter"]
-endpoints = ["https://opensearch.internal.example.com:443"]
-bulk.index = "security-events-%Y-%m-%d"
-
-# シンク: S3 アーカイブ
-[sinks.s3_archive]
-type = "aws_s3"
-inputs = ["redact_sensitive"]
-bucket = "security-logs-archive"
-region = "ap-northeast-1"
-key_prefix = "logs/%Y/%m/%d/"
-compression = "gzip"
-encoding.codec = "json"
-```
+Fluent Bit の代替として、Rust 製の Vector は高いパフォーマンスと柔軟な設定が特徴である。Vector の設定は TOML 形式で、sources（入力）→ transforms（変換・フィルタ）→ sinks（出力）のパイプラインで構成する。VRL (Vector Remap Language) による機密データのリダクションや、セキュリティイベントのフィルタリングも柔軟に記述できる。
 
 ### ログ収集エージェントの比較
 
@@ -584,44 +461,14 @@ encoding.codec = "json"
 
 SIEM (Security Information and Event Management) は、ログの集約、正規化、相関分析、アラート生成を一貫して行うプラットフォームである。
 
-```
-+----------------------------------------------------------+
-|                SIEM の内部処理フロー                        |
-|----------------------------------------------------------|
-|                                                          |
-|  1. 収集 (Collection)                                     |
-|  +-- Syslog, API, Agent, ファイルビート                   |
-|       |                                                  |
-|       v                                                  |
-|  2. パース・正規化 (Parsing & Normalization)               |
-|  +-- 異なるフォーマットを共通スキーマに変換                |
-|  +-- ECS (Elastic Common Schema)                         |
-|  +-- OCSF (Open Cybersecurity Schema Framework)          |
-|       |                                                  |
-|       v                                                  |
-|  3. エンリッチメント (Enrichment)                          |
-|  +-- GeoIP 情報の付与                                    |
-|  +-- 脅威インテリジェンスとの突合                          |
-|  +-- ユーザ/アセット情報の付与                            |
-|       |                                                  |
-|       v                                                  |
-|  4. インデックス・保存 (Indexing & Storage)                |
-|  +-- 全文検索インデックスの構築                            |
-|  +-- 時系列データの最適化                                 |
-|       |                                                  |
-|       v                                                  |
-|  5. 相関分析 (Correlation)                                |
-|  +-- ルールベースマッチング                               |
-|  +-- 統計的異常検知                                      |
-|  +-- 機械学習モデル                                      |
-|       |                                                  |
-|       v                                                  |
-|  6. アラート・対応 (Alerting & Response)                   |
-|  +-- チケット自動生成                                    |
-|  +-- SOAR 連携（自動対応）                               |
-|  +-- ダッシュボード更新                                  |
-+----------------------------------------------------------+
-```
+SIEM の内部処理は以下の6段階で構成される:
+
+1. **収集** — Syslog, API, Agent 等からログを取り込み
+2. **パース・正規化** — ECS / OCSF 等の共通スキーマに変換
+3. **エンリッチメント** — GeoIP、脅威インテリジェンス、ユーザ情報を付与
+4. **インデックス・保存** — 全文検索インデックスの構築と時系列データの最適化
+5. **相関分析** — ルールベース、統計的異常検知、機械学習モデルによるマッチング
+6. **アラート・対応** — チケット自動生成、SOAR 連携、ダッシュボード更新
 
 ### SIEM ツールの比較
 
@@ -959,39 +806,7 @@ engine.register_rule(impossible_travel_rule)
 
 ## 4. 異常検知
 
-### ルールベース vs 機械学習ベース
-
-```
-+----------------------------------------------------------+
-|          異常検知アプローチの詳細比較                       |
-|----------------------------------------------------------|
-|                                                          |
-|  ルールベース検知:                                         |
-|  +-- 既知の攻撃パターンに効果的                            |
-|  +-- 偽陽性の制御が容易                                   |
-|  +-- 新規の攻撃パターンには対応不可                        |
-|  +-- 例: "5分間にSSHログイン失敗10回以上"                 |
-|  +-- メリット: 透明性が高い、チューニングが容易            |
-|  +-- デメリット: 未知の脅威を検知できない                  |
-|                                                          |
-|  統計ベース検知:                                          |
-|  +-- ベースラインからの標準偏差を計算                     |
-|  +-- 比較的シンプルなモデル                               |
-|  +-- 例: "平均の3σ以上のAPIコール数"                      |
-|  +-- メリット: 解釈が容易、計算コストが低い               |
-|  +-- デメリット: 季節変動への対応が必要                   |
-|                                                          |
-|  機械学習ベース検知:                                       |
-|  +-- ベースラインからの逸脱を検知                         |
-|  +-- 未知の攻撃パターンにも対応可能                       |
-|  +-- 偽陽性のチューニングが必要                           |
-|  +-- 例: "通常と異なるデータ転送パターン"                 |
-|  +-- メリット: 複雑なパターンを自動学習                   |
-|  +-- デメリット: ブラックボックス化のリスク               |
-+----------------------------------------------------------+
-```
-
-### 検知手法の比較表
+### 検知手法の比較
 
 | 項目 | ルールベース | 統計ベース | 教師なしML | 教師ありML |
 |------|-----------|----------|----------|----------|
@@ -1005,42 +820,10 @@ engine.register_rule(impossible_travel_rule)
 
 ### 検知すべき異常パターン
 
-```
-+----------------------------------------------------------+
-|            セキュリティ異常検知パターン                      |
-|----------------------------------------------------------|
-|                                                          |
-|  [認証・アクセス]                                          |
-|  +-- 短時間の大量ログイン失敗 (ブルートフォース)            |
-|  +-- 通常と異なる時間帯のアクセス                          |
-|  +-- 地理的に不可能なログイン (Impossible Travel)          |
-|  +-- 権限昇格の試行                                      |
-|  +-- 普段と異なるユーザーエージェント                     |
-|  +-- 休日・深夜のアクセス                                |
-|                                                          |
-|  [データ]                                                 |
-|  +-- 大量データの外部転送 (Exfiltration)                  |
-|  +-- 通常と異なるDB クエリパターン                         |
-|  +-- 機密データへの異常なアクセス頻度                       |
-|  +-- バックアップデータへの予期しないアクセス               |
-|  +-- データベースのスキーマ変更                            |
-|                                                          |
-|  [ネットワーク]                                           |
-|  +-- C2 通信パターン (ビーコニング)                        |
-|  +-- DNS トンネリング                                     |
-|  +-- ポートスキャン                                       |
-|  +-- 内部ネットワークのラテラルムーブメント                  |
-|  +-- 通常使用しないプロトコルの通信                       |
-|  +-- 暗号化されたトラフィックの急増                       |
-|                                                          |
-|  [システム]                                               |
-|  +-- プロセスの異常な動作                                 |
-|  +-- ファイルの大量暗号化 (ランサムウェア)                  |
-|  +-- 設定変更 (CloudTrail 無効化等)                       |
-|  +-- 予期しないサービスの起動                             |
-|  +-- カーネルモジュールのロード                           |
-+----------------------------------------------------------+
-```
+- **認証・アクセス**: ブルートフォース、通常と異なる時間帯のアクセス、Impossible Travel、権限昇格の試行
+- **データ**: 大量データの外部転送 (Exfiltration)、異常な DB クエリパターン、機密データへの異常なアクセス頻度
+- **ネットワーク**: C2 通信パターン（ビーコニング）、DNS トンネリング、ポートスキャン、ラテラルムーブメント
+- **システム**: プロセスの異常な動作、ファイルの大量暗号化（ランサムウェア）、設定変更（CloudTrail 無効化等）
 
 ### CloudWatch Metric Filter + アラーム
 
@@ -1338,224 +1121,32 @@ if result and result.is_anomaly:
 
 ### セキュリティダッシュボードの構成
 
-```
-+----------------------------------------------------------+
-|  Security Operations Dashboard                           |
-|----------------------------------------------------------|
-|                                                          |
-|  [概要パネル]                                             |
-|  +-- アクティブアラート数 (Critical/High/Medium/Low)       |
-|  +-- 過去24時間のインシデント数                            |
-|  +-- 平均検知時間 (MTTD)                                  |
-|  +-- 平均対応時間 (MTTR)                                  |
-|  +-- セキュリティスコア (0-100)                            |
-|                                                          |
-|  [トレンドグラフ]                                         |
-|  +-- アラート推移 (日次/週次)                              |
-|  +-- ログインエラーの推移                                 |
-|  +-- ネットワークトラフィック量の推移                       |
-|  +-- 異常検知イベントの推移                               |
-|                                                          |
-|  [地理マップ]                                             |
-|  +-- ソース IP の地理分布                                 |
-|  +-- 異常な接続元の国別表示                               |
-|  +-- ブロックされた IP の分布                             |
-|                                                          |
-|  [テーブル]                                               |
-|  +-- 最新のアラート一覧                                   |
-|  +-- トップ攻撃者 IP                                      |
-|  +-- 最もアクセスされたエンドポイント                      |
-|  +-- 未対応の脆弱性一覧                                  |
-+----------------------------------------------------------+
-```
+Security Operations Dashboard は以下の4つのパネルグループで構成する:
+
+- **概要パネル**: アクティブアラート数、過去24時間のインシデント数、MTTD/MTTR、セキュリティスコア
+- **トレンドグラフ**: アラート推移、ログインエラー推移、ネットワークトラフィック量、異常検知イベント推移
+- **地理マップ**: ソース IP の地理分布、異常な接続元の国別表示
+- **テーブル**: 最新のアラート一覧、トップ攻撃者 IP、未対応の脆弱性一覧
 
 ### ダッシュボード設計のベストプラクティス
 
-```
-+----------------------------------------------------------+
-|          ダッシュボード設計の7原則                          |
-|----------------------------------------------------------|
-|                                                          |
-|  1. 5秒ルール                                             |
-|     → 画面を見て5秒以内に状況を把握できること             |
-|     → 重要な KPI は画面上部に大きく表示                   |
-|                                                          |
-|  2. アクション駆動                                        |
-|     → 「見るだけ」のデータは排除                         |
-|     → 各パネルに「何をすべきか」が明確                   |
-|                                                          |
-|  3. 階層化                                               |
-|     → 概要 → 詳細 → 生データのドリルダウン              |
-|     → エグゼクティブ向け / アナリスト向けの分離           |
-|                                                          |
-|  4. リアルタイム性                                        |
-|     → Critical アラートは 1分以内に反映                   |
-|     → トレンドは 5分間隔で更新                           |
-|                                                          |
-|  5. コンテキスト                                          |
-|     → 数値には比較対象を付ける（前日比、前週比）          |
-|     → 閾値を超えたら色で強調                             |
-|                                                          |
-|  6. ノイズ排除                                            |
-|     → 情報過多を避ける（1画面に7個以下のパネル）         |
-|     → フィルタリング機能の提供                           |
-|                                                          |
-|  7. 一貫性                                               |
-|     → 色の意味を統一（赤=Critical, 黄=Warning等）        |
-|     → 時間軸の統一                                      |
-+----------------------------------------------------------+
-```
+1. **5秒ルール** — 画面を見て5秒以内に状況を把握できること。重要な KPI は画面上部に大きく表示
+2. **アクション駆動** — 「見るだけ」のデータは排除し、各パネルに「何をすべきか」が明確であること
+3. **階層化** — 概要 → 詳細 → 生データのドリルダウン。エグゼクティブ向け / アナリスト向けを分離
+4. **リアルタイム性** — Critical アラートは 1分以内に反映、トレンドは 5分間隔で更新
+5. **コンテキスト** — 数値には比較対象（前日比、前週比）を付け、閾値超過は色で強調
+6. **ノイズ排除** — 1画面に7個以下のパネル、フィルタリング機能を提供
+7. **一貫性** — 色の意味を統一（赤=Critical, 黄=Warning 等）、時間軸を統一
 
-### OpenSearch Dashboards のセキュリティダッシュボード構築
+### OpenSearch Dashboards の主要ビジュアライゼーション
 
-```python
-# コード例5: OpenSearch ダッシュボードの自動構築スクリプト
-import json
-import requests
-from typing import Dict, List
+セキュリティダッシュボードには以下のビジュアライゼーションを含める:
 
-class SecurityDashboardBuilder:
-    """OpenSearch Dashboards のセキュリティダッシュボード自動構築"""
+1. **Failed Login Attempts Over Time** — `login_failed` イベントの5分間隔の時系列折れ線グラフ
+2. **Top Attacking IPs** — `sourceIp` フィールドの terms 集約によるトップ10テーブル
+3. **Attack Source Geographic Distribution** — `geoLocation` フィールドの geohash_grid によるタイルマップ
 
-    def __init__(self, opensearch_url: str, auth: tuple):
-        self.url = opensearch_url
-        self.auth = auth
-        self.headers = {"Content-Type": "application/json"}
-
-    def create_index_pattern(self, pattern: str, time_field: str):
-        """インデックスパターンの作成"""
-        body = {
-            "attributes": {
-                "title": pattern,
-                "timeFieldName": time_field,
-            }
-        }
-        requests.post(
-            f"{self.url}/api/saved_objects/index-pattern/{pattern}",
-            json=body, auth=self.auth, headers=self.headers,
-        )
-
-    def create_failed_login_visualization(self) -> dict:
-        """ログイン失敗の時系列グラフ"""
-        return {
-            "title": "Failed Login Attempts Over Time",
-            "visState": json.dumps({
-                "title": "Failed Login Attempts",
-                "type": "line",
-                "aggs": [
-                    {
-                        "id": "1",
-                        "type": "count",
-                        "schema": "metric",
-                    },
-                    {
-                        "id": "2",
-                        "type": "date_histogram",
-                        "schema": "segment",
-                        "params": {
-                            "field": "@timestamp",
-                            "interval": "5m",
-                        },
-                    },
-                ],
-                "params": {
-                    "seriesParams": [{
-                        "show": True,
-                        "type": "line",
-                        "mode": "normal",
-                    }],
-                },
-            }),
-            "kibanaSavedObjectMeta": {
-                "searchSourceJSON": json.dumps({
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {"match": {"event": "login_failed"}}
-                            ]
-                        }
-                    },
-                    "index": "security-events-*",
-                }),
-            },
-        }
-
-    def create_top_attackers_table(self) -> dict:
-        """攻撃元 IP トップ10テーブル"""
-        return {
-            "title": "Top Attacking IPs",
-            "visState": json.dumps({
-                "title": "Top Attacking IPs",
-                "type": "table",
-                "aggs": [
-                    {
-                        "id": "1",
-                        "type": "count",
-                        "schema": "metric",
-                        "params": {"customLabel": "Attack Count"},
-                    },
-                    {
-                        "id": "2",
-                        "type": "terms",
-                        "schema": "bucket",
-                        "params": {
-                            "field": "sourceIp.keyword",
-                            "size": 10,
-                            "order": "desc",
-                            "orderBy": "1",
-                            "customLabel": "Source IP",
-                        },
-                    },
-                ],
-            }),
-        }
-
-    def create_geo_map(self) -> dict:
-        """攻撃元の地理分布マップ"""
-        return {
-            "title": "Attack Source Geographic Distribution",
-            "visState": json.dumps({
-                "title": "Attack Sources Map",
-                "type": "tile_map",
-                "aggs": [
-                    {
-                        "id": "1",
-                        "type": "count",
-                        "schema": "metric",
-                    },
-                    {
-                        "id": "2",
-                        "type": "geohash_grid",
-                        "schema": "segment",
-                        "params": {
-                            "field": "geoLocation",
-                            "precision": 3,
-                        },
-                    },
-                ],
-            }),
-        }
-
-    def build_security_dashboard(self):
-        """セキュリティダッシュボードの構築"""
-        self.create_index_pattern("security-events-*", "@timestamp")
-
-        visualizations = [
-            self.create_failed_login_visualization(),
-            self.create_top_attackers_table(),
-            self.create_geo_map(),
-        ]
-
-        for viz in visualizations:
-            requests.post(
-                f"{self.url}/api/saved_objects/visualization",
-                json={"attributes": viz},
-                auth=self.auth,
-                headers=self.headers,
-            )
-
-        print(f"Dashboard created with {len(visualizations)} visualizations")
-```
+これらは OpenSearch Dashboards の Saved Objects API (`/api/saved_objects/visualization`) でプログラム的に作成できる。
 
 ---
 
@@ -1563,36 +1154,12 @@ class SecurityDashboardBuilder:
 
 ### 階層型ストレージ設計
 
-```
-+----------------------------------------------------------+
-|          ログの階層型ストレージ戦略                         |
-|----------------------------------------------------------|
-|                                                          |
-|  Hot Tier (0-30日)                                       |
-|  +-- ストレージ: OpenSearch / Elasticsearch               |
-|  +-- 特性: 即座に検索可能、高コスト                       |
-|  +-- 用途: リアルタイム分析、アラート検知                 |
-|  +-- コスト: ~$0.10/GB/月（インスタンスコスト含む）       |
-|                                                          |
-|  Warm Tier (30-90日)                                      |
-|  +-- ストレージ: S3 Standard + Athena                     |
-|  +-- 特性: SQL クエリで検索、中コスト                     |
-|  +-- 用途: インシデント調査、フォレンジック               |
-|  +-- コスト: ~$0.023/GB/月                               |
-|                                                          |
-|  Cold Tier (90-365日)                                     |
-|  +-- ストレージ: S3 Infrequent Access                     |
-|  +-- 特性: アクセス料金あり、低コスト                     |
-|  +-- 用途: コンプライアンス要件の充足                     |
-|  +-- コスト: ~$0.0125/GB/月                              |
-|                                                          |
-|  Archive Tier (365日以上)                                  |
-|  +-- ストレージ: S3 Glacier Deep Archive                  |
-|  +-- 特性: 復元に12時間、最低コスト                      |
-|  +-- 用途: 法的保持要件、訴訟対応                        |
-|  +-- コスト: ~$0.00099/GB/月                             |
-+----------------------------------------------------------+
-```
+| Tier | 保持期間 | ストレージ | コスト/GB/月 | 用途 |
+|------|---------|-----------|-------------|------|
+| Hot | 0-30日 | OpenSearch | ~$0.10 | リアルタイム分析、アラート検知 |
+| Warm | 30-90日 | S3 Standard + Athena | ~$0.023 | インシデント調査、フォレンジック |
+| Cold | 90-365日 | S3 Infrequent Access | ~$0.0125 | コンプライアンス要件の充足 |
+| Archive | 365日以上 | S3 Glacier Deep Archive | ~$0.00099 | 法的保持要件、訴訟対応 |
 
 ### S3 ライフサイクルポリシーの設定
 
@@ -1845,52 +1412,7 @@ OK:
 
 ---
 
-## 9. 演習
-
-### 演習 1: 基礎 — 構造化ログの実装
-
-以下の要件を満たす構造化ログシステムを構築せよ:
-
-1. JSON 形式でログを出力する Python ロガーを実装
-2. トレース ID、リクエスト ID を自動的に付与
-3. 機密データ（password, token, api_key）を自動マスク
-4. ログレベル別のフィルタリング機能を実装
-
-**検証ポイント:**
-- ログが JSON として正しくパースできること
-- 機密フィールドがマスクされていること
-- コンテキスト情報が正しく付与されていること
-
-### 演習 2: 応用 — SIEM 相関ルールの設計
-
-以下の攻撃シナリオを検知する Sigma ルールを作成せよ:
-
-1. 認証情報のスプレー攻撃（複数ユーザに対する同一パスワードでのログイン試行）
-2. 権限昇格の試行（通常ユーザが管理者操作を実行）
-3. データ流出の兆候（営業時間外の大量データダウンロード）
-
-**検証ポイント:**
-- Sigma CLI で構文エラーがないこと
-- 偽陽性のシナリオを 2 つ以上列挙していること
-- MITRE ATT&CK の TTP がタグ付けされていること
-
-### 演習 3: 発展 — 異常検知システムの構築
-
-以下の要件を満たす異常検知プロトタイプを構築せよ:
-
-1. 統計的ベースライン検知（Zスコアベース）を実装
-2. 少なくとも 3 種類のメトリクス（API コール数、データ転送量、ログイン試行数）を監視
-3. ベースラインの動的更新（スライディングウィンドウ）を実装
-4. 異常検知結果を Slack / PagerDuty に通知する機能を実装
-
-**検証ポイント:**
-- 通常値で異常アラートが発生しないこと
-- 異常値で確実にアラートが発生すること
-- ベースラインが時間経過とともに更新されること
-
----
-
-## 10. FAQ
+## 9. FAQ
 
 ### Q1. SIEM のログ保存期間はどのくらい必要か?
 
@@ -1908,17 +1430,9 @@ PCI DSS では 1 年間（直近 3 ヶ月は即座に検索可能）、SOC 2 で
 
 可能な限り統一すべきである。ECS (Elastic Common Schema) や OCSF (Open Cybersecurity Schema Framework) などの共通スキーマを採用することで、異なるソースからのログを一貫して分析できる。既存のログフォーマットを変更できない場合は、SIEM 側でパーサーを使って正規化する。
 
-### Q5. ログの暗号化は必要か?
-
-セキュリティログには個人情報や認証情報が含まれる可能性があるため、保存時暗号化（SSE-KMS）と転送時暗号化（TLS）の両方が必要である。特にコンプライアンス要件（PCI DSS、HIPAA）がある場合は必須である。暗号化キーの管理には AWS KMS を使用し、キーのローテーションも設定する。
-
-### Q6. マルチクラウド環境のログ集約はどうするか?
-
-Amazon Security Lake は OCSF スキーマに基づいてマルチクラウドのログを統合する。あるいは、各クラウドのログを共通のバケット（S3）に集約し、Athena や OpenSearch で横断検索する方法もある。ログ転送にはリージョン間のネットワーク料金を考慮する必要がある。
-
 ---
 
-## 11. トラブルシューティング
+## 10. トラブルシューティング
 
 ### よくある問題と対処法
 

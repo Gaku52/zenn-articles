@@ -416,51 +416,15 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 ### クロスアカウントアクセスの設定
 
-```json
-// Account A (リソース保有側) のロール信頼ポリシー
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::111122223333:role/CrossAccountRole"
-            },
-            "Action": "sts:AssumeRole",
-            "Condition": {
-                "StringEquals": {
-                    "sts:ExternalId": "unique-external-id-12345"
-                }
-            }
-        }
-    ]
-}
+クロスアカウントアクセスは IAM ロールの AssumeRole で実現する。
+
 ```
-
-```python
-# Account B (アクセス元) からのクロスアカウントアクセス
-import boto3
-
-# STS でクロスアカウントロールを引き受ける
-sts = boto3.client('sts')
-assumed_role = sts.assume_role(
-    RoleArn='arn:aws:iam::999888777666:role/CrossAccountS3Access',
-    RoleSessionName='cross-account-session',
-    ExternalId='unique-external-id-12345',
-    DurationSeconds=3600  # 1時間
-)
-
-# 一時的認証情報を使って S3 にアクセス
-credentials = assumed_role['Credentials']
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=credentials['AccessKeyId'],
-    aws_secret_access_key=credentials['SecretAccessKey'],
-    aws_session_token=credentials['SessionToken']
-)
-
-# これで Account A の S3 バケットにアクセス可能
-response = s3.list_objects_v2(Bucket='account-a-bucket')
+設定手順:
+1. Account A: 信頼ポリシーで Account B のロールを Principal に指定
+   - ExternalId 条件で混乱した代理人問題を防止
+2. Account B: sts:AssumeRole で Account A のロールを引き受ける
+   - 一時的認証情報 (AccessKeyId, SecretAccessKey, SessionToken) を取得
+   - DurationSeconds で有効期限を設定 (最大 12 時間)
 ```
 
 ### マルチアカウント戦略
@@ -489,94 +453,21 @@ response = s3.list_objects_v2(Bucket='account-a-bucket')
 
 ### SCP (Service Control Policy) の実践例
 
-```json
-// 全アカウントに適用する SCP の例
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "DenyRegionOutsideAPNE1",
-            "Effect": "Deny",
-            "Action": "*",
-            "Resource": "*",
-            "Condition": {
-                "StringNotEquals": {
-                    "aws:RequestedRegion": [
-                        "ap-northeast-1",
-                        "us-east-1"
-                    ]
-                },
-                "ArnNotLike": {
-                    "aws:PrincipalARN": "arn:aws:iam::*:role/OrganizationAdmin"
-                }
-            }
-        },
-        {
-            "Sid": "DenyLeaveOrganization",
-            "Effect": "Deny",
-            "Action": "organizations:LeaveOrganization",
-            "Resource": "*"
-        },
-        {
-            "Sid": "DenyDisableSecurityServices",
-            "Effect": "Deny",
-            "Action": [
-                "guardduty:DeleteDetector",
-                "guardduty:DisassociateFromMasterAccount",
-                "config:StopConfigurationRecorder",
-                "config:DeleteConfigurationRecorder",
-                "cloudtrail:StopLogging",
-                "cloudtrail:DeleteTrail"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "DenyRootAccount",
-            "Effect": "Deny",
-            "Action": "*",
-            "Resource": "*",
-            "Condition": {
-                "StringLike": {
-                    "aws:PrincipalArn": "arn:aws:iam::*:root"
-                }
-            }
-        }
-    ]
-}
+SCP で全アカウントに適用すべき制限:
+
+```
+必須 SCP ルール:
+  1. リージョン制限: 許可リージョン以外での操作を Deny
+  2. 組織離脱の防止: LeaveOrganization を Deny
+  3. セキュリティサービスの無効化防止:
+     GuardDuty, Config, CloudTrail の停止・削除を Deny
+  4. ルートアカウント使用の禁止: root の全操作を Deny
+     (管理アカウントの OrganizationAdmin ロールは例外)
 ```
 
 ### AWS IAM Identity Center (旧 SSO) の設定
 
-```
-+----------------------------------------------------------+
-|  IAM Identity Center のアーキテクチャ                       |
-|                                                          |
-|  [IdP: 外部 ID プロバイダ]                                 |
-|  (Okta / Azure AD / Google Workspace)                    |
-|       |                                                  |
-|       | SAML 2.0 / SCIM                                  |
-|       v                                                  |
-|  [IAM Identity Center]                                   |
-|       |                                                  |
-|       +-- Permission Set A (管理者)                       |
-|       |   +-- AWS Account: Production                    |
-|       |   +-- Policy: AdministratorAccess                |
-|       |                                                  |
-|       +-- Permission Set B (開発者)                       |
-|       |   +-- AWS Account: Development                   |
-|       |   +-- Policy: PowerUserAccess                    |
-|       |                                                  |
-|       +-- Permission Set C (読み取り専用)                  |
-|           +-- AWS Account: Production, Staging           |
-|           +-- Policy: ReadOnlyAccess                     |
-|                                                          |
-|  利点:                                                   |
-|  - 一箇所でアクセスを一元管理                               |
-|  - 一時的認証情報を自動発行                                 |
-|  - 長期アクセスキーが不要                                   |
-|  - 退職時のアクセス無効化が即座に可能                        |
-+----------------------------------------------------------+
-```
+外部 IdP (Okta / Azure AD 等) と SAML 2.0 / SCIM で連携し、Permission Set でアカウントごとの権限を定義する。一時的認証情報を自動発行するため長期アクセスキーが不要になり、退職時のアクセス無効化も即座に可能。
 
 ---
 
@@ -723,197 +614,59 @@ del fernet_key
 
 ### KMS キーポリシーの設計
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "Enable IAM policies for key management",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::123456789012:root"
-            },
-            "Action": "kms:*",
-            "Resource": "*"
-        },
-        {
-            "Sid": "Allow key administrators",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::123456789012:role/KeyAdminRole"
-            },
-            "Action": [
-                "kms:Create*",
-                "kms:Describe*",
-                "kms:Enable*",
-                "kms:List*",
-                "kms:Put*",
-                "kms:Update*",
-                "kms:Revoke*",
-                "kms:Disable*",
-                "kms:Get*",
-                "kms:Delete*",
-                "kms:ScheduleKeyDeletion",
-                "kms:CancelKeyDeletion"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "Allow key usage for encryption",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::123456789012:role/AppServiceRole"
-            },
-            "Action": [
-                "kms:Encrypt",
-                "kms:Decrypt",
-                "kms:ReEncrypt*",
-                "kms:GenerateDataKey*",
-                "kms:DescribeKey"
-            ],
-            "Resource": "*",
-            "Condition": {
-                "StringEquals": {
-                    "kms:ViaService": "s3.ap-northeast-1.amazonaws.com"
-                }
-            }
-        }
-    ]
-}
+KMS キーポリシーでは、管理者と利用者の権限を分離する。
+
+```
+キーポリシー設計の要点:
+  1. root アカウントに kms:* を許可 (IAM ポリシーとの連携用)
+  2. KeyAdminRole: 鍵の作成・ローテーション・削除を許可
+  3. AppServiceRole: Encrypt, Decrypt, GenerateDataKey* のみ許可
+     - Condition で kms:ViaService を指定し、特定サービス経由のみに限定
+  → 管理者は鍵を管理するが暗号化できない
+  → アプリは暗号化できるが鍵を管理できない (職務分離)
 ```
 
 ### S3 バケットのセキュリティ設定
 
-```python
-import boto3
-import json
+```
+S3 セキュリティ必須設定チェックリスト:
++----------------------------------------------------------+
+| 設定項目                        | 内容                     |
+|----------------------------------------------------------+
+| デフォルト暗号化                | SSE-KMS + BucketKey 有効 |
+| パブリックアクセスブロック       | 4 項目すべて True        |
+| バケットポリシー                | HTTPS のみ許可 (Deny HTTP)|
+| バージョニング                  | 有効化 (誤削除・改ざん対策)|
+| オブジェクトロック              | GOVERNANCE or COMPLIANCE |
++----------------------------------------------------------+
+```
 
-s3 = boto3.client('s3')
-
-# デフォルト暗号化の設定
-s3.put_bucket_encryption(
-    Bucket='my-secure-bucket',
-    ServerSideEncryptionConfiguration={
-        'Rules': [{
-            'ApplyServerSideEncryptionByDefault': {
-                'SSEAlgorithm': 'aws:kms',
-                'KMSMasterKeyID': 'arn:aws:kms:ap-northeast-1:123456:key/xxx',
-            },
-            'BucketKeyEnabled': True,  # コスト削減
-        }]
-    },
-)
-
-# パブリックアクセスブロック
-s3.put_public_access_block(
-    Bucket='my-secure-bucket',
-    PublicAccessBlockConfiguration={
-        'BlockPublicAcls': True,
-        'IgnorePublicAcls': True,
-        'BlockPublicPolicy': True,
-        'RestrictPublicBuckets': True,
-    },
-)
-
-# バケットポリシー: HTTPS のみ許可
-bucket_policy = {
+```json
+// バケットポリシー: HTTPS のみ許可の例
+{
     "Version": "2012-10-17",
     "Statement": [{
         "Sid": "DenyHTTP",
         "Effect": "Deny",
         "Principal": "*",
         "Action": "s3:*",
-        "Resource": [
-            "arn:aws:s3:::my-secure-bucket",
-            "arn:aws:s3:::my-secure-bucket/*",
-        ],
-        "Condition": {
-            "Bool": {"aws:SecureTransport": "false"}
-        }
+        "Resource": ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"],
+        "Condition": {"Bool": {"aws:SecureTransport": "false"}}
     }]
 }
-
-s3.put_bucket_policy(
-    Bucket='my-secure-bucket',
-    Policy=json.dumps(bucket_policy)
-)
-
-# バージョニングの有効化 (誤削除・改ざん対策)
-s3.put_bucket_versioning(
-    Bucket='my-secure-bucket',
-    VersioningConfiguration={
-        'Status': 'Enabled'
-    }
-)
-
-# オブジェクトロック設定 (ランサムウェア対策)
-# ※ バケット作成時にのみ有効化可能
-s3.put_object_lock_configuration(
-    Bucket='my-secure-bucket',
-    ObjectLockConfiguration={
-        'ObjectLockEnabled': 'Enabled',
-        'Rule': {
-            'DefaultRetention': {
-                'Mode': 'GOVERNANCE',  # or 'COMPLIANCE'
-                'Days': 365
-            }
-        }
-    }
-)
 ```
 
 ### RDS / データベースの暗号化
 
-```python
-# Terraform での RDS 暗号化設定
-"""
-resource "aws_db_instance" "main" {
-  identifier     = "my-secure-db"
-  engine         = "postgres"
-  engine_version = "15.4"
-  instance_class = "db.r6g.large"
-
-  # 暗号化設定
-  storage_encrypted = true
-  kms_key_id       = aws_kms_key.rds_key.arn
-
-  # ネットワークセキュリティ
-  db_subnet_group_name   = aws_db_subnet_group.private.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  publicly_accessible    = false
-
-  # SSL 強制
-  parameter_group_name = aws_db_parameter_group.ssl_required.name
-
-  # 自動バックアップ
-  backup_retention_period = 35
-  backup_window          = "03:00-04:00"
-
-  # 削除保護
-  deletion_protection = true
-
-  # 拡張モニタリング
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
-
-  # ログのエクスポート
-  enabled_cloudwatch_logs_exports = [
-    "postgresql",
-    "upgrade"
-  ]
-}
-
-# SSL 接続を強制するパラメータグループ
-resource "aws_db_parameter_group" "ssl_required" {
-  family = "postgres15"
-  name   = "ssl-required"
-
-  parameter {
-    name  = "rds.force_ssl"
-    value = "1"
-  }
-}
-"""
+```
+RDS セキュリティ設定の要点:
+  - storage_encrypted = true (KMS キー指定)
+  - publicly_accessible = false (プライベートサブネットのみ)
+  - rds.force_ssl = 1 (SSL 接続を強制)
+  - deletion_protection = true
+  - backup_retention_period = 35 (自動バックアップ)
+  - monitoring_interval = 60 (拡張モニタリング)
+  - CloudWatch Logs へのログエクスポート
 ```
 
 ### シークレット管理
@@ -1016,30 +769,7 @@ resource "aws_secretsmanager_secret_rotation" "db_rotation" {
 
 ### マルチ AZ 構成のセキュリティ設計
 
-```
-+----------------------------------------------------------+
-|  VPC (10.0.0.0/16) - マルチ AZ 設計                        |
-|                                                          |
-|  AZ-a                          AZ-c                      |
-|  +------------------------+  +------------------------+  |
-|  | Public (10.0.1.0/24)   |  | Public (10.0.4.0/24)   |  |
-|  | +-- ALB Node           |  | +-- ALB Node           |  |
-|  | +-- NAT GW             |  | +-- NAT GW             |  |
-|  +------------------------+  +------------------------+  |
-|  | Private (10.0.2.0/24)  |  | Private (10.0.5.0/24)  |  |
-|  | +-- App Server 1       |  | +-- App Server 2       |  |
-|  +------------------------+  +------------------------+  |
-|  | Data (10.0.3.0/24)     |  | Data (10.0.6.0/24)     |  |
-|  | +-- RDS Primary        |  | +-- RDS Standby        |  |
-|  +------------------------+  +------------------------+  |
-|                                                          |
-|  セキュリティ設計ポイント:                                 |
-|  - 各層にサブネットを配置 (パブリック/プライベート/データ)   |
-|  - 各 AZ で同じ構成を冗長化                                |
-|  - データサブネットは外部接続なし (ルートテーブルなし)       |
-|  - VPC Flow Logs を全サブネットで有効化                    |
-+----------------------------------------------------------+
-```
+マルチ AZ では各 AZ に Public/Private/Data の 3 層サブネットを冗長配置する。セキュリティ設計ポイント: 各層で同じセキュリティグループ構成を適用、データサブネットは外部接続なし (ルートテーブルなし)、VPC Flow Logs を全サブネットで有効化。
 
 ### セキュリティグループとネットワーク ACL の使い分け
 
@@ -1062,83 +792,12 @@ resource "aws_secretsmanager_secret_rotation" "db_rotation" {
   - ネットワーク ACL: 追加の防御層 (特定 IP の明示的拒否)
 ```
 
-```hcl
-# Terraform でのセキュリティグループ設計例
-resource "aws_security_group" "alb_sg" {
-  name        = "alb-security-group"
-  description = "ALB security group"
-  vpc_id      = aws_vpc.main.id
-
-  # HTTPS のみ許可
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS from internet"
-  }
-
-  # HTTP → HTTPS リダイレクト用
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP redirect"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "app_sg" {
-  name        = "app-security-group"
-  description = "Application server security group"
-  vpc_id      = aws_vpc.main.id
-
-  # ALB からのみ受信
-  ingress {
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-    description     = "Traffic from ALB only"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "db_sg" {
-  name        = "db-security-group"
-  description = "Database security group"
-  vpc_id      = aws_vpc.main.id
-
-  # アプリサーバからのみ受信
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_sg.id]
-    description     = "PostgreSQL from app servers only"
-  }
-
-  # 外部への通信は不要
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+```
+セキュリティグループのチェーン設計例:
+  ALB SG:  ingress 443/tcp from 0.0.0.0/0 (HTTPS のみ)
+  App SG:  ingress 8080/tcp from ALB SG (ALB からのみ)
+  DB SG:   ingress 5432/tcp from App SG (アプリからのみ)
+  → SG 参照で通信を層ごとに制限 (CIDR ではなく SG ID で指定)
 ```
 
 ### VPC Endpoints の活用
@@ -1166,78 +825,20 @@ resource "aws_security_group" "db_sg" {
 +----------------------------------------------------------+
 ```
 
-```json
-// VPC エンドポイントポリシーの例: 特定バケットのみアクセス許可
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowSpecificBucketOnly",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::my-app-bucket",
-                "arn:aws:s3:::my-app-bucket/*"
-            ]
-        }
-    ]
-}
-```
+VPC エンドポイントポリシーで、アクセス可能なリソースを特定バケットのみに制限することも可能。
 
 ### VPC Flow Logs の活用
 
-```python
-# Terraform での VPC Flow Logs 設定
-"""
-resource "aws_flow_log" "vpc_flow_log" {
-  iam_role_arn    = aws_iam_role.flow_log_role.arn
-  log_destination = aws_cloudwatch_log_group.flow_log.arn
-  traffic_type    = "ALL"  # ACCEPT, REJECT, ALL
-  vpc_id          = aws_vpc.main.id
+```
+VPC Flow Logs 設定の要点:
+  - traffic_type: ALL (ACCEPT + REJECT の両方を記録)
+  - 配信先: CloudWatch Logs (KMS 暗号化)
+  - 保持期間: 90 日以上
+  - max_aggregation_interval: 60 秒
 
-  # カスタムログフォーマット
-  log_format = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status} $${vpc-id} $${subnet-id} $${az-id} $${sublocation-type} $${sublocation-id}"
-
-  max_aggregation_interval = 60  # 1分間隔
-}
-
-resource "aws_cloudwatch_log_group" "flow_log" {
-  name              = "/vpc/flow-logs"
-  retention_in_days = 90
-  kms_key_id        = aws_kms_key.log_key.arn
-}
-"""
-
-# Athena で VPC Flow Logs を分析するクエリ例
-"""
--- 拒否されたトラフィックの分析
-SELECT srcaddr, dstaddr, dstport, protocol,
-       SUM(packets) as total_packets,
-       SUM(bytes) as total_bytes
-FROM vpc_flow_logs
-WHERE action = 'REJECT'
-  AND date = '2024/01/15'
-GROUP BY srcaddr, dstaddr, dstport, protocol
-ORDER BY total_bytes DESC
-LIMIT 20;
-
--- 不審な外部通信の検出
-SELECT srcaddr, dstaddr, dstport,
-       SUM(bytes) as total_bytes
-FROM vpc_flow_logs
-WHERE srcaddr LIKE '10.%'
-  AND NOT dstaddr LIKE '10.%'
-  AND dstport NOT IN (443, 80, 53)
-  AND action = 'ACCEPT'
-GROUP BY srcaddr, dstaddr, dstport
-ORDER BY total_bytes DESC
-LIMIT 50;
-"""
+Athena での分析クエリ例:
+  - 拒否トラフィックの分析: action = 'REJECT' で集計
+  - 不審な外部通信の検出: 内部IP→外部IP で非標準ポート通信を検出
 ```
 
 ---
@@ -1326,50 +927,15 @@ LIMIT 50;
 
 ### AWS Config ルールによる継続的コンプライアンス
 
-```python
-# AWS Config カスタムルールの例 (Lambda で評価)
-import boto3
-import json
+AWS Config のマネージドルールとカスタムルール (Lambda) を組み合わせ、リソースの設定変更を継続的に評価する。カスタムルールでは Lambda 関数内で対象リソースの設定を確認し、`put_evaluations` で COMPLIANT / NON_COMPLIANT を報告する。
 
-def lambda_handler(event, context):
-    """
-    カスタム Config ルール: S3 バケットが暗号化されているか確認
-    """
-    config = boto3.client('config')
-
-    # 評価対象のリソース情報を取得
-    invoking_event = json.loads(event['invokingEvent'])
-    configuration_item = invoking_event['configurationItem']
-
-    bucket_name = configuration_item['resourceName']
-
-    # S3 暗号化の確認
-    s3 = boto3.client('s3')
-    try:
-        encryption = s3.get_bucket_encryption(Bucket=bucket_name)
-        compliance = 'COMPLIANT'
-        annotation = 'Bucket encryption is enabled'
-    except s3.exceptions.ClientError as e:
-        if 'ServerSideEncryptionConfigurationNotFoundError' in str(e):
-            compliance = 'NON_COMPLIANT'
-            annotation = 'Bucket encryption is NOT enabled'
-        else:
-            compliance = 'NOT_APPLICABLE'
-            annotation = f'Error checking encryption: {str(e)}'
-
-    # 評価結果を報告
-    config.put_evaluations(
-        Evaluations=[{
-            'ComplianceResourceType': configuration_item['resourceType'],
-            'ComplianceResourceId': configuration_item['resourceId'],
-            'ComplianceType': compliance,
-            'Annotation': annotation,
-            'OrderingTimestamp': configuration_item['configurationItemCaptureTime']
-        }],
-        ResultToken=event['resultToken']
-    )
-
-    return {'compliance': compliance}
+```
+推奨マネージドルール例:
+  - s3-bucket-server-side-encryption-enabled
+  - rds-storage-encrypted
+  - iam-root-access-key-check
+  - cloudtrail-enabled
+  - vpc-flow-logs-enabled
 ```
 
 ---
@@ -1400,127 +966,35 @@ def lambda_handler(event, context):
 +----------------------------------------------------------+
 ```
 
-```python
-# CloudTrail ログの Athena 分析クエリ例
+Athena を使った CloudTrail ログの分析クエリ例:
 
-# 1. IAM ポリシー変更の追跡
-"""
+```sql
+-- 未承認 API 呼び出しの検出
 SELECT eventtime, useridentity.arn, eventname,
-       requestparameters, responseelements
+       errorcode, sourceipaddress
 FROM cloudtrail_logs
-WHERE eventsource = 'iam.amazonaws.com'
-  AND eventname IN ('CreatePolicy', 'AttachRolePolicy',
-                     'AttachUserPolicy', 'PutRolePolicy',
-                     'PutUserPolicy')
-  AND eventtime > '2024-01-01'
-ORDER BY eventtime DESC;
-"""
-
-# 2. 未承認 API 呼び出しの検出
-"""
-SELECT eventtime, useridentity.arn, eventsource,
-       eventname, errorcode, errormessage,
-       sourceipaddress
-FROM cloudtrail_logs
-WHERE errorcode IN ('AccessDenied', 'UnauthorizedAccess',
-                     'Client.UnauthorizedAccess')
-  AND eventtime > '2024-01-01'
-ORDER BY eventtime DESC
-LIMIT 100;
-"""
-
-# 3. ルートアカウント使用の検出
-"""
-SELECT eventtime, eventname, sourceipaddress,
-       useragent, requestparameters
-FROM cloudtrail_logs
-WHERE useridentity.type = 'Root'
-  AND eventtype != 'AwsServiceEvent'
-ORDER BY eventtime DESC;
-"""
-
-# 4. コンソールログイン失敗の検出
-"""
-SELECT eventtime, useridentity.arn, sourceipaddress,
-       errorcode, errormessage
-FROM cloudtrail_logs
-WHERE eventname = 'ConsoleLogin'
-  AND responseelements LIKE '%Failure%'
-ORDER BY eventtime DESC
-LIMIT 50;
-"""
+WHERE errorcode IN ('AccessDenied', 'UnauthorizedAccess')
+ORDER BY eventtime DESC LIMIT 100;
 ```
+
+他に実装すべきクエリ: IAM ポリシー変更の追跡、ルートアカウント使用の検出、コンソールログイン失敗の検出。
 
 ### CloudWatch によるセキュリティモニタリング
 
-```python
-# CloudWatch メトリクスフィルタとアラームの設定 (Terraform)
-"""
-# ルートアカウント使用の検出
-resource "aws_cloudwatch_log_metric_filter" "root_usage" {
-  name           = "root-account-usage"
-  log_group_name = aws_cloudwatch_log_group.cloudtrail.name
-  pattern        = "{ $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }"
+CloudTrail ログに対してメトリクスフィルタを設定し、重要なイベントを検出する。
 
-  metric_transformation {
-    name      = "RootAccountUsageCount"
-    namespace = "SecurityMetrics"
-    value     = "1"
-  }
-}
-
-resource "aws_cloudwatch_metric_alarm" "root_usage_alarm" {
-  alarm_name          = "root-account-usage-alarm"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "RootAccountUsageCount"
-  namespace           = "SecurityMetrics"
-  period              = 300
-  statistic           = "Sum"
-  threshold           = 0
-  alarm_description   = "Root account was used"
-  alarm_actions       = [aws_sns_topic.security_alerts.arn]
-}
-
-# MFA なしのコンソールログイン検出
-resource "aws_cloudwatch_log_metric_filter" "no_mfa_login" {
-  name           = "no-mfa-console-login"
-  log_group_name = aws_cloudwatch_log_group.cloudtrail.name
-  pattern        = "{ $.eventName = \"ConsoleLogin\" && $.additionalEventData.MFAUsed != \"Yes\" }"
-
-  metric_transformation {
-    name      = "NoMFALoginCount"
-    namespace = "SecurityMetrics"
-    value     = "1"
-  }
-}
-
-# セキュリティグループ変更の検出
-resource "aws_cloudwatch_log_metric_filter" "sg_changes" {
-  name           = "security-group-changes"
-  log_group_name = aws_cloudwatch_log_group.cloudtrail.name
-  pattern        = "{ $.eventName = \"AuthorizeSecurityGroupIngress\" || $.eventName = \"AuthorizeSecurityGroupEgress\" || $.eventName = \"RevokeSecurityGroupIngress\" || $.eventName = \"RevokeSecurityGroupEgress\" || $.eventName = \"CreateSecurityGroup\" || $.eventName = \"DeleteSecurityGroup\" }"
-
-  metric_transformation {
-    name      = "SecurityGroupChangeCount"
-    namespace = "SecurityMetrics"
-    value     = "1"
-  }
-}
-
-# IAM ポリシー変更の検出
-resource "aws_cloudwatch_log_metric_filter" "iam_changes" {
-  name           = "iam-policy-changes"
-  log_group_name = aws_cloudwatch_log_group.cloudtrail.name
-  pattern        = "{ $.eventName = \"CreatePolicy\" || $.eventName = \"DeletePolicy\" || $.eventName = \"AttachRolePolicy\" || $.eventName = \"DetachRolePolicy\" || $.eventName = \"AttachUserPolicy\" || $.eventName = \"DetachUserPolicy\" || $.eventName = \"AttachGroupPolicy\" || $.eventName = \"DetachGroupPolicy\" }"
-
-  metric_transformation {
-    name      = "IAMPolicyChangeCount"
-    namespace = "SecurityMetrics"
-    value     = "1"
-  }
-}
-"""
+```
+設定すべきメトリクスフィルタ:
++----------------------------------------------------------+
+| 検出対象                    | フィルタパターン (要点)       |
+|----------------------------------------------------------+
+| ルートアカウント使用         | userIdentity.type = "Root"  |
+| MFA なしコンソールログイン   | MFAUsed != "Yes"            |
+| セキュリティグループ変更     | AuthorizeSecurityGroup*     |
+| IAM ポリシー変更            | CreatePolicy, AttachRole*   |
+| CloudTrail 設定変更         | StopLogging, DeleteTrail    |
++----------------------------------------------------------+
+→ 各フィルタに CloudWatch Alarm + SNS 通知を設定
 ```
 
 ### コンプライアンスフレームワークとの対応
@@ -1607,153 +1081,28 @@ resource "aws_cloudwatch_log_metric_filter" "iam_changes" {
 +----------------------------------------------------------+
 ```
 
-### 自動封じ込めスクリプトの例
+### 自動封じ込めの要点
 
-```python
-import boto3
-import json
-from datetime import datetime
+EC2 インスタンスが侵害された場合の封じ込め手順:
 
-def auto_contain_compromised_instance(instance_id: str, region: str = 'ap-northeast-1'):
-    """
-    侵害が疑われる EC2 インスタンスの自動封じ込め
-
-    手順:
-    1. 証拠保全のためのスナップショット取得
-    2. 隔離用セキュリティグループにアタッチ
-    3. インスタンスメタデータの記録
-    4. 自動スケーリンググループから除外
-    """
-    ec2 = boto3.client('ec2', region_name=region)
-    timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
-
-    # 1. インスタンス情報の取得と記録
-    instance = ec2.describe_instances(InstanceIds=[instance_id])
-    reservation = instance['Reservations'][0]
-    instance_detail = reservation['Instances'][0]
-
-    print(f"[{timestamp}] Containing instance: {instance_id}")
-    print(f"  Private IP: {instance_detail.get('PrivateIpAddress')}")
-    print(f"  Public IP: {instance_detail.get('PublicIpAddress', 'None')}")
-    print(f"  VPC: {instance_detail.get('VpcId')}")
-
-    # 2. EBS ボリュームのスナップショット取得 (証拠保全)
-    for volume in instance_detail.get('BlockDeviceMappings', []):
-        vol_id = volume['Ebs']['VolumeId']
-        snapshot = ec2.create_snapshot(
-            VolumeId=vol_id,
-            Description=f'Forensic snapshot - {instance_id} - {timestamp}',
-            TagSpecifications=[{
-                'ResourceType': 'snapshot',
-                'Tags': [
-                    {'Key': 'Purpose', 'Value': 'forensic-evidence'},
-                    {'Key': 'IncidentDate', 'Value': timestamp},
-                    {'Key': 'SourceInstance', 'Value': instance_id}
-                ]
-            }]
-        )
-        print(f"  Snapshot created: {snapshot['SnapshotId']} for {vol_id}")
-
-    # 3. 隔離用セキュリティグループの作成 (全通信遮断)
-    vpc_id = instance_detail['VpcId']
-    isolation_sg = ec2.create_security_group(
-        GroupName=f'isolation-{instance_id}-{timestamp}',
-        Description=f'Isolation SG for {instance_id}',
-        VpcId=vpc_id
-    )
-    isolation_sg_id = isolation_sg['GroupId']
-
-    # デフォルトの egress ルールを削除 (完全隔離)
-    ec2.revoke_security_group_egress(
-        GroupId=isolation_sg_id,
-        IpPermissions=[{
-            'IpProtocol': '-1',
-            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-        }]
-    )
-
-    # 4. セキュリティグループを隔離用に変更
-    ec2.modify_instance_attribute(
-        InstanceId=instance_id,
-        Groups=[isolation_sg_id]
-    )
-    print(f"  Instance isolated with SG: {isolation_sg_id}")
-
-    # 5. タグの追加 (調査用)
-    ec2.create_tags(
-        Resources=[instance_id],
-        Tags=[
-            {'Key': 'SecurityStatus', 'Value': 'ISOLATED'},
-            {'Key': 'IsolationDate', 'Value': timestamp},
-            {'Key': 'OriginalSGs', 'Value': json.dumps(
-                [sg['GroupId'] for sg in instance_detail.get('SecurityGroups', [])]
-            )}
-        ]
-    )
-
-    print(f"[{timestamp}] Containment complete for {instance_id}")
-    return {
-        'instance_id': instance_id,
-        'isolation_sg': isolation_sg_id,
-        'timestamp': timestamp,
-        'status': 'CONTAINED'
-    }
+```
+1. EBS スナップショット取得 (証拠保全)
+2. 隔離用セキュリティグループ作成 (ingress/egress 全遮断)
+3. インスタンスの SG を隔離用に変更
+4. タグで状態を記録 (SecurityStatus=ISOLATED)
+※ インスタンスは停止しない (メモリ上の証拠を保全)
 ```
 
 ### IAM 認証情報の緊急無効化
 
-```python
-def emergency_disable_iam_user(username: str):
-    """
-    侵害が疑われる IAM ユーザの緊急無効化
-    """
-    iam = boto3.client('iam')
-    timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
+IAM ユーザの侵害が疑われる場合の対応手順:
 
-    # 1. 全アクセスキーの無効化
-    keys = iam.list_access_keys(UserName=username)
-    for key in keys['AccessKeyMetadata']:
-        iam.update_access_key(
-            UserName=username,
-            AccessKeyId=key['AccessKeyId'],
-            Status='Inactive'
-        )
-        print(f"  Disabled access key: {key['AccessKeyId']}")
-
-    # 2. コンソールパスワードの削除
-    try:
-        iam.delete_login_profile(UserName=username)
-        print(f"  Console password deleted")
-    except iam.exceptions.NoSuchEntityException:
-        print(f"  No console password to delete")
-
-    # 3. 全ポリシーのデタッチ
-    attached = iam.list_attached_user_policies(UserName=username)
-    for policy in attached['AttachedPolicies']:
-        iam.detach_user_policy(
-            UserName=username,
-            PolicyArn=policy['PolicyArn']
-        )
-        print(f"  Detached policy: {policy['PolicyName']}")
-
-    # 4. 明示的 Deny ポリシーのアタッチ (二重防御)
-    deny_policy = {
-        "Version": "2012-10-17",
-        "Statement": [{
-            "Effect": "Deny",
-            "Action": "*",
-            "Resource": "*"
-        }]
-    }
-
-    iam.put_user_policy(
-        UserName=username,
-        PolicyName=f'EmergencyDeny-{timestamp}',
-        PolicyDocument=json.dumps(deny_policy)
-    )
-    print(f"  Applied explicit deny policy")
-
-    print(f"[{timestamp}] User {username} fully disabled")
+```
+1. 全アクセスキーを無効化 (update_access_key → Inactive)
+2. コンソールパスワードの削除 (delete_login_profile)
+3. 全ポリシーのデタッチ
+4. 明示的 Deny ポリシーをアタッチ (二重防御)
+   {"Effect": "Deny", "Action": "*", "Resource": "*"}
 ```
 
 ---
@@ -1930,230 +1279,13 @@ OK:
 +----------------------------------------------------------+
 ```
 
----
-
-## 10. 演習問題
-
-### 演習 1: IAM ポリシーの設計
-
-以下の要件を満たす IAM ポリシーを JSON で作成せよ。
-
-```
-要件:
-  - 開発チーム用のポリシー
-  - ap-northeast-1 リージョンのみ操作可能
-  - EC2 インスタンスの起動・停止・再起動が可能
-  - ただし、タグ "Environment=Production" のインスタンスは操作不可
-  - S3 の特定バケット (dev-artifacts) への読み書きが可能
-  - IAM 関連の操作は一切不可
-```
-
-<details>
-<summary>解答例</summary>
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowEC2Operations",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:StartInstances",
-                "ec2:StopInstances",
-                "ec2:RebootInstances",
-                "ec2:DescribeInstances",
-                "ec2:DescribeTags"
-            ],
-            "Resource": "*",
-            "Condition": {
-                "StringEquals": {
-                    "aws:RequestedRegion": "ap-northeast-1"
-                }
-            }
-        },
-        {
-            "Sid": "DenyProductionEC2",
-            "Effect": "Deny",
-            "Action": [
-                "ec2:StartInstances",
-                "ec2:StopInstances",
-                "ec2:RebootInstances"
-            ],
-            "Resource": "*",
-            "Condition": {
-                "StringEquals": {
-                    "ec2:ResourceTag/Environment": "Production"
-                }
-            }
-        },
-        {
-            "Sid": "AllowS3DevBucket",
-            "Effect": "Allow",
-            "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:DeleteObject",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::dev-artifacts",
-                "arn:aws:s3:::dev-artifacts/*"
-            ]
-        },
-        {
-            "Sid": "DenyIAM",
-            "Effect": "Deny",
-            "Action": "iam:*",
-            "Resource": "*"
-        }
-    ]
-}
-```
-
-</details>
-
-### 演習 2: セキュリティインシデントの対応
-
-以下のシナリオについて、対応手順を時系列で記述せよ。
-
-```
-シナリオ:
-  GuardDuty が以下のアラートを検出
-  - Finding Type: UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS
-  - 重要度: High
-  - 内容: EC2 インスタンス (i-0abc123) に割り当てられた IAM ロールの
-          認証情報が、AWS 外部の IP アドレスから使用されている
-```
-
-<details>
-<summary>解答例</summary>
-
-```
-対応手順:
-
-[即座 (0-15分)]
-1. GuardDuty Finding の詳細確認
-   - 外部 IP アドレスの特定
-   - 使用された API 呼び出しの確認
-   - 影響を受けた IAM ロールの特定
-
-2. EC2 インスタンスの隔離
-   - 隔離用セキュリティグループに変更 (全通信遮断)
-   - インスタンスは停止しない (証拠保全のため)
-   - EBS スナップショットの取得
-
-3. IAM ロールの認証情報の無効化
-   - ロールのセッションポリシーに明示的 Deny を追加
-   - aws:TokenIssueTime 条件で現在時刻以前のトークンを拒否
-
-[初動対応 (15分-2時間)]
-4. CloudTrail ログの調査
-   - 外部 IP からの全 API 呼び出しを抽出
-   - 不正な操作 (データ取得、権限変更等) の特定
-   - 影響範囲の確定
-
-5. 二次被害の確認
-   - 他のリソースへの横展開がないか確認
-   - S3 バケットのアクセスログ確認
-   - 他アカウントへのクロスアカウントアクセス確認
-
-[根絶・復旧 (2時間-24時間)]
-6. 侵入経路の特定と修復
-   - IMDS v2 の強制 (HttpTokens = required)
-   - SSRF 脆弱性の修正
-   - アプリケーションの脆弱性パッチ
-
-7. クリーンな環境での再構築
-   - 新しい AMI からインスタンスを再作成
-   - IAM ロールの権限を再レビュー
-   - セキュリティグループの設定を確認
-
-[事後対応 (24時間-1週間)]
-8. 報告書の作成と改善
-   - インシデント報告書
-   - 根本原因分析 (RCA)
-   - IMDS v2 の全インスタンス強制適用
-   - GuardDuty の自動修復ランブック整備
-```
-
-</details>
-
-### 演習 3: VPC ネットワーク設計
-
-以下の要件を満たす VPC 設計図を作成せよ。
-
-```
-要件:
-  - Web アプリケーション (ALB + ECS Fargate)
-  - データベース (Aurora PostgreSQL)
-  - マルチ AZ (2 AZ)
-  - インターネットからは HTTPS のみ受信
-  - データベースはプライベートサブネットのみ
-  - AWS サービスへのアクセスは VPC Endpoint 経由
-  - VPC Flow Logs を有効化
-```
-
-<details>
-<summary>解答例</summary>
-
-```
-VPC: 10.0.0.0/16
-
-AZ-a (ap-northeast-1a)          AZ-c (ap-northeast-1c)
-+----------------------------+  +----------------------------+
-| Public Subnet              |  | Public Subnet              |
-| 10.0.1.0/24               |  | 10.0.4.0/24               |
-| +-- ALB Node               |  | +-- ALB Node               |
-| +-- NAT Gateway            |  | +-- NAT Gateway            |
-| Route: 0.0.0.0/0 → IGW    |  | Route: 0.0.0.0/0 → IGW    |
-+----------------------------+  +----------------------------+
-| Private Subnet (App)       |  | Private Subnet (App)       |
-| 10.0.2.0/24               |  | 10.0.5.0/24               |
-| +-- ECS Fargate Tasks      |  | +-- ECS Fargate Tasks      |
-| Route: 0.0.0.0/0 → NAT-a  |  | Route: 0.0.0.0/0 → NAT-c  |
-+----------------------------+  +----------------------------+
-| Private Subnet (Data)      |  | Private Subnet (Data)      |
-| 10.0.3.0/24               |  | 10.0.6.0/24               |
-| +-- Aurora Primary         |  | +-- Aurora Replica          |
-| Route: ローカルのみ         |  | Route: ローカルのみ         |
-+----------------------------+  +----------------------------+
-
-セキュリティグループ:
-  ALB SG: インバウンド 443 from 0.0.0.0/0
-  App SG: インバウンド 8080 from ALB SG
-  DB SG:  インバウンド 5432 from App SG
-
-VPC Endpoints:
-  - Gateway: S3, DynamoDB
-  - Interface: ECR (dkr, api), CloudWatch Logs,
-               Secrets Manager, KMS
-
-VPC Flow Logs:
-  - 全トラフィック (ACCEPT + REJECT)
-  - CloudWatch Logs に配信
-  - 保持期間 90 日
-```
-
-</details>
-
----
-
-## 11. FAQ
+## 10. FAQ
 
 ### Q1. クラウドのセキュリティは自社データセンターより安全か?
 
 インフラの物理セキュリティ、DDoS 対策、パッチ適用は大手クラウドプロバイダの方が優れている。ただし設定ミスによるデータ漏洩は依然としてユーザ責任である。S3 バケットの公開設定ミスによるデータ流出は後を絶たない。結局のところ「クラウドのインフラは安全、しかしクラウドの中の設定は自己責任」という理解が正しい。
 
-### Q2. マルチクラウド環境のセキュリティはどう管理するか?
-
-CSPM (Cloud Security Posture Management) ツール (Prisma Cloud, Wiz, etc.) でマルチクラウドの設定を統合監視する。IAM は各クラウドの特性を理解した上で統一的なポリシーを設計する。共通の IaC (Terraform) で全環境を管理し、セキュリティポリシーをコードで統一する。ただし、マルチクラウドは運用の複雑性が増すため、明確なビジネス要件がない限り単一クラウドを推奨する。
-
-### Q3. IAM ポリシーが複雑になりすぎた場合はどうするか?
-
-AWS IAM Access Analyzer でポリシーの分析と未使用権限の特定を行う。許可されているが使われていない権限を削除し、必要最小限まで絞り込む。ポリシーの設計はロールベースで行い、個別ユーザへのインラインポリシーは避ける。Permission Boundaries を活用して権限の上限を設定することも有効である。
-
-### Q4. IMDS (Instance Metadata Service) v1 と v2 の違いは?
+### Q2. IMDS (Instance Metadata Service) v1 と v2 の違いは?
 
 IMDS v1 は単純な HTTP GET でインスタンスメタデータにアクセスでき、SSRF 攻撃で認証情報が窃取されるリスクがある (Capital One 事件)。IMDS v2 ではセッショントークンが必要になり、PUT メソッドでトークンを取得した上でアクセスする仕組みとなっている。全インスタンスで IMDS v2 のみを許可する設定を推奨する。
 
@@ -2171,52 +1303,9 @@ resource "aws_instance" "example" {
 """
 ```
 
-### Q5. クラウドでの DDoS 対策はどうすべきか?
+### Q3. クラウドでの DDoS 対策はどうすべきか?
 
-基本的な DDoS 防御は AWS Shield Standard (無料) で自動的に提供される。大規模な攻撃に対しては Shield Advanced (有料) が DDoS Response Team (DRT) と24時間365日のサポートを提供する。CloudFront + AWS WAF の組み合わせでアプリケーション層 (L7) の攻撃にも対処できる。Rate-based ルールで異常なリクエスト頻度を自動ブロックすることも重要である。
-
-### Q6. コンテナ環境 (ECS/EKS) のセキュリティの注意点は?
-
-```
-コンテナセキュリティの主要チェックポイント:
-+----------------------------------------------------------+
-| 層             | 対策                                    |
-|----------------------------------------------------------+
-| イメージ        | ECR イメージスキャン、最小ベースイメージ  |
-|                | (distroless/alpine)、root 以外で実行     |
-| ランタイム      | 読み取り専用ファイルシステム、特権なし     |
-|                | (--no-new-privileges)                    |
-| ネットワーク    | タスク単位のセキュリティグループ、          |
-|                | サービスメッシュ (mTLS)                    |
-| シークレット    | Secrets Manager / Parameter Store 連携   |
-| IAM            | タスクロールの最小権限                     |
-| ログ           | awslogs ドライバでの CloudWatch 出力      |
-+----------------------------------------------------------+
-```
-
-### Q7. サーバレス (Lambda) のセキュリティ特有の課題は?
-
-サーバレスでは OS やミドルウェアの管理は不要だが、アプリケーションコードのセキュリティ、環境変数のシークレット管理、実行ロールの権限管理が重要である。Lambda の同時実行数の制限を設定して DoS 対策を行い、VPC 内で実行してネットワーク分離を確保する。また、Lambda Layers の依存関係の脆弱性スキャンも忘れずに行う。
-
-### Q8. クラウドセキュリティの自動化はどこまですべきか?
-
-可能な限り自動化を推進する。具体的には以下を自動化する。
-
-```
-自動化すべき項目:
-+----------------------------------------------------------+
-| 優先度 | 項目                    | ツール                  |
-|----------------------------------------------------------+
-| 必須   | IaC (インフラのコード化) | Terraform / CDK         |
-| 必須   | 設定の継続的監査         | Config Rules / Hub      |
-| 必須   | ログの収集と集約         | CloudTrail / Config     |
-| 高     | 脆弱性スキャン           | Inspector / ECR Scan    |
-| 高     | シークレットのローテーション | Secrets Manager        |
-| 高     | パッチ適用               | Systems Manager         |
-| 中     | インシデント対応         | EventBridge + Lambda    |
-| 中     | コンプライアンスレポート   | Audit Manager          |
-+----------------------------------------------------------+
-```
+基本的な DDoS 防御は AWS Shield Standard (無料) で自動的に提供される。大規模な攻撃に対しては Shield Advanced (有料) が DDoS Response Team (DRT) と24時間365日のサポートを提供する。CloudFront + AWS WAF の組み合わせでアプリケーション層 (L7) の攻撃にも対処できる。
 
 ---
 
