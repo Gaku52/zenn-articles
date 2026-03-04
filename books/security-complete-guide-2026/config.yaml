@@ -1,0 +1,41 @@
+title: "セキュリティ完全ガイド 2026 - 脅威モデリングからクラウド防御まで実践で学ぶ包括的セキュリティ"
+summary: "OWASP Top 10、XSS/CSRF/SQLi対策、暗号技術、TLS、ネットワーク防御、コンテナセキュリティ、SAST/DAST、AWS/クラウドセキュリティ、インシデント対応、コンプライアンスまで。脅威モデリングに基づく実践的セキュリティの全てを網羅した完全ガイド。"
+topics: ["security", "web", "cloud", "aws", "devops"]
+published: true
+price: 1000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - 00-introduction
+  # Part 1: セキュリティの基礎
+  - 01-security-overview
+  - 02-threat-modeling
+  - 03-security-principles
+  # Part 2: Webセキュリティ
+  - 04-owasp-top10
+  - 05-xss-prevention
+  - 06-csrf-clickjacking
+  - 07-injection
+  - 08-auth-vulnerabilities
+  # Part 3: 暗号技術
+  - 09-crypto-basics
+  - 10-tls-certificates
+  - 11-key-management
+  # Part 4: ネットワークセキュリティ
+  - 12-network-security-basics
+  - 13-dns-security
+  - 14-api-security
+  # Part 5: アプリケーションセキュリティ
+  - 15-secure-coding
+  - 16-dependency-security
+  - 17-container-security
+  - 18-sast-dast
+  # Part 6: クラウドセキュリティ
+  - 19-cloud-security-basics
+  - 20-aws-security
+  - 21-infrastructure-as-code-security
+  # Part 7: 運用とガバナンス
+  - 22-incident-response
+  - 23-monitoring-logging
+  - 24-compliance
+  - 25-security-culture
+  - 26-conclusion
