@@ -25,7 +25,7 @@ $ brew install go
 
 # バージョン確認
 $ go version
-go version go1.23.0 darwin/arm64
+go version go1.24.0 darwin/arm64
 ```
 
 ### Windows
@@ -42,9 +42,9 @@ $ winget install GoLang.Go
 
 ```bash
 # 公式のtar.gzからインストール
-$ wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
+$ wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
 $ sudo rm -rf /usr/local/go
-$ sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+$ sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
 
 # PATHに追加（~/.bashrc または ~/.zshrc）
 $ echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
@@ -57,7 +57,7 @@ $ go version
 
 ```bash
 $ go version
-go version go1.23.0 darwin/arm64
+go version go1.24.0 darwin/arm64
 
 $ go env GOPATH
 /Users/yourname/go
@@ -122,7 +122,7 @@ $ go mod init hello-go
 ```
 module hello-go
 
-go 1.23.0
+go 1.24
 ```
 
 ### Hello World

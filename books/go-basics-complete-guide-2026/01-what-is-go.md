@@ -21,7 +21,7 @@ title: "Go言語とは何か"
 
 - **Robert Griesemer** — V8 JavaScript エンジンの開発者
 - **Rob Pike** — Unix、UTF-8の共同設計者
-- **Ken Thompson** — Unixの生みの親、C言語の共同設計者
+- **Ken Thompson** — Unixの生みの親、B言語の設計者
 
 彼らの課題は「**大規模ソフトウェア開発における複雑性の爆発**」でした。
 

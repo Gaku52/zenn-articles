@@ -257,7 +257,7 @@ sum := float64(i) + f  // OK: 両方 float64 にそろえる
 
 ```go
 name := "Go"
-version := 1.23
+version := 1.24
 
 // 基本出力
 fmt.Println("Hello, World!")                  // 改行あり

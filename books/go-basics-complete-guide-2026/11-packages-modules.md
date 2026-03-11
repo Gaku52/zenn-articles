@@ -127,7 +127,7 @@ $ go mod init github.com/yourname/myapp
 ```
 module github.com/yourname/myapp
 
-go 1.23.0
+go 1.24
 ```
 
 ### 外部パッケージの追加

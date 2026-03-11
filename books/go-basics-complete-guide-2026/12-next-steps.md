@@ -63,12 +63,13 @@ GoはWebサーバー開発に最も使われている言語の一つです。
 - **gRPC** — マイクロサービス間通信
 
 ```go
-// 予告: 標準ライブラリだけでWebサーバー
+// 予告: 標準ライブラリだけでWebサーバー（Go 1.22+ のルーティング構文）
 func main() {
-    http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+    mux := http.NewServeMux()
+    mux.HandleFunc("GET /hello", func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintln(w, "Hello, Web!")
     })
-    http.ListenAndServe(":8080", nil)
+    http.ListenAndServe(":8080", mux)
 }
 ```
 
@@ -94,18 +95,32 @@ $ GOOS=windows GOARCH=amd64 go build -o myapp.exe
 
 ### 5. ジェネリクス（Go 1.18+）
 
+Go 1.21+ では `min` / `max` がビルトイン関数として追加されました。
+
 ```go
-// 任意の数値型に対応する関数
-func Min[T constraints.Ordered](a, b T) T {
-    if a < b {
-        return a
+// ビルトイン関数（Go 1.21+）
+fmt.Println(min(3, 5))       // 3
+fmt.Println(max(3.14, 2.71)) // 3.14
+```
+
+自分でジェネリック関数を定義する場合は `cmp.Ordered`（標準ライブラリ）を使います。
+
+```go
+import "cmp"
+
+// 任意の順序付き型に対応する関数
+func Clamp[T cmp.Ordered](v, lo, hi T) T {
+    if v < lo {
+        return lo
     }
-    return b
+    if v > hi {
+        return hi
+    }
+    return v
 }
 
-fmt.Println(Min(3, 5))       // 3
-fmt.Println(Min(3.14, 2.71)) // 2.71
-fmt.Println(Min("a", "b"))   // "a"
+fmt.Println(Clamp(15, 0, 10))  // 10
+fmt.Println(Clamp(-5, 0, 10))  // 0
 ```
 
 ---

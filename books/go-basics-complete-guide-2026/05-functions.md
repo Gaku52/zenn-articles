@@ -31,10 +31,8 @@ func add(a int, b int) int {
     return a + b
 }
 
-// 同じ型の引数は省略できる
-func add(a, b int) int {
-    return a + b
-}
+// 同じ型の引数は型をまとめて書ける
+// func add(a, b int) int { ... } と書いても同じ意味
 
 func main() {
     greet()
@@ -241,7 +239,10 @@ func main() {
 ```go
 package main
 
-import "fmt"
+import (
+    "fmt"
+    "time"
+)
 
 var startTime time.Time
 
