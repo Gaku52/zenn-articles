@@ -1,0 +1,19 @@
+title: "Go言語 基礎から始める完全ガイド 2026"
+summary: "Go初学者のための体系的な基礎ガイド。環境構築から基本構文、制御フロー、関数、ポインタ、構造体、インターフェース、エラーハンドリングまで。他言語経験者がGoの考え方を確実に身につけられる構成です。"
+topics: ["go", "golang", "プログラミング", "入門", "backend"]
+published: true
+price: 500
+chapters:
+  - 00-introduction
+  - 01-what-is-go
+  - 02-setup-environment
+  - 03-basic-syntax
+  - 04-control-flow
+  - 05-functions
+  - 06-data-structures
+  - 07-pointers
+  - 08-structs-methods
+  - 09-interfaces
+  - 10-error-handling
+  - 11-packages-modules
+  - 12-next-steps
