@@ -1,0 +1,21 @@
+title: "Go実践開発ガイド 2026"
+summary: "Go基礎の次に進む実践ガイド。並行処理（goroutine・channel・Context）、Web開発（net/http・Gin・Echo・gRPC・DB）、CLI開発、ジェネリクス、プロファイリング、デプロイ、ベストプラクティスまで。基礎本で学んだ知識を本番で使える力に変える一冊です。"
+topics: ["go", "golang", "backend", "Web開発", "並行処理"]
+published: true
+price: 1000
+chapters:
+  - 00-introduction
+  - 01-goroutines-channels
+  - 02-sync-primitives
+  - 03-concurrency-patterns
+  - 04-context
+  - 05-net-http
+  - 06-gin-echo
+  - 07-database
+  - 08-grpc
+  - 09-testing
+  - 10-cli-development
+  - 11-generics
+  - 12-profiling
+  - 13-deployment
+  - 14-best-practices
