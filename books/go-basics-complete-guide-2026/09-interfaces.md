@@ -14,6 +14,7 @@ title: "インターフェース"
 - ✅ 空インターフェース（any）
 - ✅ 型アサーションと型スイッチ
 - ✅ インターフェースの設計原則
+- ✅ **nil インターフェースの落とし穴（重要）**
 
 ---
 
@@ -272,34 +273,94 @@ type UserGetter interface {
 
 ---
 
-## nil インターフェース vs nil を持つインターフェース
+## 【重要】nil インターフェース vs nil を持つインターフェース
 
-```go
-var s Shape  // nil インターフェース
-fmt.Println(s == nil)  // true
+Goで最も有名な落とし穴の一つです。**他の言語にはない概念**なので注意してください。
 
-var c *Circle  // nil ポインタ
-s = c          // nil ポインタをインターフェースに代入
-fmt.Println(s == nil)  // false（！）
-// インターフェースは {型: *Circle, 値: nil} を持っているので nil ではない
+### インターフェースの内部構造
+
+Goのインターフェース変数は内部に2つの情報を持っています：
+
+```
+インターフェース変数
+┌──────────────┐
+│ 型情報 (T)   │  ← どの型の値が入っているか
+│ 値 (V)       │  ← 実際の値（またはポインタ）
+└──────────────┘
+
+インターフェースが nil になるのは、T も V も両方 nil のときだけ
 ```
 
-これはGoの有名な落とし穴です。エラーを返す関数で特に注意が必要です。
+### 具体例で理解する
 
 ```go
+// ケース1: 完全な nil（インターフェース自体が nil）
+var s Shape          // T=nil, V=nil → s == nil は true
+fmt.Println(s == nil)  // true ✅
+
+// ケース2: nil ポインタをインターフェースに代入
+var c *Circle = nil  // nil ポインタ
+s = c                // T=*Circle, V=nil → s == nil は false！
+fmt.Println(s == nil)  // false ⚠️
+```
+
+**図解:**
+
+```
+ケース1: var s Shape
+  s: [ T=nil | V=nil ]  → nil と判定される ✅
+
+ケース2: var c *Circle = nil; s = c
+  s: [ T=*Circle | V=nil ]  → nil ではないと判定される ⚠️
+      ↑
+      型情報が入っているため nil ではない
+```
+
+### エラー処理での落とし穴
+
+この問題が最も頻繁に現れるのはエラーを返す関数です：
+
+```go
+type MyError struct {
+    Message string
+}
+
+func (e *MyError) Error() string {
+    return e.Message
+}
+
 // ❌ 危険なパターン
-func findUser(id int) error {
-    var err *MyError  // nil
-    // ... 何か処理 ...
-    return err  // nil の *MyError を返す → nil ではない error が返る
+func riskyFunc(bad bool) error {
+    var err *MyError  // nil ポインタ（型は *MyError）
+    if bad {
+        err = &MyError{"something went wrong"}
+    }
+    return err  // bad=false でも nil ではない error が返る！
+                // 内部: T=*MyError, V=nil → error として nil ではない
 }
 
-// ✅ 安全なパターン
-func findUser(id int) error {
-    // ... 何か処理 ...
-    return nil  // 明示的に nil を返す
+func main() {
+    err := riskyFunc(false)
+    if err != nil {
+        fmt.Println("エラー:", err)  // ← ここに入ってしまう！
+    }
 }
 ```
+
+```go
+// ✅ 安全なパターン
+func safeFunc(bad bool) error {
+    if bad {
+        return &MyError{"something went wrong"}
+    }
+    return nil  // 明示的に nil を返す（T=nil, V=nil）
+}
+```
+
+### ルール
+
+> `error` を返す関数では、必ず**明示的に `nil` を返す**こと。
+> `var err *MyError` のような型付きの nil 変数を `return err` で返してはいけない。
 
 ---
 
@@ -308,6 +369,7 @@ func findUser(id int) error {
 1. `Stringer` インターフェースを実装して、自分の構造体を `fmt.Println` で表示してみましょう
 2. `Shape` インターフェースに `Perimeter() float64` を追加し、Circle と Rectangle の両方で実装してみましょう
 3. 型スイッチを使って、`any` 型の値の型を判定する関数を書いてみましょう
+4. nil インターフェースの落とし穴を実際に確認してみましょう（`riskyFunc` を試してみましょう）
 
 ---
 
