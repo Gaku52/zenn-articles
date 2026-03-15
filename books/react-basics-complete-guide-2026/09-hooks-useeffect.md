@@ -21,30 +21,32 @@ function UserProfile({ userId }: { userId: string }) {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    // AbortControllerでHTTPリクエスト自体をキャンセルできる
-    const controller = new AbortController()
+    // クリーンアップフラグ
+    let cancelled = false
 
     const fetchUser = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const response = await fetch(`/api/users/${userId}`, {
-          signal: controller.signal  // シグナルを渡す
-        })
+        const response = await fetch(`/api/users/${userId}`)
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
-        setUser(data)
+
+        // アンマウント済みなら状態更新しない
+        if (!cancelled) {
+          setUser(data)
+        }
       } catch (err) {
-        // AbortErrorはキャンセルによるものなので無視
-        if (err instanceof Error && err.name === 'AbortError') return
-        setError(err as Error)
+        if (!cancelled) {
+          setError(err as Error)
+        }
       } finally {
-        if (!controller.signal.aborted) {
+        if (!cancelled) {
           setLoading(false)
         }
       }
@@ -52,9 +54,9 @@ function UserProfile({ userId }: { userId: string }) {
 
     fetchUser()
 
-    // クリーンアップ: リクエスト自体をキャンセル
+    // クリーンアップ関数
     return () => {
-      controller.abort()
+      cancelled = true
     }
   }, [userId]) // userIdはeffect内で使っているので依存配列に必須
 
@@ -71,9 +73,9 @@ function UserProfile({ userId }: { userId: string }) {
 }
 ```
 
-> **💡 AbortControllerを使う理由**: 古い`let cancelled = false`フラグ方式は状態更新を防ぐだけですが、AbortControllerは**HTTP通信自体を中断**します。ユーザーが素早くページを切り替えた場合、不要な通信を止めることで帯域幅の節約やAPIレート制限の消費を防げます。
+> **💡 ステップアップ**: ここで紹介した`cancelled`フラグ方式は、クリーンアップの基本を学ぶためのパターンです。実務では、HTTP通信自体を中断できる**AbortController**を使うのがより良い方法です。応用編 Chapter 2 で詳しく解説します。
 
-> **💡 実務でのデータフェッチ**: 実務では、useEffect + fetchの手動実装よりも **TanStack Query（v5）** や **SWR** といったライブラリの利用が推奨されています。キャッシュ管理、自動キャンセル、再試行、ローディング状態を自動で扱えます。React公式ドキュメントでもこれらのライブラリの利用が推奨されています。本書の応用編で詳しく解説します。
+> **💡 実務でのデータフェッチ**: 実務では、useEffect + fetchの手動実装よりも **TanStack Query** や **SWR** といったデータフェッチライブラリが広く使われています。キャッシュ管理やローディング状態を自動で扱えるため、コードが大幅にシンプルになります。応用編で詳しく解説します。
 
 ## 依存配列の完全理解
 
@@ -357,11 +359,11 @@ function LayoutEffect() {
 
 **重要ポイント:**
 
-- データフェッチ時はAbortControllerでリクエストのキャンセルを実装する
+- データフェッチ時はクリーンアップフラグで不要な状態更新を防ぐ（実務ではAbortControllerが推奨。応用編で解説）
 - 依存配列にはeffect内で使用している全ての値を含める（ESLintの`exhaustive-deps`ルールに従う）
 - オブジェクトや関数の依存に注意（参照の同一性）
 - クリーンアップ関数で副作用を正しく解除
 - WebSocket、タイマー、イベントリスナーなど、適切なクリーンアップパターンを使い分ける
-- 実務のデータフェッチにはTanStack QueryやSWRの利用を検討する
+- 実務のデータフェッチにはTanStack QueryやSWRも検討する（応用編で解説）
 
 `useEffect`を正しく理解することで、副作用を安全に扱い、メモリリークや無限ループを防ぐことができます。次の章では、再利用可能なロジックを作成するカスタムフックについて学習します。
