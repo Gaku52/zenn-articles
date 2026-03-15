@@ -143,9 +143,9 @@ useEffect(() => {
 <App> → <Layout> → <Sidebar> → <Menu> → <MenuItem>
 ```
 
-Context APIを使えば解決できますが、**いつ使うべきか、どう設計すべきか**を理解している人は少数です。
+まず試すべきは**コンポーネント合成（Composition）**です。コンポーネント構造を見直して、データを必要なコンポーネントに直接渡す設計にすることで、多くの場合Props drillingは解消できます。それでも解決しない場合（テーマ、認証情報など、アプリ全体で共有する値）にContext APIを使います。
 
-本書では、Props drillingの問題点から、Context APIの正しい設計まで、リファクタリング例を通して学べます。
+本書では、Props drillingの問題点から、コンポーネント合成による解決、Context APIの適切な使い分けまで、リファクタリング例を通して学べます。
 
 ### 3. リストのkey問題
 
@@ -187,32 +187,30 @@ function UserProfile({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // クリーンアップフラグ
-    let isCancelled = false;
+    // AbortControllerでHTTPリクエスト自体をキャンセル可能にする
+    const controller = new AbortController();
 
     async function fetchUser() {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/users/${userId}`);
+        const response = await fetch(`/api/users/${userId}`, {
+          signal: controller.signal, // シグナルを渡す
+        });
 
         if (!response.ok) {
           throw new Error('ユーザーの取得に失敗しました');
         }
 
         const data = await response.json();
-
-        // コンポーネントがアンマウントされていなければ状態更新
-        if (!isCancelled) {
-          setUser(data);
-        }
+        setUser(data);
       } catch (err) {
-        if (!isCancelled) {
-          setError(err instanceof Error ? err.message : '不明なエラー');
-        }
+        // AbortErrorはキャンセルによるものなので無視
+        if (err instanceof Error && err.name === 'AbortError') return;
+        setError(err instanceof Error ? err.message : '不明なエラー');
       } finally {
-        if (!isCancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -220,11 +218,11 @@ function UserProfile({ userId }: { userId: string }) {
 
     fetchUser();
 
-    // クリーンアップ関数
+    // クリーンアップ: リクエスト自体をキャンセル（通信も停止する）
     return () => {
-      isCancelled = true;
+      controller.abort();
     };
-  }, [userId]); // userIdが変わったら再実行
+  }, [userId]); // userIdはeffect内で使用しているため、依存配列に必須
 
   if (loading) return <div>読み込み中...</div>;
   if (error) return <div>エラー: {error}</div>;
@@ -243,8 +241,10 @@ function UserProfile({ userId }: { userId: string }) {
 
 1. **ローディング状態の管理**: ユーザー体験の向上
 2. **エラーハンドリング**: 適切なエラー表示
-3. **クリーンアップ**: メモリリークの防止
-4. **依存配列の適切な管理**: 正しいタイミングでの再実行
+3. **AbortControllerによるキャンセル**: 不要な通信を実際に中断し、帯域幅とAPIレート制限を節約
+4. **依存配列**: effect内で使用している`userId`を含めることで、変更時に自動で再実行
+
+> **💡 実務ではTanStack Query（旧React Query）の利用を推奨します。** useEffect + fetchの手動実装は学習目的には有用ですが、実務ではキャッシュ管理、自動キャンセル、再試行、ローディング/エラー状態を自動で扱えるTanStack QueryやSWRを使うのがベストプラクティスです。React公式ドキュメントでも推奨されています。
 
 ### カスタムフックに抽出
 
@@ -274,30 +274,28 @@ export function useUser(userId: string): UseUserResult {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isCancelled = false;
+    const controller = new AbortController();
 
     async function fetchUser() {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/users/${userId}`);
+        const response = await fetch(`/api/users/${userId}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error('ユーザーの取得に失敗しました');
         }
 
         const data = await response.json();
-
-        if (!isCancelled) {
-          setUser(data);
-        }
+        setUser(data);
       } catch (err) {
-        if (!isCancelled) {
-          setError(err instanceof Error ? err.message : '不明なエラー');
-        }
+        if (err instanceof Error && err.name === 'AbortError') return;
+        setError(err instanceof Error ? err.message : '不明なエラー');
       } finally {
-        if (!isCancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -306,7 +304,7 @@ export function useUser(userId: string): UseUserResult {
     fetchUser();
 
     return () => {
-      isCancelled = true;
+      controller.abort();
     };
   }, [userId, refetchTrigger]);
 
@@ -337,6 +335,8 @@ function UserProfile({ userId }: { userId: string }) {
 - コードの再利用性: 同じロジックを複数のコンポーネントで使える
 - 保守性の向上: 修正が1箇所で済む
 - テストの容易性: カスタムフックを単体でテスト可能
+
+> **💡 実務では、このようなカスタムフックを自作する代わりに、TanStack Query（v5）を使うのが主流です。** キャッシュ管理、自動リフェッチ、楽観的更新などを標準で提供します。
 
 ## リファクタリング例: ToDoアプリの改善パターン
 
@@ -618,7 +618,8 @@ https://zenn.dev/gaku/books/react-basics-complete-guide-2026
 
 **本書の解決策:**
 - コンポーネント分割の判断基準
-- Context APIの適切な使い方
+- コンポーネント合成（Composition）でProps drillingを解消
+- Context APIの適切な使い所（テーマ、認証など全体共有の値）
 - カスタムフックによるロジック抽出
 
 **期待される成果:** 保守性の高いコンポーネント設計ができる
@@ -699,8 +700,8 @@ https://zenn.dev/gaku/books/react-basics-complete-guide-2026
 - 「はい、Reactは使えます（チュートリアルレベル）」
 
 **After:**
-- 「useEffectは副作用を扱うHookで、依存配列で実行タイミングを制御します」
-- 「Props drillingはContext APIで解決できます」
+- 「useEffectは副作用を扱うHookで、effect内で使用する値は全て依存配列に含める必要があります」
+- 「Props drillingはまずコンポーネント合成を検討し、グローバルな値にはContext APIを使います」
 - 「はい、Reactの基礎は理解しており、実務レベルのアプリを実装できます」
 
 ---

@@ -462,92 +462,25 @@ function ObservableCounter() {
 
 ## 4. データフェッチのベストプラクティス
 
-### 4.1 基本パターン（Race Condition対策あり）
+### 4.1 Race Conditionとは
 
-**Race Condition（競合状態）**: 複数の非同期処理が競合して、古いデータで上書きされる問題
-
-```typescript
-interface User {
-  id: string
-  name: string
-  email: string
-}
-
-function UserProfile({ userId }: { userId: string }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  useEffect(() => {
-    // クリーンアップフラグ（Race Condition対策）
-    let cancelled = false
-
-    const fetchUser = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const response = await fetch(`/api/users/${userId}`)
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        // アンマウント済みなら状態更新しない
-        if (!cancelled) {
-          setUser(data)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err as Error)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchUser()
-
-    // クリーンアップ関数
-    return () => {
-      cancelled = true
-    }
-  }, [userId]) // userId が変わったら再フェッチ
-
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error.message}</div>
-  if (!user) return null
-
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <p>{user.email}</p>
-    </div>
-  )
-}
-```
-
-**なぜ `cancelled` フラグが必要？**
+**Race Condition（競合状態）**: 複数の非同期処理が競合して、古いデータで上書きされる問題です。
 
 ```typescript
-// ❌ フラグなしの場合の問題
+// ❌ Race Conditionの問題
 // 1. userId = 'user1' でフェッチ開始（3秒かかる）
 // 2. すぐに userId = 'user2' に変更してフェッチ開始（1秒で完了）
 // 3. user2 のデータが表示される
 // 4. その後、user1 のフェッチが完了して、古いデータで上書き！
 
-// ✅ フラグありの場合
+// ✅ AbortControllerで解決
 // 1. userId = 'user1' でフェッチ開始
-// 2. userId = 'user2' に変更 → クリーンアップで cancelled = true
-// 3. user1 のフェッチが完了しても、cancelled === true なので状態更新しない
+// 2. userId = 'user2' に変更 → controller.abort() で通信自体をキャンセル
+// 3. user1 のリクエストは中断され、帯域幅も節約される
 // 4. user2 のデータのみ表示される
 ```
 
-### 4.2 AbortController を使った実装（モダンな方法）
+### 4.2 AbortController を使った実装（推奨）
 
 ```typescript
 function UserProfile({ userId }: { userId: string }) {
@@ -666,6 +599,49 @@ function UserProfile({ userId }: { userId: string }) {
   )
 }
 ```
+
+### 4.4 実務ではTanStack Query / SWR を使う
+
+上記のuseEffect + fetchの手動実装は**学習目的では有用**ですが、実務では以下の理由から**データフェッチライブラリの利用が強く推奨**されます。React公式ドキュメントでも、useEffectでのデータフェッチは推奨されていません。
+
+**TanStack Query（v5）の例:**
+
+```typescript
+import { useQuery } from '@tanstack/react-query'
+
+function UserProfile({ userId }: { userId: string }) {
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: ({ signal }) =>  // signalが自動で渡される → 自動キャンセル
+      fetch(`/api/users/${userId}`, { signal }).then(res => res.json()),
+    staleTime: 5 * 60 * 1000,  // 5分間キャッシュ
+  })
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+  if (!user) return null
+
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  )
+}
+```
+
+**TanStack Query / SWR が解決すること:**
+
+| 課題 | useEffect手動実装 | TanStack Query |
+|------|------------------|----------------|
+| リクエストキャンセル | 自分でAbortController管理 | **自動** |
+| キャッシュ | なし | **自動（同じqueryKeyはキャッシュヒット）** |
+| ローディング/エラー状態 | 自分でstate管理 | **自動** |
+| 重複リクエスト排除 | なし | **自動（同じqueryKeyは1つだけ実行）** |
+| 再試行 | 自分で実装 | **自動（3回まで再試行）** |
+| バックグラウンドリフレッシュ | なし | **ウィンドウフォーカス時に自動** |
+
+**結論**: useEffectでのデータフェッチの仕組みを理解した上で、実務ではTanStack QueryやSWRを使いましょう。
 
 ---
 
@@ -988,8 +964,8 @@ function MeasureElement() {
 - WebSocket/Subscription は必ず解除
 
 **3. データフェッチは Race Condition 対策を**
-- `cancelled` フラグ または AbortController
-- 古いデータで上書きされるのを防ぐ
+- AbortControllerで通信自体をキャンセル（推奨）
+- 実務ではTanStack Query / SWR を使う（自動キャンセル、キャッシュ、再試行を提供）
 
 **4. 無限ループを回避する**
 - オブジェクト/配列を依存配列に入れない

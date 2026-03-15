@@ -35,6 +35,51 @@ title: "Context と Form の型安全な実装"
 
 ---
 
+## Context APIの前に: コンポーネント合成を検討する
+
+Context APIは強力ですが、**全てのProps drilling問題にContext APIが最適とは限りません**。
+
+まず検討すべきは**コンポーネント合成（Composition）**です。
+
+```typescript
+// ❌ Props drilling: themeを中間コンポーネントが素通りさせている
+function App() {
+  const theme = useThemeValue()
+  return <Layout theme={theme} />  // Layoutはthemeを使わない
+}
+function Layout({ theme }: { theme: Theme }) {
+  return <Sidebar theme={theme} />  // Sidebarもthemeを使わない
+}
+function Sidebar({ theme }: { theme: Theme }) {
+  return <Avatar theme={theme} />  // Avatarだけがthemeを使う
+}
+
+// ✅ コンポーネント合成: childrenで直接渡す
+function App() {
+  const theme = useThemeValue()
+  return (
+    <Layout>
+      <Sidebar>
+        <Avatar theme={theme} />  {/* 直接渡す */}
+      </Sidebar>
+    </Layout>
+  )
+}
+```
+
+**Context APIが適切な場面:**
+- テーマ（ダーク/ライト）: アプリ全体の多くのコンポーネントが参照する
+- 認証情報: どの画面でもログイン状態を確認する
+- ロケール/言語設定: 全てのテキストに影響する
+
+**コンポーネント合成が適切な場面:**
+- 特定の子コンポーネントだけがデータを必要とする
+- Props drillingが2-3階層程度で、中間コンポーネントが不要にPropsを受け渡している
+
+この使い分けを理解した上で、以下ではContext APIの型安全な実装を学びます。
+
+---
+
 ## 1. Context の基本的な型定義
 
 ### 基本パターン

@@ -21,32 +21,30 @@ function UserProfile({ userId }: { userId: string }) {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    // クリーンアップフラグ
-    let cancelled = false
+    // AbortControllerでHTTPリクエスト自体をキャンセルできる
+    const controller = new AbortController()
 
     const fetchUser = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const response = await fetch(`/api/users/${userId}`)
+        const response = await fetch(`/api/users/${userId}`, {
+          signal: controller.signal  // シグナルを渡す
+        })
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
-
-        // アンマウント済みなら状態更新しない
-        if (!cancelled) {
-          setUser(data)
-        }
+        setUser(data)
       } catch (err) {
-        if (!cancelled) {
-          setError(err as Error)
-        }
+        // AbortErrorはキャンセルによるものなので無視
+        if (err instanceof Error && err.name === 'AbortError') return
+        setError(err as Error)
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false)
         }
       }
@@ -54,11 +52,11 @@ function UserProfile({ userId }: { userId: string }) {
 
     fetchUser()
 
-    // クリーンアップ関数
+    // クリーンアップ: リクエスト自体をキャンセル
     return () => {
-      cancelled = true
+      controller.abort()
     }
-  }, [userId]) // userIdが変わったら再フェッチ
+  }, [userId]) // userIdはeffect内で使っているので依存配列に必須
 
   if (loading) return <Spinner />
   if (error) return <ErrorMessage error={error} />
@@ -72,6 +70,10 @@ function UserProfile({ userId }: { userId: string }) {
   )
 }
 ```
+
+> **💡 AbortControllerを使う理由**: 古い`let cancelled = false`フラグ方式は状態更新を防ぐだけですが、AbortControllerは**HTTP通信自体を中断**します。ユーザーが素早くページを切り替えた場合、不要な通信を止めることで帯域幅の節約やAPIレート制限の消費を防げます。
+
+> **💡 実務でのデータフェッチ**: 実務では、useEffect + fetchの手動実装よりも **TanStack Query（v5）** や **SWR** といったライブラリの利用が推奨されています。キャッシュ管理、自動キャンセル、再試行、ローディング状態を自動で扱えます。React公式ドキュメントでもこれらのライブラリの利用が推奨されています。本書の応用編で詳しく解説します。
 
 ## 依存配列の完全理解
 
@@ -355,10 +357,11 @@ function LayoutEffect() {
 
 **重要ポイント:**
 
-- データフェッチ時はクリーンアップフラグを使用
-- 依存配列は完全に指定する(ESLintの警告に従う)
-- オブジェクトや関数の依存に注意
+- データフェッチ時はAbortControllerでリクエストのキャンセルを実装する
+- 依存配列にはeffect内で使用している全ての値を含める（ESLintの`exhaustive-deps`ルールに従う）
+- オブジェクトや関数の依存に注意（参照の同一性）
 - クリーンアップ関数で副作用を正しく解除
 - WebSocket、タイマー、イベントリスナーなど、適切なクリーンアップパターンを使い分ける
+- 実務のデータフェッチにはTanStack QueryやSWRの利用を検討する
 
 `useEffect`を正しく理解することで、副作用を安全に扱い、メモリリークや無限ループを防ぐことができます。次の章では、再利用可能なロジックを作成するカスタムフックについて学習します。
