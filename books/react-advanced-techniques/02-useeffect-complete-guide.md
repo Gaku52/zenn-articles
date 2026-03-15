@@ -1,14 +1,14 @@
 ---
-title: "useEffect 完全ガイドと罠の回避"
+title: "useEffect 実践ガイドと罠の回避"
 ---
 
-# Chapter 2: useEffect 完全ガイドと罠の回避
+# Chapter 2: useEffect 実践ガイドと罠の回避
 
 ## この章で学べること
 
-この章では、Reactで最も誤解されやすいHookである `useEffect` を完全に理解します。
+この章では、Reactで最も誤解されやすいHookである `useEffect` を実践的に理解します。
 
-- ✅ 依存配列の完全理解と正しい設定方法
+- ✅ 依存配列の正しい理解と設定方法
 - ✅ クリーンアップ関数の必要性と実装パターン
 - ✅ データフェッチのベストプラクティス
 - ✅ useEffect の無限ループを回避する方法
@@ -24,7 +24,7 @@ title: "useEffect 完全ガイドと罠の回避"
 ## 目次
 
 1. [useEffect の基本おさらい](#1-useeffect-の基本おさらい)
-2. [依存配列の完全理解](#2-依存配列の完全理解)
+2. [依存配列の正しい理解](#2-依存配列の正しい理解)
 3. [クリーンアップ関数のパターン](#3-クリーンアップ関数のパターン)
 4. [データフェッチのベストプラクティス](#4-データフェッチのベストプラクティス)
 5. [無限ループを回避する](#5-無限ループを回避する)
@@ -108,7 +108,7 @@ useEffect(() => {
 
 ---
 
-## 2. 依存配列の完全理解
+## 2. 依存配列の正しい理解
 
 ### 2.1 アンチパターン1: 依存配列の欠落
 
@@ -604,6 +604,8 @@ function UserProfile({ userId }: { userId: string }) {
 
 上記のuseEffect + fetchの手動実装は**学習目的では有用**ですが、実務では以下の理由から**データフェッチライブラリの利用が強く推奨**されます。React公式ドキュメントでも、useEffectでのデータフェッチは推奨されていません。
 
+> **対応バージョン**: TanStack Query v5（`@tanstack/react-query`） / SWR v2（`swr`）
+
 **TanStack Query（v5）の例:**
 
 ```typescript
@@ -990,7 +992,7 @@ useEffect を使う際は、以下をチェックしましょう：
 
 次の Chapter 3 では、カスタムフック設計パターンを学びます：
 - 再利用可能なカスタムフックの設計原則
-- useFetch、useLocalStorage、useDebounce の完全実装
+- useFetch、useLocalStorage、useDebounce の実装
 - useContext + useReducer パターン（Redux代替）
 
 ---

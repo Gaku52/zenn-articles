@@ -18,6 +18,8 @@ title: "Context と Form の型安全な実装"
 
 **前提知識**: Context API、React Hook Form の基礎
 
+**対応バージョン**: React 19.x / React Hook Form v7（`react-hook-form`） / Zod v4（`zod`） / `@hookform/resolvers` v5
+
 **所要時間**: 50-60分
 
 ---
