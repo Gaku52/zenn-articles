@@ -10,7 +10,7 @@ Goは標準ライブラリ `database/sql` でDB接続の基盤を提供し、`sq
 
 ---
 
-## 7.1 database/sql の基本
+## database/sql の基本
 
 `database/sql` はGoの標準DB抽象レイヤーです。ドライバを差し替えるだけでPostgreSQL、MySQL、SQLiteに対応できます。
 
@@ -51,7 +51,7 @@ func main() {
 
 ---
 
-## 7.2 CRUD操作
+## CRUD操作
 
 基本メソッドは3つです。
 
@@ -131,7 +131,7 @@ func (r *UserRepo) Update(ctx context.Context, u *User) error {
 
 ---
 
-## 7.3 トランザクション
+## トランザクション
 
 `BeginTx` → 処理 → `Commit` / `Rollback` の流れです。ヘルパー関数を作ると安全に管理できます。
 
@@ -186,7 +186,7 @@ func (s *AccountService) Transfer(ctx context.Context, from, to int64, amount fl
 
 ---
 
-## 7.4 sqlx と GORM
+## sqlx と GORM
 
 ### sqlx -- 構造体マッピング付きの生SQL
 
@@ -257,7 +257,7 @@ db.Delete(&User{}, 1)                                            // Soft Delete
 
 ---
 
-## 7.5 マイグレーション
+## マイグレーション
 
 スキーマ変更はマイグレーションツールで管理します。**本番で `AutoMigrate` は使わないでください**（カラム削除されない、ロールバック不可）。
 
@@ -293,7 +293,7 @@ migrate -path ./migrations -database "$DB_URL" down 1   # 1つ戻す
 
 ---
 
-## 7.6 避けるべきアンチパターン
+## 避けるべきアンチパターン
 
 **rows.Close() の忘れ** -- `defer rows.Close()` を必ず書く。忘れると接続プールが枯渇する。
 

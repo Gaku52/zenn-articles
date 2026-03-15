@@ -6,7 +6,7 @@ title: "テスト"
 
 > httptest, テーブル駆動テスト, モック — 実践的なGoテスト
 
-Goのテストは `_test.go` ファイルに `Test` プレフィックスの関数を書くだけで始められる。この章では実践で最も使う5つのテスト技法を身につける。
+Goのテストは `_test.go` ファイルに `Test` プレフィックスの関数を書くだけで始められます。この章では実践で最も使う5つのテスト技法を身につけます。
 
 ## テーブル駆動テスト
 
@@ -212,14 +212,14 @@ func (c *FakeClock) Advance(d time.Duration) { c.Current = c.Current.Add(d) }
 func BenchmarkStringConcat(b *testing.B) {
     b.Run("Plus演算子", func(b *testing.B) {
         b.ReportAllocs()
-        for i := 0; i < b.N; i++ {
+        for b.Loop() {
             s := ""
             for j := 0; j < 100; j++ { s += "a" }
         }
     })
     b.Run("strings.Builder", func(b *testing.B) {
         b.ReportAllocs()
-        for i := 0; i < b.N; i++ {
+        for b.Loop() {
             var sb strings.Builder
             for j := 0; j < 100; j++ { sb.WriteString("a") }
             _ = sb.String()

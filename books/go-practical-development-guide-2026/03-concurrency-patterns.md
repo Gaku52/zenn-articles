@@ -6,7 +6,7 @@ title: "並行パターン"
 
 > Worker Pool, Fan-out/Fan-in, Pipeline -- 実践的な並行処理設計
 
-goroutineとchannelを組み合わせた実用的な並行パターンを学ぶ。本章では5つの定番パターンを、動くコードとともに解説する。
+goroutineとchannelを組み合わせた実用的な並行パターンを学びます。本章では5つの定番パターンを、動くコードとともに解説します。
 
 ## Pipeline パターン
 
@@ -213,7 +213,8 @@ func main() {
 	names := []string{"users", "orders", "reviews", "points"}
 	results := make([]string, len(names))
 	for i, name := range names {
-		i, name := i, name
+		// Go 1.22+ ではループ変数のキャプチャ問題が解消されたため、
+		// 「i, name := i, name」のようなコピーは不要です。
 		g.Go(func() error {
 			data, err := fetchData(ctx, name, 50*time.Millisecond)
 			if err != nil {

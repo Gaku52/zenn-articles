@@ -12,7 +12,7 @@ title: "プロファイリング"
 
 ---
 
-## 12.1 ベンチマークテスト
+## ベンチマークテスト
 
 最適化の起点はベンチマークです。`testing.B` を使って関数のパフォーマンスを定量的に測定します。
 
@@ -69,7 +69,7 @@ benchstat before.txt after.txt
 
 ---
 
-## 12.2 pprof — CPU・メモリプロファイリング
+## pprof -- CPU・メモリプロファイリング
 
 ### CPUプロファイル
 
@@ -142,7 +142,7 @@ go run main.go -cpuprofile=cpu.prof && go tool pprof -http=:8081 cpu.prof
 
 ---
 
-## 12.3 net/http/pprof — 本番サーバーのプロファイリング
+## net/http/pprof -- 本番サーバーのプロファイリング
 
 HTTPサーバーには `net/http/pprof` を使います。副作用インポートだけでエンドポイントが登録されます。
 
@@ -193,7 +193,7 @@ go tool pprof -http=:8081 http://localhost:6060/debug/pprof/heap
 
 ---
 
-## 12.4 runtime/trace — 実行トレース
+## runtime/trace -- 実行トレース
 
 pprofが「**何が**遅いか」を教えてくれるのに対し、traceは「**なぜ**遅いか」を教えてくれます。goroutineのスケジューリング、GCのタイミング、ネットワーク待ちなど、時系列のイベントを可視化できます。
 
@@ -252,7 +252,7 @@ go test -bench=BenchmarkSerialize -trace=trace.out
 
 ---
 
-## 12.5 最適化のベストプラクティス
+## 最適化のベストプラクティス
 
 ### 最適化サイクル
 
