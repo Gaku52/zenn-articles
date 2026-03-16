@@ -1,0 +1,19 @@
+title: "TypeScript入門ガイド 2026"
+summary: "JavaScriptを知っている方がTypeScriptを基礎から学ぶための入門書。型の基本からユニオン型、ジェネリクス、ユーティリティ型まで、実務で必要な型システムの知識を体系的に解説します。TypeScript 5.7対応。"
+topics: ["typescript", "javascript", "frontend", "初心者", "プログラミング"]
+published: true
+price: 500
+chapters:
+  - 00-introduction
+  - 01-what-is-typescript
+  - 02-setup
+  - 03-primitive-types
+  - 04-complex-types
+  - 05-functions
+  - 06-type-alias-interface
+  - 07-union-narrowing
+  - 08-intersection-discriminated
+  - 09-generics
+  - 10-utility-types
+  - 11-type-safe-coding
+  - 12-next-steps
