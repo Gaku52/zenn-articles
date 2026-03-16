@@ -76,6 +76,47 @@ const Direction = { North: "north", South: "south", East: "east", West: "west" }
 type Direction = (typeof Direction)[keyof typeof Direction];
 ```
 
+## enum（参考）
+
+TypeScriptには `enum`（列挙型）という構文もあります。既存のコードで見かけることがあるため、基本的な読み方を押さえておきましょう。
+
+```typescript
+// 数値 enum（値を省略すると 0, 1, 2... が自動割当）
+enum Direction {
+  North,  // 0
+  South,  // 1
+  East,   // 2
+  West,   // 3
+}
+
+// 文字列 enum（値を明示的に指定）
+enum Status {
+  Active = "ACTIVE",
+  Inactive = "INACTIVE",
+  Pending = "PENDING",
+}
+
+const s: Status = Status.Active; // "ACTIVE"
+```
+
+### なぜリテラル型ユニオンが推奨されるのか
+
+現在の TypeScript では、`enum` よりもリテラル型ユニオンや `as const` パターンの方が推奨されるケースが多いです。主な理由は次の通りです。
+
+- **TypeScript 固有の構文**: `enum` は型消去されず、JavaScript にコンパイルすると独自のオブジェクトコードが生成されます。リテラル型ユニオンは型注釈のみで、生成される JavaScript に余計なコードが残りません
+- **Tree-shaking の問題**: バンドラーが `enum` のコードを未使用と判定しにくく、バンドルサイズに影響する場合があります
+- **数値 enum の罠**: 数値 enum は任意の数値を代入できてしまうため、型安全性が不十分です
+
+```typescript
+// enum の場合（コンパイル後にオブジェクトコードが残る）
+enum Color { Red = "RED", Blue = "BLUE" }
+
+// リテラル型ユニオンの場合（コンパイル後に何も残らない）
+type Color = "RED" | "BLUE";
+```
+
+既存コードで `enum` を見かけたら読めれば十分です。新規コードでは、リテラル型ユニオンや `as const` を使うのが一般的です。
+
 ## typeof による型ガード
 
 `typeof` 演算子を `if` 文で使うと、TypeScript はブロック内で変数の型を自動的に絞り込みます。この仕組みを**型ガード（type guard）** と呼びます。
@@ -227,6 +268,7 @@ const filtered: string[] = items.filter(isNotNull);
 | ユニオン型 | `A \| B` で「A または B」を表す型 |
 | メンバーアクセス | ユニオン型では全構成型に共通するメンバーのみ使える |
 | リテラル型ユニオン | `"a" \| "b" \| "c"` で決まった値のいずれかを表す |
+| `enum`（参考） | 列挙型。現在はリテラル型ユニオンや `as const` が推奨 |
 | typeof ガード | `typeof x === "string"` でプリミティブ型を判定 |
 | instanceof ガード | `x instanceof Error` でクラスインスタンスを判定 |
 | in ガード | `"key" in obj` でプロパティの有無を判定 |

@@ -158,6 +158,44 @@ function getTimeout(c: Config): number {
 
 `Readonly<T>` で全プロパティを一括 readonly にすることもできます。なお `readonly` はコンパイル時のチェックのみです。
 
+## インデックスシグネチャ
+
+プロパティ名が事前にわからないオブジェクト（動的なキーを持つ辞書的な構造）には、**インデックスシグネチャ**を使います。
+
+```typescript
+// キーが string、値が number のオブジェクト
+type WordCount = {
+  [key: string]: number;
+};
+
+const counts: WordCount = {
+  hello: 3,
+  world: 5,
+  typescript: 1,
+};
+
+counts["newWord"] = 10; // 任意のキーで追加できる
+```
+
+固定のプロパティとインデックスシグネチャを併用することもできます。ただし、固定プロパティの型はインデックスシグネチャの値の型と互換性がなければなりません。
+
+```typescript
+type Config = {
+  version: number;           // 固定プロパティ
+  [key: string]: number;     // その他は任意のキーで number
+};
+```
+
+キーの候補が決まっている場合は、インデックスシグネチャよりも `Record<K, V>` の方が型安全です（Chapter 10 で詳しく解説します）。
+
+```typescript
+// キーが自由: インデックスシグネチャ
+type FreeDict = { [key: string]: string };
+
+// キーが決まっている: Record が安全
+type ErrorMessages = Record<"notFound" | "unauthorized", string>;
+```
+
 ---
 
 ## any 型
@@ -278,6 +316,7 @@ function log(message: string): void {
 | オブジェクト型 | `{ key: Type }` でプロパティの構造を定義 |
 | オプショナル (`?`) | プロパティを省略可能にする |
 | readonly | プロパティの再代入を禁止（コンパイル時のみ） |
+| インデックスシグネチャ | `{ [key: string]: T }` で動的なキーを持つオブジェクトを型付け |
 | `any` | 型チェック無効化。非推奨 |
 | `unknown` | 型安全な any。使う前に型チェックが必要 |
 | `never` | 値を持たない型。網羅性チェックに活用 |

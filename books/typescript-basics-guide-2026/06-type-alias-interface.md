@@ -209,6 +209,56 @@ type Status = "active" | "inactive";
 // type Status = "suspended"; // Error: 重複した識別子
 ```
 
+## typeof 型演算子
+
+JavaScriptの `typeof` は実行時に値の型を文字列で返す演算子ですが、TypeScriptではもう一つ、**型レベルの `typeof`** が使えます。変数から型を取り出したいときに便利です。
+
+```typescript
+// 値レベルの typeof（型ガード、Chapter 07 で詳しく解説）
+if (typeof value === "string") { /* ... */ }
+
+// 型レベルの typeof（変数の型を取得して型定義に使う）
+const user = { name: "Alice", age: 30 };
+type User = typeof user; // { name: string; age: number }
+```
+
+型レベルの `typeof` は、型注釈の中（`type` の右辺や引数の型など）でのみ使えます。既存の値から型を自動生成できるため、型定義の重複を減らすのに役立ちます。
+
+```typescript
+const config = { host: "localhost", port: 3000 };
+type Config = typeof config; // { host: string; port: number }
+
+function startServer(c: Config) { /* ... */ }
+```
+
+## keyof 演算子
+
+`keyof` は、オブジェクト型のプロパティ名をユニオン型として取り出す型演算子です。
+
+```typescript
+type User = { name: string; age: number; email: string };
+type UserKey = keyof User; // "name" | "age" | "email"
+```
+
+`keyof` を使うと、オブジェクトのキーだけを受け取る関数を型安全に書けます。
+
+```typescript
+function getValue<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const user = { name: "Alice", age: 30 };
+getValue(user, "name");  // OK: string
+// getValue(user, "foo"); // Error: "foo" は keyof typeof user に含まれない
+```
+
+`typeof` と `keyof` を組み合わせると、**値として定義したオブジェクトからキーのユニオン型を取り出す**こともできます。
+
+```typescript
+const palette = { primary: "#8b5cf6", secondary: "#06b6d4", danger: "#ef4444" } as const;
+type ColorName = keyof typeof palette; // "primary" | "secondary" | "danger"
+```
+
 ## type と interface の使い分け
 
 オブジェクト型の定義に関しては、`type` と `interface` は互換性が高く、どちらを使っても問題ないケースが多いです。
@@ -273,6 +323,8 @@ type Role = "admin" | "editor" | "viewer";
 | 余剰プロパティチェック | オブジェクトリテラルを直接渡すときだけ発動する |
 | `extends` vs `&` | `extends` は衝突時にエラー、`&` は衝突時に `never` |
 | Declaration Merging | `interface` は同名で再宣言すると自動マージされる |
+| `typeof`（型レベル） | 変数から型を取り出す。型定義の重複を減らせる |
+| `keyof` | オブジェクト型のプロパティ名をユニオン型として取得する |
 | 使い分け | オブジェクト形状には `interface`、それ以外には `type` が一般的 |
 
 ## やってみよう！

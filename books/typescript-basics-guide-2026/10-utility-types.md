@@ -230,6 +230,36 @@ const permissions: RolePermissions = {
 
 ---
 
+## ユーティリティ型の仕組み（Mapped Types）
+
+ここまで紹介したユーティリティ型の多くは、内部的に **Mapped Types（マップ型）** という仕組みで実装されています。深く理解する必要はありませんが、仕組みを知っておくと型エラーのメッセージが読みやすくなります。
+
+Mapped Types の基本構文は `{ [K in keyof T]: ... }` です。`T` のプロパティを1つずつ取り出して、新しい型を組み立てます。
+
+```typescript
+// Partial<T> の内部実装（イメージ）
+type MyPartial<T> = {
+  [K in keyof T]?: T[K];  // 各プロパティに ? を付ける
+};
+
+// Readonly<T> の内部実装（イメージ）
+type MyReadonly<T> = {
+  readonly [K in keyof T]: T[K];  // 各プロパティに readonly を付ける
+};
+```
+
+`[K in keyof T]` は「`T` のキーを1つずつ `K` に代入しながら繰り返す」という意味です。`T[K]` はそのキーに対応する値の型を取り出します。
+
+```typescript
+type User = { name: string; age: number };
+type ReadonlyUser = MyReadonly<User>;
+// { readonly name: string; readonly age: number }
+```
+
+型エラーで `{ [K in keyof T]?: T[K] }` のような表記を見かけたら、「各プロパティを変換しているんだな」と理解できれば十分です。
+
+---
+
 ## まとめ
 
 | 概念 | 要点 |
@@ -246,6 +276,7 @@ const permissions: RolePermissions = {
 | `Exclude<T, U>` | ユニオン型から特定の型を除外する |
 | `Extract<T, U>` | ユニオン型から特定の型だけを抽出する |
 | 組み合わせ | `Partial<Omit<T, K>>` のように組み合わせて実務の型を作る |
+| Mapped Types | `{ [K in keyof T]: T[K] }` でユーティリティ型が内部的に動作する仕組み |
 
 ---
 
