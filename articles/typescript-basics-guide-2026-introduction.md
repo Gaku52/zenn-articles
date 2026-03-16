@@ -10,9 +10,9 @@ published: true
 
 JavaScriptの基本を理解している方が、TypeScriptの型システムを基礎から体系的に学ぶための入門書です。
 
-https://zenn.dev/gaku/books/typescript-basics-guide-2026
+https://zenn.dev/gaku1234/books/typescript-basics-guide-2026
 
-**500円 / 全12章 / 約5.5万字 / TypeScript 5.7 / Node.js 22 LTS 対応**
+**500円 / 全12章 / 約8.9万字 / TypeScript 5.7 / Node.js 22 LTS 対応**
 
 ---
 
@@ -116,12 +116,12 @@ first(["a", "b"]);    // string | undefined
 |------|------|
 | **価格** | 500円 |
 | **章数** | 全12章（4部構成） |
-| **文字数** | 約5.5万字 |
+| **文字数** | 約8.9万字 |
 | **対応バージョン** | TypeScript 5.7 / Node.js 22 LTS |
 
 導入部分は無料で読めます。目次と内容を確認してからご検討ください。
 
-[書籍ページを見る](https://zenn.dev/gaku/books/typescript-basics-guide-2026)
+[書籍ページを見る](https://zenn.dev/gaku1234/books/typescript-basics-guide-2026)
 
 ---
 
