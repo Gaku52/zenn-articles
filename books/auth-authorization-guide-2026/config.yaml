@@ -1,0 +1,22 @@
+title: "認証認可実践ガイド 2026"
+summary: "セッション・JWT・OAuth 2.0・OIDCからRBAC・多要素認証まで、Webアプリの認証認可を体系的に学ぶ"
+topics: ["authentication", "authorization", "security", "oauth", "jwt"]
+published: true
+price: 1000
+toc_depth: 0
+chapters:
+  - 00-introduction
+  - 01-auth-fundamentals
+  - 02-password-security
+  - 03-session-management
+  - 04-csrf-protection
+  - 05-jwt
+  - 06-oauth2
+  - 07-openid-connect
+  - 08-token-management
+  - 09-rbac
+  - 10-abac-policies
+  - 11-mfa
+  - 12-social-login
+  - 13-api-authorization
+  - 14-best-practices

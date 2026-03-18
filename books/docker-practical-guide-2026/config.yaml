@@ -1,0 +1,22 @@
+title: "Docker実践ガイド 2026"
+summary: "コンテナの基礎からDockerfile最適化・Compose・本番運用・セキュリティまで、実務で使えるDocker力を身につける"
+topics: ["docker", "container", "devops", "infrastructure", "kubernetes"]
+published: true
+price: 1000
+toc_depth: 0
+chapters:
+  - 00-introduction
+  - 01-container-basics
+  - 02-docker-commands
+  - 03-dockerfile
+  - 04-multi-stage-build
+  - 05-docker-compose
+  - 06-compose-advanced
+  - 07-networking
+  - 08-volume-storage
+  - 09-development-workflow
+  - 10-production-deployment
+  - 11-monitoring
+  - 12-security
+  - 13-ci-cd
+  - 14-best-practices

@@ -1,0 +1,22 @@
+title: "Rust実践開発ガイド 2026"
+summary: "所有権・非同期・Web開発からCLIツールまで、Rustで実践的なアプリケーションを構築する力を身につける"
+topics: ["rust", "programming", "backend", "cli", "webdevelopment"]
+published: true
+price: 1000
+toc_depth: 0
+chapters:
+  - 00-introduction
+  - 01-ownership-borrowing
+  - 02-types-traits
+  - 03-error-handling
+  - 04-collections-iterators
+  - 05-lifetimes
+  - 06-smart-pointers
+  - 07-closures
+  - 08-async-programming
+  - 09-web-development
+  - 10-concurrency
+  - 11-cli-tools
+  - 12-serialization-db
+  - 13-testing
+  - 14-best-practices

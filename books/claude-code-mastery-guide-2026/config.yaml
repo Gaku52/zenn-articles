@@ -1,0 +1,24 @@
+title: "Claude Codeマスターガイド 2026"
+summary: "CLAUDE.md・hooks・MCP・Skills・SDKからコンテキスト管理・コスト最適化まで、Claude Codeの全機能を体系的にマスターする"
+topics: ["claudecode", "ai", "mcp", "agent", "llm"]
+published: true
+price: 1000
+toc_depth: 0
+chapters:
+  - 00-introduction
+  - 01-setup-basics
+  - 02-models
+  - 03-claude-md
+  - 04-slash-commands
+  - 05-skills
+  - 06-hooks
+  - 07-rules-permissions
+  - 08-context-management
+  - 09-mcp-basics
+  - 10-mcp-advanced
+  - 11-agent-sdk
+  - 12-git-github
+  - 13-multi-file-agents
+  - 14-practical-recipes
+  - 15-team-ci
+  - 16-cost-best-practices
