@@ -36,11 +36,11 @@ AIエージェント開発において、1つのエージェントでは対処�
 
 Supervisorパターンは、1つの管理エージェント（Supervisor）がタスクを分解し、専門ワーカーに委任する階層型の構成です。
 
-```
-[Supervisor]
- ├── [Worker A: フロントエンド]
- ├── [Worker B: バックエンド]
- └── [Worker C: テスト]
+```mermaid
+flowchart TD
+    S[Supervisor] --> A["Worker A: Frontend"]
+    S --> B["Worker B: Backend"]
+    S --> C["Worker C: Test"]
 ```
 
 Supervisorの役割は3つあります。
@@ -126,15 +126,12 @@ class SwarmSystem:
 
 Debateパターンは、提案者・批判者・審判者の3つの役割で議論を回し、回答品質を反復的に向上させるパターンです。
 
-```
-[提案者] → 初期提案
-     ↓
-[批判者] → 問題点の指摘
-     ↓
-[審判者] → 合格 / 不合格の判定
-     ↓
-不合格 → [提案者] が改善案を再提出（ループ）
-合格   → 最終回答として出力
+```mermaid
+flowchart TD
+    A["Proposer"] -->|"Initial proposal"| B["Critic"]
+    B -->|"Point out issues"| C["Judge"]
+    C -->|"Pass"| D["Final Output"]
+    C -->|"Fail"| A
 ```
 
 ```python
@@ -230,10 +227,12 @@ def schedule_tasks(assignments: list[dict]) -> list[list[dict]]:
 
 全エージェントがアクセスできる共有データストアを用意し、各エージェントが必要なデータを読み書きします。
 
-```
-[Agent A] ──write──> +-----------+ <──read── [Agent B]
-                     | 共有メモリ  |
-[Agent C] ──write──> +-----------+ <──read── [Agent D]
+```mermaid
+flowchart LR
+    A["Agent A"] -- write --> M["Shared Memory"]
+    C["Agent C"] -- write --> M
+    M -- read --> B["Agent B"]
+    M -- read --> D["Agent D"]
 ```
 
 ```python
@@ -275,12 +274,13 @@ class Blackboard:
 
 ワークフローをDAG（有向非巡回グラフ）として設計すると、処理が必ず終了することが保証されます。各ノードがエージェントの処理に対応し、エッジが処理の流れを表します。
 
-```
-DAG例: コンテンツ生成パイプライン
-
-  [企画立案] ──→ [調査] ──→ [執筆] ──→ [レビュー] ──→ [公開]
-                              ↑           │
-                              └── 要修正 ──┘
+```mermaid
+flowchart LR
+    A["Planning"] --> B["Research"]
+    B --> C["Writing"]
+    C --> D["Review"]
+    D -->|"Pass"| E["Publish"]
+    D -->|"Needs revision"| C
 ```
 
 ### LangGraphでの実装例

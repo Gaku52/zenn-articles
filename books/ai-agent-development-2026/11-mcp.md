@@ -14,16 +14,25 @@ MCP（Model Context Protocol）は、**AI アプリケーションとツール/�
 
 従来、AI アプリごとにツール連携を個別実装する必要がありました（N x M 問題）。MCP は「USB のような標準規格」でこれを解決します。
 
+```mermaid
+flowchart LR
+    subgraph "Without MCP (N x M)"
+        A1["App1"] -- custom --> T1["Tool1"]
+        A1 -- custom --> T2["Tool2"]
+        A2["App2"] -- custom --> T1
+    end
 ```
-MCPなし（N x M 問題）:
-  App1 ──カスタム統合──→ Tool1
-  App1 ──カスタム統合──→ Tool2
-  App2 ──カスタム統合──→ Tool1   ← 全組み合わせを個別実装
 
-MCPあり（N + M）:
-  App1 ──MCP──┐              ┌──MCP──→ Tool1
-  App2 ──MCP──┤  標準        ├──MCP──→ Tool2
-  App3 ──MCP──┘  プロトコル  └──MCP──→ Tool3
+```mermaid
+flowchart LR
+    subgraph "With MCP (N + M)"
+        B1["App1"] -- MCP --> P["Standard Protocol"]
+        B2["App2"] -- MCP --> P
+        B3["App3"] -- MCP --> P
+        P -- MCP --> U1["Tool1"]
+        P -- MCP --> U2["Tool2"]
+        P -- MCP --> U3["Tool3"]
+    end
 ```
 
 MCP サーバーを一度作れば、Claude Desktop・Claude Code・Cursor など MCP 対応のあらゆるホストから利用できます。
@@ -32,16 +41,17 @@ MCP サーバーを一度作れば、Claude Desktop・Claude Code・Cursor な�
 
 MCP は **クライアント / サーバーモデル** を採用しています。通信は **JSON-RPC 2.0** で行われ、トランスポートには **stdio**（ローカル）と **SSE**（リモート）があります。
 
-```
-+------------------+                   +------------------+
-|   MCP Host       |     JSON-RPC      |   MCP Server     |
-|  (AIアプリ)       |   over stdio/SSE  |  (ツールプロバイダ) |
-|  +-----------+   |                   |  +-----------+   |
-|  | MCP Client|<========================>| Server    |   |
-|  +-----------+   |                   |  +-----------+   |
-|  | LLM       |   |                   |  | ツール実装 |   |
-|  +-----------+   |                   |  +-----------+   |
-+------------------+                   +------------------+
+```mermaid
+flowchart LR
+    subgraph Host["MCP Host (AI App)"]
+        LLM["LLM"]
+        Client["MCP Client"]
+    end
+    subgraph Server["MCP Server (Tool Provider)"]
+        Srv["Server"]
+        Tools["Tool Implementations"]
+    end
+    Client <-- "JSON-RPC over stdio/SSE" --> Srv
 ```
 
 ### 4つの機能カテゴリ

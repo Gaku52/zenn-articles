@@ -26,17 +26,22 @@ LangChain の `AgentExecutor` は、LLM とツールの呼び出しをループ�
 
 LangGraph はこれらの課題を解決するために設計されたフレームワークです。ワークフローを**有向グラフ**として明示的に定義し、各ステップの制御を開発者の手に委ねます。
 
+```mermaid
+flowchart LR
+    subgraph "AgentExecutor (Black Box)"
+        L1["LLM"] --> T1["Tool"] --> L2["LLM"] --> R["Response"]
+    end
 ```
-AgentExecutor（ブラックボックス）:
-  [LLM] → [ツール] → [LLM] → ... → [回答]
-  内部のフローを制御できない
 
-LangGraph（明示的な状態グラフ）:
-  [Node A] ──→ [条件分岐] ──→ [Node B]
-       ^              |
-       |              v
-       +────── [Node C] ──→ [END]
-  各ノード・エッジを個別に定義・制御
+```mermaid
+flowchart TD
+    subgraph "LangGraph (Explicit State Graph)"
+        A["Node A"] --> B{"Conditional Edge"}
+        B --> C["Node B"]
+        B --> D["Node C"]
+        D --> A
+        C --> E["END"]
+    end
 ```
 
 ### 3 つのコア概念

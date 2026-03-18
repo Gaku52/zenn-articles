@@ -10,15 +10,21 @@ AIエージェントを開発したら、次に重要になるのが**評価**�
 
 従来のソフトウェアテストでは、入力に対して期待する出力が一意に決まります。しかしAIエージェントの評価には、固有の難しさがあります。
 
+```mermaid
+flowchart LR
+    subgraph "Traditional Software Test"
+        I1["Input"] --> F["Function"] --> O1["Output (Deterministic)"]
+    end
 ```
-従来のソフトウェアテスト:
-  入力 → [関数] → 出力（決定的）
-  評価: 出力が正しいか？
 
-エージェント評価:
-  入力 → [計画] → [ツール1] → [判断] → [ツール2] → ... → 出力
-  評価: 最終出力 + 各ステップの妥当性 + 効率 + 安全性
+```mermaid
+flowchart LR
+    subgraph "Agent Evaluation"
+        I2["Input"] --> P["Plan"] --> T1["Tool 1"] --> J["Judge"] --> T2["Tool 2"] --> O2["Output"]
+    end
 ```
+
+評価対象: **最終出力** + **各ステップの妥当性** + **効率** + **安全性**
 
 エージェント評価が難しい主な理由は以下の3つです。
 

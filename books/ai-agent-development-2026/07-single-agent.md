@@ -154,13 +154,12 @@ good = {
 
 エージェントを本番運用するには、安全性を担保する**ガードレール**が不可欠です。入力・実行中・出力の3層で設計します。
 
-```
-入力ガードレール       実行中ガードレール       出力ガードレール
-├ インジェクション検出  ├ ステップ数上限         ├ PII漏洩チェック
-└ 入力長制限           ├ ループ検出             └ 有害コンテンツフィルタ
-                       ├ トークン予算管理
-                       └ 破壊的操作の確認
-```
+| Input Guardrails | Runtime Guardrails | Output Guardrails |
+|---|---|---|
+| Injection detection | Step count limit | PII leak check |
+| Input length limit | Loop detection | Harmful content filter |
+| — | Token budget management | — |
+| — | Destructive operation confirmation | — |
 
 ```python
 import json

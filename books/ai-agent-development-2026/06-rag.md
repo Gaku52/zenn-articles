@@ -20,14 +20,21 @@ RAG は「LLM に外部記憶を持たせる仕組み」と捉えると理解し
 
 RAG パイプラインは、**インデックス構築（オフライン）** と **検索・生成（オンライン）** の2段階で構成されます。
 
+```mermaid
+flowchart LR
+    subgraph "Index Build (Offline)"
+        D["Documents"] --> C["Chunk Split"] --> E["Embedding"] --> V["Vector DB"]
+    end
 ```
-【インデックス構築】
-文書群 → チャンク分割 → Embedding → ベクトルDB格納
 
-【検索・生成】
-ユーザークエリ → Embedding → ベクトル検索 → 関連チャンク取得
-                                                  ↓
-              ユーザー質問 + 検索結果コンテキスト → LLM → 回答生成
+```mermaid
+flowchart LR
+    subgraph "Retrieval & Generation (Online)"
+        Q["User Query"] --> E2["Embedding"] --> S["Vector Search"] --> R["Related Chunks"]
+        R --> L["LLM"]
+        Q2["User Question"] --> L
+        L --> A["Generated Answer"]
+    end
 ```
 
 ### 各フェーズの役割
