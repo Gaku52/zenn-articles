@@ -1,7 +1,7 @@
 title: "Rust実践開発ガイド 2026"
 summary: "所有権・非同期・Web開発からCLIツールまで、Rustで実践的なアプリケーションを構築する力を身につける"
 topics: ["rust", "programming", "backend", "cli", "webdevelopment"]
-published: true
+published: false
 price: 1000
 toc_depth: 0
 chapters:

@@ -1,7 +1,7 @@
 title: "AIエージェント開発入門 2026"
 summary: "LLMの基礎からツール利用・RAG・マルチエージェント・本番運用まで、AIエージェントを設計・構築する力を身につける"
 topics: ["ai", "llm", "agent", "langchain", "rag"]
-published: true
+published: false
 price: 1000
 toc_depth: 0
 chapters:
