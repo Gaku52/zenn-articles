@@ -388,7 +388,7 @@ Xcodeの最新版（26.3）では、Claude Codeがネイティブに統合され
 - Xcodeのビルドログから直接Claudeを呼び出す
 - SwiftUIプレビュー内でリアルタイムに修正を提案
 
-この統合により、SwiftやObjective-Cの開発体験が大幅に向上しました。
+この統合により、SwiftやObjective-Cの開発体験が大幅に向上すると期待されています。
 
 ### Microsoft Agent Framework統合
 
