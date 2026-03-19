@@ -1,7 +1,7 @@
 title: "Claude Codeマスターガイド 2026"
 summary: "CLAUDE.md・hooks・MCP・Skills・SDKからコンテキスト管理・コスト最適化まで、Claude Codeの全機能を体系的にマスターする"
 topics: ["claudecode", "ai", "mcp", "agent", "llm"]
-published: false
+published: true
 price: 1000
 toc_depth: 0
 chapters:
