@@ -312,9 +312,124 @@ func main() {
 ## やってみよう
 
 1. FizzBuzz を書いてみましょう（1-30で、3の倍数は"Fizz"、5の倍数は"Buzz"、両方の倍数は"FizzBuzz"）
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    for i := 1; i <= 30; i++ {
+        // 式なしの switch で複数条件を分岐
+        switch {
+        case i%15 == 0:
+            fmt.Println("FizzBuzz")
+        case i%3 == 0:
+            fmt.Println("Fizz")
+        case i%5 == 0:
+            fmt.Println("Buzz")
+        default:
+            fmt.Println(i)
+        }
+    }
+}
+```
+
+`i%15 == 0` を最初に判定するのがポイントです。`i%3` と `i%5` を先に書くと、15の倍数が "Fizz" や "Buzz" に吸収されてしまいます。
+
+:::
+
 2. 式なしの switch を使って BMI の判定を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    height := 1.70 // メートル
+    weight := 65.0 // キログラム
+    bmi := weight / (height * height)
+
+    fmt.Printf("BMI: %.1f → ", bmi)
+
+    // 式なしの switch: 各 case に条件式を書ける
+    switch {
+    case bmi < 18.5:
+        fmt.Println("低体重")
+    case bmi < 25.0:
+        fmt.Println("普通体重")
+    case bmi < 30.0:
+        fmt.Println("肥満（1度）")
+    default:
+        fmt.Println("肥満（2度以上）")
+    }
+    // 出力: BMI: 22.5 → 普通体重
+}
+```
+
+Go の `switch` は `break` が不要です（自動で抜ける）。次の case に落ちたい場合は `fallthrough` を使いますが、通常は使いません。
+
+:::
+
 3. `range` を使って文字列 `"Hello, 世界"` を1文字ずつ表示してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    for i, r := range "Hello, 世界" {
+        fmt.Printf("index=%d, char='%c'\n", i, r)
+    }
+    // index=0, char='H'
+    // index=1, char='e'
+    // index=2, char='l'
+    // index=3, char='l'
+    // index=4, char='o'
+    // index=5, char=','
+    // index=6, char=' '
+    // index=7, char='世'   ← index が 7（"世" は3バイト）
+    // index=10, char='界'  ← index が 10 に飛ぶ
+}
+```
+
+`range` で文字列をループすると、`rune`（Unicode コードポイント）単位で反復します。index はバイト位置なので、マルチバイト文字の後は値が飛びます。
+
+:::
+
 4. `defer` を使って「開始→処理中→終了」の順で表示するプログラムを書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    // defer は関数の終了時に実行される（LIFO: 後入れ先出し）
+    defer fmt.Println("終了")
+
+    fmt.Println("開始")
+    fmt.Println("処理中")
+}
+// 出力:
+// 開始
+// 処理中
+// 終了
+```
+
+`defer` は宣言した順番の逆順で実行されます。ファイルのクローズやロックの解放など、「この関数が終わる前に必ず実行したい処理」に使います。
+
+:::
 
 ---
 

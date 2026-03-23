@@ -209,9 +209,87 @@ func main() {  // プログラムのエントリーポイント
 ## やってみよう
 
 1. `go version` でGoのバージョンを確認してみましょう
+
+:::details 解答例を見る
+
+```bash
+$ go version
+go version go1.24.0 darwin/arm64
+```
+
+`go1.24.0` の部分がバージョン、`darwin/arm64` はOS/アーキテクチャです。Go 1.24 以上が表示されればOKです。
+
+:::
+
 2. `hello-go` プロジェクトを作成し、`Hello, Go!` を表示させてみましょう
+
+:::details 解答例を見る
+
+```bash
+$ mkdir hello-go && cd hello-go
+$ go mod init hello-go
+```
+
+```go
+// main.go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, Go!")
+}
+```
+
+```bash
+$ go run main.go
+Hello, Go!
+```
+
+:::
+
 3. 表示するメッセージを変えて `go run` してみましょう
+
+:::details 解答例を見る
+
+```go
+// main.go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("こんにちは、Go言語！")
+}
+```
+
+```bash
+$ go run main.go
+こんにちは、Go言語！
+```
+
+:::
+
 4. `go build` でバイナリを作成し、直接実行してみましょう
+
+:::details 解答例を見る
+
+```bash
+# バイナリをビルド
+$ go build -o hello-go
+
+# 直接実行（go コマンド不要）
+$ ./hello-go
+Hello, Go!
+
+# バイナリのサイズを確認
+$ ls -lh hello-go
+-rwxr-xr-x  1 user  staff   1.8M  ...  hello-go
+```
+
+`go run` はビルドと実行を同時に行いますが、`go build` はバイナリを生成するだけです。生成されたバイナリは Go がインストールされていない環境でもそのまま実行できます。
+
+:::
 
 ---
 

@@ -355,8 +355,311 @@ func safe(ctx context.Context) <-chan int {
 **練習1: URLクローラー**
 10個のURLを受け取り、`errgroup.SetLimit(3)` で並行にHTTP GETし、各URLのステータスコードを返す関数を実装せよ。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"time"
+
+	"golang.org/x/sync/errgroup"
+)
+
+// CrawlResult は各URLのクロール結果
+type CrawlResult struct {
+	URL        string
+	StatusCode int
+}
+
+// crawlURLs は最大3並行でURLをクロールし、各ステータスコードを返す
+func crawlURLs(ctx context.Context, urls []string) ([]CrawlResult, error) {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(3) // 同時実行数を3に制限
+
+	// インデックス指定でスライスに書き込むことでMutex不要
+	// 各goroutineが異なるインデックスにアクセスするため安全
+	results := make([]CrawlResult, len(urls))
+
+	for i, url := range urls {
+		g.Go(func() error {
+			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+			if err != nil {
+				return fmt.Errorf("create request for %s: %w", url, err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return fmt.Errorf("fetch %s: %w", url, err)
+			}
+			defer resp.Body.Close()
+
+			results[i] = CrawlResult{URL: url, StatusCode: resp.StatusCode}
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err // 最初のエラーを返す（他のgoroutineは自動キャンセル）
+	}
+	return results, nil
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	urls := []string{
+		"https://httpbin.org/status/200",
+		"https://httpbin.org/status/201",
+		"https://httpbin.org/status/202",
+		"https://httpbin.org/status/301",
+		"https://httpbin.org/status/400",
+		"https://httpbin.org/status/401",
+		"https://httpbin.org/status/403",
+		"https://httpbin.org/status/404",
+		"https://httpbin.org/status/500",
+		"https://httpbin.org/status/503",
+	}
+
+	results, err := crawlURLs(ctx, urls)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+
+	for _, r := range results {
+		fmt.Printf("%s → %d\n", r.URL, r.StatusCode)
+	}
+
+	// 出力例:
+	// https://httpbin.org/status/200 → 200
+	// https://httpbin.org/status/201 → 201
+	// ... (各URLのステータスコード)
+}
+```
+
+**ポイント:** `errgroup.WithContext` を使うと、1つのgoroutineがエラーを返した時点で他のgoroutineのcontextもキャンセルされる。`SetLimit(3)` で同時実行数を制限することで、対象サーバーへの負荷を制御できる。
+
+> ※ `context` の詳細は Chapter 04 で学びます。ここでは「キャンセルを伝搬する仕組み」と理解しておけばOKです。
+
+:::
+
 **練習2: Pipeline + Rate Limiter**
 1-100の整数を生成 -> `rate.NewLimiter(rate.Limit(20), 5)` で毎秒20件に制限 -> 二乗するPipelineを構築せよ。全ステージをcontext対応にすること。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"golang.org/x/time/rate"
+)
+
+// generate は1〜100の整数をchannelに送信する
+func generate(ctx context.Context) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for i := 1; i <= 100; i++ {
+			select {
+			case <-ctx.Done():
+				return
+			case out <- i:
+			}
+		}
+	}()
+	return out
+}
+
+// rateLimit はRate Limiterを通してデータを流す
+func rateLimit(ctx context.Context, in <-chan int, limiter *rate.Limiter) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for v := range in {
+			// Wait はトークンが取得できるまでブロックする
+			if err := limiter.Wait(ctx); err != nil {
+				return // contextキャンセル時に終了
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- v:
+			}
+		}
+	}()
+	return out
+}
+
+// square は受信した値を二乗して送信する
+func square(ctx context.Context, in <-chan int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for v := range in {
+			select {
+			case <-ctx.Done():
+				return
+			case out <- v * v:
+			}
+		}
+	}()
+	return out
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 毎秒20件、バースト5のRate Limiter
+	limiter := rate.NewLimiter(rate.Limit(20), 5)
+
+	// Pipeline: generate → rateLimit → square → 出力
+	start := time.Now()
+	count := 0
+	for v := range square(ctx, rateLimit(ctx, generate(ctx), limiter)) {
+		count++
+		fmt.Printf("[%6s] %d: %d\n",
+			time.Since(start).Truncate(time.Millisecond), count, v)
+	}
+
+	// 出力例:
+	// [   0ms] 1: 1
+	// [   0ms] 2: 4      ← バースト5件は即座に処理
+	// ...
+	// [ 250ms] 6: 36     ← 以降は50msごと（毎秒20件）
+}
+```
+
+**ポイント:** Rate LimiterをPipelineの1ステージとして挟むのが定番パターン。`limiter.Wait(ctx)` はcontextのキャンセルにも対応しているため、タイムアウト時にPipeline全体が確実に停止する。
+
+> ※ `context` の詳細は Chapter 04 で学びます。
+
+:::
+
 **練習3: タイムアウト付きFan-out**
 5つのAPIエンドポイント（`time.Sleep`でシミュレート可）を並行に呼び出し、3秒以内に全結果を集約する関数を実装せよ。1つでもタイムアウトしたら `context.DeadlineExceeded` を返すこと。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+)
+
+// APIResult はAPIの呼び出し結果
+type APIResult struct {
+	Endpoint string
+	Data     string
+	Duration time.Duration
+}
+
+// callAPI はAPIエンドポイントの呼び出しをシミュレートする
+func callAPI(ctx context.Context, endpoint string, latency time.Duration) (APIResult, error) {
+	select {
+	case <-ctx.Done():
+		return APIResult{}, ctx.Err() // タイムアウト or キャンセル
+	case <-time.After(latency):
+		return APIResult{
+			Endpoint: endpoint,
+			Data:     fmt.Sprintf("response from %s", endpoint),
+			Duration: latency,
+		}, nil
+	}
+}
+
+// fanOutWithTimeout は全APIを並行に呼び出し、全結果を集約する
+// 3秒以内に完了しなければ context.DeadlineExceeded を返す
+func fanOutWithTimeout(endpoints []string) ([]APIResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var (
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		results []APIResult
+		firstErr error
+	)
+
+	for _, ep := range endpoints {
+		wg.Add(1)
+		go func(endpoint string) {
+			defer wg.Done()
+
+			// 各APIは0〜4秒のランダムなレイテンシ
+			latency := time.Duration(rand.Intn(4000)+500) * time.Millisecond
+			result, err := callAPI(ctx, endpoint, latency)
+
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("%s: %w", endpoint, err)
+				}
+				return
+			}
+			results = append(results, result)
+		}(ep)
+	}
+
+	wg.Wait()
+
+	// 1つでもタイムアウトしたらエラーを返す
+	if firstErr != nil {
+		return nil, firstErr
+	}
+	return results, nil
+}
+
+func main() {
+	endpoints := []string{
+		"/api/users",
+		"/api/orders",
+		"/api/products",
+		"/api/reviews",
+		"/api/inventory",
+	}
+
+	results, err := fanOutWithTimeout(endpoints)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("All %d APIs responded within deadline:\n", len(results))
+	for _, r := range results {
+		fmt.Printf("  %s (%v)\n", r.Endpoint, r.Duration)
+	}
+
+	// 出力例（全API が3秒以内に応答した場合）:
+	// All 5 APIs responded within deadline:
+	//   /api/users (1.2s)
+	//   /api/orders (0.8s)
+	//   ...
+	//
+	// タイムアウトした場合:
+	// Error: /api/inventory: context deadline exceeded
+}
+```
+
+**ポイント:** `context.WithTimeout` で全goroutineに共通のデッドラインを設定する。`callAPI` 内の `select` で `ctx.Done()` を監視することで、デッドライン到達時に全goroutineが即座に終了する。`sync.WaitGroup` で全goroutineの完了を確実に待つことで、goroutineリークを防ぐ。
+
+> ※ `context` の詳細は Chapter 04 で学びます。
+
+:::
+

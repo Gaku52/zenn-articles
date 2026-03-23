@@ -369,8 +369,88 @@ Goのポインタは安全に設計されています。C言語のような危�
 ## やってみよう
 
 1. 整数のポインタを受け取り、値を2倍にする `doubleValue(p *int)` 関数を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func doubleValue(p *int) {
+    *p *= 2 // ポインタを経由して、呼び出し元の変数を直接変更
+}
+
+func main() {
+    x := 10
+    fmt.Println("変更前:", x) // 10
+    doubleValue(&x)           // &x でアドレスを渡す
+    fmt.Println("変更後:", x) // 20
+}
+```
+
+`&x` で変数 `x` のアドレスを取得し、`*p` でそのアドレスが指す値を読み書きします。値渡しでは呼び出し元の変数を変更できませんが、ポインタ渡しなら可能です。
+
+:::
+
 2. 2つの整数のポインタを受け取り、値を入れ替える `swap(a, b *int)` 関数を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func swap(a, b *int) {
+    *a, *b = *b, *a // Go の多重代入で一行で交換できる
+}
+
+func main() {
+    x, y := 10, 20
+    fmt.Printf("変更前: x=%d, y=%d\n", x, y) // x=10, y=20
+    swap(&x, &y)
+    fmt.Printf("変更後: x=%d, y=%d\n", x, y) // x=20, y=10
+}
+```
+
+ポインタを使わずに `swap(a, b int)` と書くと、値のコピーが交換されるだけで、呼び出し元の `x`, `y` は変わりません。
+
+:::
+
 3. nil ポインタを間接参照するとどうなるか確認してみましょう（`recover` で捕捉してみましょう）
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func safeDeref() {
+    // defer + recover で panic を捕捉
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("panicを捕捉:", r)
+        }
+    }()
+
+    var p *int    // nil ポインタ（どこも指していない）
+    fmt.Println(*p) // ← ここで panic 発生
+}
+
+func main() {
+    safeDeref()
+    fmt.Println("プログラムは継続しています")
+}
+// 出力:
+// panicを捕捉: runtime error: invalid memory address or nil pointer dereference
+// プログラムは継続しています
+```
+
+nil ポインタの間接参照は **panic** を引き起こします。`recover` で捕捉できますが、通常は「ポインタが nil でないか事前にチェックする」のが正しい対処法です。
+
+:::
 
 ---
 

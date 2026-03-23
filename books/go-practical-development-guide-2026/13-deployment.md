@@ -341,6 +341,109 @@ func main() {
 - `docker images` でイメージサイズを確認する
 - 非rootユーザーで実行されていることを確認する
 
+:::details 解答例を見る
+
+まず、シンプルなHTTPサーバーを用意する。
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"runtime"
+)
+
+// ビルド時に -ldflags "-X main.version=v1.0.0" で注入
+var version = "dev"
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello World! (version=%s, go=%s)\n", version, runtime.Version())
+	})
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	log.Printf("Server starting on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+```
+
+次に、マルチステージビルドの Dockerfile を作成する。
+
+```dockerfile
+# ===== Stage 1: ビルド =====
+FROM golang:1.24-alpine AS builder
+
+# CA証明書とタイムゾーン情報をインストール
+RUN apk add --no-cache ca-certificates tzdata
+# 非rootユーザーを作成
+RUN adduser -D -g '' appuser
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+COPY . .
+
+ARG VERSION=dev
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -trimpath \
+    -ldflags="-w -s -X main.version=${VERSION}" \
+    -o /app/server .
+
+# ===== Stage 2: 実行（最小イメージ） =====
+FROM gcr.io/distroless/static-debian12
+
+# ビルドステージから必要なファイルだけコピー
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/passwd /etc/passwd
+
+# 非rootユーザーで実行
+USER appuser
+COPY --from=builder /app/server /server
+
+EXPOSE 8080
+ENTRYPOINT ["/server"]
+```
+
+```bash
+# ビルドとサイズ確認
+docker build --build-arg VERSION=v1.0.0 -t myapp:v1.0.0 .
+docker images myapp
+# 出力例:
+# REPOSITORY  TAG     IMAGE ID       CREATED        SIZE
+# myapp       v1.0.0  abc123def456   5 seconds ago  12.3MB
+
+# 実行して動作確認
+docker run -d -p 8080:8080 --name myapp myapp:v1.0.0
+curl http://localhost:8080
+# 出力例: Hello World! (version=v1.0.0, go=go1.24.1)
+
+# 非rootユーザーで実行されていることを確認
+docker exec myapp whoami 2>&1 || echo "(distroless にはシェルがないため exec は失敗する)"
+# distroless は whoami コマンドがないため、代わりに /proc を確認:
+docker run --rm myapp:v1.0.0 cat /proc/1/status 2>&1 || \
+  echo "distroless にはシェルがないことが確認できた = 攻撃面が極小"
+
+# 後片付け
+docker stop myapp && docker rm myapp
+```
+
+ポイント: マルチステージビルドにより最終イメージは約12MB。`distroless/static` にはシェルもパッケージマネージャもないため、コンテナ内での攻撃面が極小になる。`go.mod` / `go.sum` を先にコピーして `go mod download` することで、Docker のレイヤキャッシュが効きソース変更時の再ビルドが高速化される。
+
+:::
+
 ### 練習2: GitHub Actions CI
 
 自分のリポジトリに以下を含むCIワークフローを作成してみよう。
@@ -350,6 +453,93 @@ func main() {
 - `govulncheck` による脆弱性スキャン
 - PRを出してCIが通ることを確認する
 
+:::details 解答例を見る
+
+`.github/workflows/ci.yml` を作成する。
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      # -race: データ競合検出 / -coverprofile: カバレッジ出力
+      - run: go test -race -coverprofile=coverage.out -v ./...
+      - uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage.out
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      # govulncheck で既知の脆弱性をスキャン
+      - run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  build:
+    needs: [lint, test, security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - run: CGO_ENABLED=0 go build -trimpath -ldflags="-w -s" -o bin/server ./cmd/server
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server
+          path: bin/server
+```
+
+```bash
+# ローカルでCIと同等のチェックを実行してからpushする
+go vet ./...
+go test -race -cover ./...
+golangci-lint run
+govulncheck ./...
+
+# ブランチを作ってPRを出す
+git checkout -b feature/add-ci
+git add .github/workflows/ci.yml
+git commit -m "ci: add CI workflow with lint, test, security, build"
+git push -u origin feature/add-ci
+# GitHub上でPRを作成し、CIが全てグリーンになることを確認
+```
+
+ポイント: `lint` → `test` → `security` は並列実行され、全て通過後に `build` が実行される（`needs` で依存関係を定義）。`-race` フラグは並行処理のデータ競合をランタイムで検出するため、CIでは必ず有効にすること。
+
+:::
+
 ### 練習3: Graceful Shutdown
 
 Graceful Shutdownを実装したHTTPサーバーを作り、以下を検証してみよう。
@@ -357,3 +547,101 @@ Graceful Shutdownを実装したHTTPサーバーを作り、以下を検証し�
 1. `curl` で3秒かかるリクエストを送信中に `Ctrl+C` でサーバーを停止
 2. レスポンスが正常に返ることを確認
 3. `Shutdown` のタイムアウトを1秒に短くして、同じことを試す。今度はどうなるか？
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func main() {
+	mux := http.NewServeMux()
+
+	// ヘルスチェック
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	// 3秒かかる重い処理
+	mux.HandleFunc("/slow", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Processing slow request...")
+		time.Sleep(3 * time.Second)
+		fmt.Fprintln(w, "done (3 seconds)")
+		log.Println("Slow request completed")
+	})
+
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// サーバーをgoroutineで起動
+	go func() {
+		log.Printf("Server starting on %s", srv.Addr)
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// SIGINT (Ctrl+C) / SIGTERM を待つ
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-quit
+	log.Printf("Received signal: %s, shutting down...", sig)
+
+	// --- ここのタイムアウトを変えて実験する ---
+	// 10秒: 3秒のリクエストは完了できる
+	// 1秒: 3秒のリクエストは途中で切断される
+	shutdownTimeout := 10 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Shutdown error: %v", err)
+	}
+	log.Println("Server stopped gracefully")
+}
+```
+
+```bash
+# 1. サーバー起動
+go run main.go
+
+# 2. 別ターミナルで3秒かかるリクエストを送信
+curl http://localhost:8080/slow &
+
+# 3. リクエスト送信直後（1秒以内）にサーバーのターミナルで Ctrl+C
+
+# --- タイムアウト10秒の場合 ---
+# curl は3秒後に "done (3 seconds)" を受け取る ← 正常完了
+# サーバーログ:
+#   Received signal: interrupt, shutting down...
+#   Slow request completed
+#   Server stopped gracefully
+
+# --- タイムアウト1秒に変更した場合 ---
+# shutdownTimeout := 1 * time.Second に変更して再実行
+# curl は "curl: (52) Empty reply from server" になる ← 途中切断
+# サーバーログ:
+#   Received signal: interrupt, shutting down...
+#   Shutdown error: context deadline exceeded
+#   Server stopped gracefully
+```
+
+ポイント: `srv.Shutdown(ctx)` は新しいリクエストの受付を停止し、処理中のリクエストが完了するまで待つ。タイムアウトが短すぎると処理中のリクエストが切断される。本番では Kubernetes の `terminationGracePeriodSeconds`（デフォルト30秒）と合わせて設定すること。
+
+:::

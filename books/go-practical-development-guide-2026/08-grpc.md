@@ -341,10 +341,550 @@ service TodoService {
 }
 ```
 
+:::details 解答例を見る
+
+まず、完全な `.proto` ファイルを定義します。
+
+```protobuf
+// proto/todo/v1/todo.proto
+syntax = "proto3";
+package todo.v1;
+option go_package = "gen/todo/v1;todov1";
+
+service TodoService {
+  rpc CreateTodo(CreateTodoRequest) returns (CreateTodoResponse);
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+  rpc CompleteTodo(CompleteTodoRequest) returns (CompleteTodoResponse);
+}
+
+message Todo {
+  int64 id = 1;
+  string title = 2;
+  bool done = 3;
+}
+
+message CreateTodoRequest { string title = 1; }
+message CreateTodoResponse { Todo todo = 1; }
+message ListTodosRequest {}
+message ListTodosResponse { repeated Todo todos = 1; }
+message CompleteTodoRequest { int64 id = 1; }
+message CompleteTodoResponse { Todo todo = 1; }
+```
+
+`buf generate` でコード生成後、サーバーとクライアントを実装します。
+
+```go
+// server/main.go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
+	todov1 "example.com/todo/gen/todo/v1" // buf generate で生成されたパッケージ
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type todoServer struct {
+	todov1.UnimplementedTodoServiceServer // 未実装メソッドのデフォルト提供
+	mu     sync.RWMutex
+	todos  map[int64]*todov1.Todo
+	nextID int64
+}
+
+func newTodoServer() *todoServer {
+	return &todoServer{todos: make(map[int64]*todov1.Todo), nextID: 1}
+}
+
+func (s *todoServer) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.CreateTodoResponse, error) {
+	// バリデーション: gRPCでは status.Errorf で適切なコードを返す
+	if req.Title == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "title is required")
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	todo := &todov1.Todo{
+		Id:    s.nextID,
+		Title: req.Title,
+		Done:  false,
+	}
+	s.todos[s.nextID] = todo
+	s.nextID++
+
+	return &todov1.CreateTodoResponse{Todo: todo}, nil
+}
+
+func (s *todoServer) ListTodos(ctx context.Context, req *todov1.ListTodosRequest) (*todov1.ListTodosResponse, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	list := make([]*todov1.Todo, 0, len(s.todos))
+	for _, t := range s.todos {
+		list = append(list, t)
+	}
+	return &todov1.ListTodosResponse{Todos: list}, nil
+}
+
+func (s *todoServer) CompleteTodo(ctx context.Context, req *todov1.CompleteTodoRequest) (*todov1.CompleteTodoResponse, error) {
+	if req.Id <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid todo id: %d", req.Id)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	todo, ok := s.todos[req.Id]
+	if !ok {
+		// NotFound: REST の 404 に相当
+		return nil, status.Errorf(codes.NotFound, "todo %d not found", req.Id)
+	}
+	todo.Done = true
+	return &todov1.CompleteTodoResponse{Todo: todo}, nil
+}
+
+func main() {
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s := grpc.NewServer()
+	todov1.RegisterTodoServiceServer(s, newTodoServer())
+
+	// Graceful Shutdown
+	go func() {
+		fmt.Println("gRPC server listening on :50051")
+		if err := s.Serve(lis); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("Shutting down...")
+	s.GracefulStop()
+}
+```
+
+```go
+// client/main.go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	todov1 "example.com/todo/gen/todo/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+func main() {
+	// 開発用: insecure.NewCredentials()。本番では TLS 必須
+	conn, err := grpc.NewClient("localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := todov1.NewTodoServiceClient(conn)
+
+	// タイムアウト付きの context を必ず設定する
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 作成
+	created, err := client.CreateTodo(ctx, &todov1.CreateTodoRequest{Title: "gRPCを学ぶ"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Created: %v\n", created.Todo)
+
+	// 一覧
+	list, err := client.ListTodos(ctx, &todov1.ListTodosRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Todos: %v\n", list.Todos)
+
+	// 完了
+	completed, err := client.CompleteTodo(ctx, &todov1.CompleteTodoRequest{Id: created.Todo.Id})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Completed: %v\n", completed.Todo)
+}
+
+// 実行例:
+// Created: id:1 title:"gRPCを学ぶ"
+// Todos: [id:1 title:"gRPCを学ぶ"]
+// Completed: id:1 title:"gRPCを学ぶ" done:true
+```
+
+gRPC では `status.Errorf` で `codes.NotFound`、`codes.InvalidArgument` など適切なステータスコードを返すのが鉄則です。REST の HTTP ステータスコードに相当する16種類のコードを使い分けましょう。
+
+:::
+
 **練習2: Server Streamingの体験**
 
 練習1に`WatchTodos`メソッドを追加し、TODOが追加・完了されるたびにイベントをストリーミング配信してください。`stream.Context().Done()`によるキャンセル対応を実装すること。
 
+:::details 解答例を見る
+
+まず、`.proto` にストリーミング用のメッセージとRPCを追加します。
+
+```protobuf
+// proto/todo/v1/todo.proto に追加
+message WatchTodosRequest {}
+message TodoEvent {
+  string event_type = 1; // "created" or "completed"
+  Todo todo = 2;
+}
+
+service TodoService {
+  // ... 既存のRPC ...
+  rpc WatchTodos(WatchTodosRequest) returns (stream TodoEvent); // Server Streaming
+}
+```
+
+サーバー側の実装です。
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
+	todov1 "example.com/todo/gen/todo/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type todoServer struct {
+	todov1.UnimplementedTodoServiceServer
+	mu     sync.RWMutex
+	todos  map[int64]*todov1.Todo
+	nextID int64
+
+	// イベント通知用チャネル: 各 WatchTodos クライアントに配布
+	watchersMu sync.Mutex
+	watchers   []chan *todov1.TodoEvent
+}
+
+func newTodoServer() *todoServer {
+	return &todoServer{
+		todos:    make(map[int64]*todov1.Todo),
+		nextID:   1,
+		watchers: make([]chan *todov1.TodoEvent, 0),
+	}
+}
+
+// notify は全 watcher にイベントを送信する（ノンブロッキング）
+func (s *todoServer) notify(event *todov1.TodoEvent) {
+	s.watchersMu.Lock()
+	defer s.watchersMu.Unlock()
+
+	for _, ch := range s.watchers {
+		select {
+		case ch <- event:
+		default:
+			// バッファが一杯ならスキップ（遅いクライアントを待たない）
+		}
+	}
+}
+
+func (s *todoServer) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.CreateTodoResponse, error) {
+	if req.Title == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "title is required")
+	}
+
+	s.mu.Lock()
+	todo := &todov1.Todo{Id: s.nextID, Title: req.Title, Done: false}
+	s.todos[s.nextID] = todo
+	s.nextID++
+	s.mu.Unlock()
+
+	// 作成イベントを全 watcher に通知
+	s.notify(&todov1.TodoEvent{EventType: "created", Todo: todo})
+
+	return &todov1.CreateTodoResponse{Todo: todo}, nil
+}
+
+func (s *todoServer) ListTodos(ctx context.Context, req *todov1.ListTodosRequest) (*todov1.ListTodosResponse, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	list := make([]*todov1.Todo, 0, len(s.todos))
+	for _, t := range s.todos {
+		list = append(list, t)
+	}
+	return &todov1.ListTodosResponse{Todos: list}, nil
+}
+
+func (s *todoServer) CompleteTodo(ctx context.Context, req *todov1.CompleteTodoRequest) (*todov1.CompleteTodoResponse, error) {
+	if req.Id <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id")
+	}
+	s.mu.Lock()
+	todo, ok := s.todos[req.Id]
+	if !ok {
+		s.mu.Unlock()
+		return nil, status.Errorf(codes.NotFound, "todo %d not found", req.Id)
+	}
+	todo.Done = true
+	s.mu.Unlock()
+
+	// 完了イベントを全 watcher に通知
+	s.notify(&todov1.TodoEvent{EventType: "completed", Todo: todo})
+
+	return &todov1.CompleteTodoResponse{Todo: todo}, nil
+}
+
+// WatchTodos は Server Streaming RPC
+func (s *todoServer) WatchTodos(req *todov1.WatchTodosRequest, stream todov1.TodoService_WatchTodosServer) error {
+	// この watcher 用のチャネルを作成して登録
+	ch := make(chan *todov1.TodoEvent, 10) // バッファ付き
+
+	s.watchersMu.Lock()
+	s.watchers = append(s.watchers, ch)
+	s.watchersMu.Unlock()
+
+	// クリーンアップ: 関数終了時に watcher を削除
+	defer func() {
+		s.watchersMu.Lock()
+		for i, w := range s.watchers {
+			if w == ch {
+				s.watchers = append(s.watchers[:i], s.watchers[i+1:]...)
+				break
+			}
+		}
+		s.watchersMu.Unlock()
+		close(ch)
+	}()
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			// クライアント切断を検出 → リソースリークを防ぐ
+			return nil
+		case event := <-ch:
+			if err := stream.Send(event); err != nil {
+				return status.Errorf(codes.Internal, "send failed: %v", err)
+			}
+		}
+	}
+}
+
+func main() {
+	lis, _ := net.Listen("tcp", ":50051")
+	s := grpc.NewServer()
+	todov1.RegisterTodoServiceServer(s, newTodoServer())
+
+	go func() {
+		fmt.Println("gRPC server listening on :50051")
+		log.Fatal(s.Serve(lis))
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	s.GracefulStop()
+}
+
+// 動作確認手順:
+// 1. ターミナル1: サーバー起動
+// 2. ターミナル2: WatchTodos クライアント起動（下記参照）
+// 3. ターミナル3: CreateTodo / CompleteTodo を呼ぶ
+// → ターミナル2 にリアルタイムでイベントが表示される
+```
+
+```go
+// watch_client/main.go -- WatchTodos のクライアント
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"log"
+
+	todov1 "example.com/todo/gen/todo/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+func main() {
+	conn, err := grpc.NewClient("localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	client := todov1.NewTodoServiceClient(conn)
+
+	// Server Streaming: Recv() をループで呼んでイベントを受信
+	stream, err := client.WatchTodos(context.Background(), &todov1.WatchTodosRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Watching for todo events... (Ctrl+C to stop)")
+	for {
+		event, err := stream.Recv()
+		if err == io.EOF {
+			fmt.Println("Stream closed by server")
+			return
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("[%s] ID=%d Title=%q Done=%v\n",
+			event.EventType, event.Todo.Id, event.Todo.Title, event.Todo.Done)
+	}
+}
+
+// 実行例:
+// Watching for todo events... (Ctrl+C to stop)
+// [created] ID=1 Title="買い物" Done=false
+// [completed] ID=1 Title="買い物" Done=true
+```
+
+Server Streaming の実装で最も重要なのは `stream.Context().Done()` によるクライアント切断の検出です。これを忘れるとクライアントが切断してもgoroutineが残り続け、リソースリークの原因になります。
+
+:::
+
 **練習3: ロギングインターセプタの拡張**
 
 本章のロギングインターセプタを拡張して、(1) メタデータから`x-request-id`を取得して出力、(2) エラー時にはエラーメッセージも出力、(3) レスポンスサイズの記録 — を追加してください。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+)
+
+// EnhancedLoggingUnaryInterceptor は拡張版ロギングインターセプタ
+func EnhancedLoggingUnaryInterceptor(
+	ctx context.Context, req any,
+	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+) (any, error) {
+	start := time.Now()
+
+	// (1) メタデータから x-request-id を取得
+	requestID := "unknown"
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if values := md.Get("x-request-id"); len(values) > 0 {
+			requestID = values[0]
+		}
+	}
+
+	// ハンドラ実行
+	resp, err := handler(ctx, req)
+
+	// ステータスコードの取得
+	code := codes.OK
+	errMsg := ""
+	if err != nil {
+		code = status.Code(err)
+		// (2) エラー時はエラーメッセージも記録
+		errMsg = status.Convert(err).Message()
+	}
+
+	// (3) レスポンスサイズの記録（Protocol Buffers のシリアライズサイズ）
+	var respSize int
+	if resp != nil {
+		if msg, ok := resp.(proto.Message); ok {
+			respSize = proto.Size(msg)
+		}
+	}
+
+	// ログ出力
+	if errMsg != "" {
+		log.Printf("[gRPC] request_id=%s method=%s code=%s duration=%v resp_size=%dB error=%q",
+			requestID, info.FullMethod, code, time.Since(start), respSize, errMsg)
+	} else {
+		log.Printf("[gRPC] request_id=%s method=%s code=%s duration=%v resp_size=%dB",
+			requestID, info.FullMethod, code, time.Since(start), respSize)
+	}
+
+	return resp, err
+}
+
+func main() {
+	lis, _ := net.Listen("tcp", ":50051")
+
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			RecoveryUnaryInterceptor,        // パニックリカバリ（最外側）
+			EnhancedLoggingUnaryInterceptor, // 拡張ロギング
+		),
+	)
+	// サービス登録とサーバー起動は省略
+
+	fmt.Println("gRPC server listening on :50051")
+	log.Fatal(s.Serve(lis))
+}
+
+// RecoveryUnaryInterceptor は本章のパニックリカバリインターセプタ
+func RecoveryUnaryInterceptor(
+	ctx context.Context, req any,
+	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+) (resp any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC] %s: %v", info.FullMethod, r)
+			err = status.Errorf(codes.Internal, "internal server error")
+		}
+	}()
+	return handler(ctx, req)
+}
+
+// クライアント側でメタデータを送信する例:
+//
+// md := metadata.Pairs("x-request-id", "req-abc-123")
+// ctx := metadata.NewOutgoingContext(context.Background(), md)
+// resp, err := client.CreateTodo(ctx, &todov1.CreateTodoRequest{Title: "テスト"})
+
+// 実行例（サーバーのログ出力）:
+// [gRPC] request_id=req-abc-123 method=/todo.v1.TodoService/CreateTodo code=OK duration=52µs resp_size=24B
+// [gRPC] request_id=req-def-456 method=/todo.v1.TodoService/CompleteTodo code=NotFound duration=12µs resp_size=0B error="todo 99 not found"
+```
+
+`metadata.FromIncomingContext` でリクエストメタデータを取得し、`proto.Size` でレスポンスのシリアライズサイズを計測しています。分散トレーシングでは `x-request-id` を全サービス間で伝搬させることで、1つのリクエストがどのサービスを通ったかを追跡できます。
+
+:::

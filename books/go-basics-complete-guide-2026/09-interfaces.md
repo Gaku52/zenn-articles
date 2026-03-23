@@ -367,9 +367,183 @@ func safeFunc(bad bool) error {
 ## やってみよう
 
 1. `Stringer` インターフェースを実装して、自分の構造体を `fmt.Println` で表示してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+type Book struct {
+    Title  string
+    Author string
+    Pages  int
+}
+
+// fmt.Stringer インターフェースを実装（String() string を持つだけでOK）
+func (b Book) String() string {
+    return fmt.Sprintf("『%s』(%s著, %dページ)", b.Title, b.Author, b.Pages)
+}
+
+func main() {
+    book := Book{Title: "Go入門", Author: "田中太郎", Pages: 300}
+    fmt.Println(book) // 『Go入門』(田中太郎著, 300ページ)
+}
+```
+
+`fmt.Println` は内部で `Stringer` インターフェースをチェックし、`String()` メソッドがあればその戻り値を使って表示します。`implements` 宣言は不要です。
+
+:::
+
 2. `Shape` インターフェースに `Perimeter() float64` を追加し、Circle と Rectangle の両方で実装してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Shape interface {
+    Area() float64
+    Perimeter() float64 // 周長を追加
+}
+
+type Circle struct {
+    Radius float64
+}
+
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+    return 2 * math.Pi * c.Radius // 円周: 2πr
+}
+
+type Rectangle struct {
+    Width, Height float64
+}
+
+func (r Rectangle) Area() float64 {
+    return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+    return 2 * (r.Width + r.Height) // 周長: 2(w+h)
+}
+
+// Shape を満たす任意の図形を受け取れる
+func printShape(s Shape) {
+    fmt.Printf("面積: %.2f, 周長: %.2f\n", s.Area(), s.Perimeter())
+}
+
+func main() {
+    printShape(Circle{Radius: 5})          // 面積: 78.54, 周長: 31.42
+    printShape(Rectangle{Width: 4, Height: 6}) // 面積: 24.00, 周長: 20.00
+}
+```
+
+`Area()` と `Perimeter()` の両方を実装すれば `Shape` を満たします。新しい図形（例: `Triangle`）を追加する際も、既存のコードを変更せずに `printShape` で扱えます。
+
+:::
+
 3. 型スイッチを使って、`any` 型の値の型を判定する関数を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func describeType(v any) string {
+    switch v := v.(type) {
+    case int:
+        return fmt.Sprintf("整数: %d", v)
+    case string:
+        return fmt.Sprintf("文字列: %q（長さ%d）", v, len(v))
+    case bool:
+        return fmt.Sprintf("真偽値: %t", v)
+    case float64:
+        return fmt.Sprintf("浮動小数点: %.2f", v)
+    case nil:
+        return "nil"
+    default:
+        return fmt.Sprintf("不明な型: %T", v)
+    }
+}
+
+func main() {
+    fmt.Println(describeType(42))       // 整数: 42
+    fmt.Println(describeType("hello"))  // 文字列: "hello"（長さ5）
+    fmt.Println(describeType(true))     // 真偽値: true
+    fmt.Println(describeType(3.14))     // 浮動小数点: 3.14
+    fmt.Println(describeType(nil))      // nil
+    fmt.Println(describeType([]int{}))  // 不明な型: []int
+}
+```
+
+`switch v := v.(type)` で型に応じた分岐ができます。各 `case` 内では `v` が該当する型に自動的に変換されるため、型アサーション不要でフィールドやメソッドにアクセスできます。
+
+:::
+
 4. nil インターフェースの落とし穴を実際に確認してみましょう（`riskyFunc` を試してみましょう）
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+type MyError struct {
+    Message string
+}
+
+func (e *MyError) Error() string {
+    return e.Message
+}
+
+// ❌ 危険なパターン
+func riskyFunc(bad bool) error {
+    var err *MyError // nil ポインタだが「型情報」は *MyError
+    if bad {
+        err = &MyError{"something went wrong"}
+    }
+    return err // (*MyError)(nil) → error インターフェースに変換
+}
+
+// ✅ 安全なパターン
+func safeFunc(bad bool) error {
+    if bad {
+        return &MyError{"something went wrong"}
+    }
+    return nil // インターフェースとしての nil を返す
+}
+
+func main() {
+    // riskyFunc: bad=false でも err != nil になる
+    err1 := riskyFunc(false)
+    fmt.Printf("riskyFunc: err == nil → %v\n", err1 == nil) // false！
+
+    // safeFunc: bad=false なら err == nil
+    err2 := safeFunc(false)
+    fmt.Printf("safeFunc:  err == nil → %v\n", err2 == nil) // true
+
+    // なぜ？ インターフェースは (型, 値) の2つを持つ
+    // riskyFunc → (型=*MyError, 値=nil) → nil ではない！
+    // safeFunc  → (型=nil, 値=nil)      → nil
+}
+```
+
+**教訓**: エラーを返す関数では、具体的な型の変数に nil を入れて返さず、`return nil` でインターフェースとしての nil を直接返しましょう。
+
+:::
 
 ---
 

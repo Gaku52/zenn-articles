@@ -303,8 +303,134 @@ fmt.Errorf("Open file failed: %w", err)
 ## やってみよう
 
 1. `divide(a, b float64) (float64, error)` を書き、ゼロ除算をエラーとして返してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("ゼロで割ることはできません")
+    }
+    return a / b, nil
+}
+
+func main() {
+    // 正常系
+    result, err := divide(10, 3)
+    if err != nil {
+        fmt.Println("エラー:", err)
+        return
+    }
+    fmt.Printf("10 / 3 = %.4f\n", result) // 3.3333
+
+    // 異常系: ゼロ除算
+    _, err = divide(10, 0)
+    if err != nil {
+        fmt.Println("エラー:", err) // ゼロで割ることはできません
+    }
+}
+```
+
+:::
+
 2. カスタムエラー型 `ValidationError` を作り、`errors.As` で取り出してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+// error インターフェースを実装
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf("validation error: %s - %s", e.Field, e.Message)
+}
+
+func validateAge(age int) error {
+    if age < 0 {
+        return &ValidationError{Field: "age", Message: "must be non-negative"}
+    }
+    if age > 150 {
+        return &ValidationError{Field: "age", Message: "must be 150 or less"}
+    }
+    return nil
+}
+
+func main() {
+    err := validateAge(-5)
+    if err != nil {
+        // errors.As でカスタムエラー型を取り出す
+        var ve *ValidationError
+        if errors.As(err, &ve) {
+            fmt.Printf("フィールド: %s\n", ve.Field)   // age
+            fmt.Printf("メッセージ: %s\n", ve.Message) // must be non-negative
+        }
+    }
+}
+```
+
+`errors.Is` は「どのエラーか（値の比較）」、`errors.As` は「どの型のエラーか（型の判定＋取り出し）」です。カスタムエラー型のフィールドにアクセスしたい場合は `errors.As` を使います。
+
+:::
+
 3. `%w` でエラーをラップし、`errors.Is` でセンチネルエラーを判定してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+// センチネルエラー: パッケージレベルで定義する定数的なエラー
+var ErrNotFound = errors.New("not found")
+
+func findUser(id int) (string, error) {
+    if id != 1 {
+        // %w でセンチネルエラーをラップ（文脈情報を追加）
+        return "", fmt.Errorf("user %d: %w", id, ErrNotFound)
+    }
+    return "Alice", nil
+}
+
+func main() {
+    _, err := findUser(42)
+    if err != nil {
+        fmt.Println("エラー:", err) // user 42: not found
+
+        // errors.Is はラップの連鎖をたどって元のエラーと比較する
+        if errors.Is(err, ErrNotFound) {
+            fmt.Println("→ ユーザーが見つかりません（404相当）")
+        }
+
+        // ❌ == では判定できない（ラップされているため）
+        fmt.Println("== で比較:", err == ErrNotFound) // false
+    }
+}
+```
+
+`%w` でラップすると文脈（"user 42"）が追加され、デバッグしやすくなります。`errors.Is` はラップの連鎖をたどるため、ラップされていても元のエラーを正しく判定できます。
+
+:::
 
 ---
 

@@ -269,8 +269,93 @@ func main() {
 ## やってみよう
 
 1. 2つの整数を受け取り、大きい方を返す `max(a, b int) int` 関数を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func max(a, b int) int {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func main() {
+    fmt.Println(max(3, 7))  // 7
+    fmt.Println(max(10, 2)) // 10
+    fmt.Println(max(5, 5))  // 5
+}
+```
+
+**注意**: Go 1.21 以降、標準の `builtin` パッケージに `max` 関数が追加されました。学習目的では自分で書きますが、実務では組み込みの `max()` を使いましょう。
+
+:::
+
 2. 可変長引数を受け取り、平均値を返す `average(nums ...float64) float64` 関数を書いてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func average(nums ...float64) float64 {
+    if len(nums) == 0 {
+        return 0 // 引数が0個の場合のゼロ除算を防ぐ
+    }
+    sum := 0.0
+    for _, n := range nums {
+        sum += n
+    }
+    return sum / float64(len(nums))
+}
+
+func main() {
+    fmt.Println(average(1, 2, 3, 4, 5)) // 3
+    fmt.Println(average(10.5, 20.3))     // 15.4
+    fmt.Println(average())               // 0
+}
+```
+
+`...float64` は可変長引数です。関数内部では `nums` は `[]float64`（スライス）として扱えます。
+
+:::
+
 3. クロージャを使って、呼ぶたびにフィボナッチ数列の次の値を返す関数を作ってみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func fibonacci() func() int {
+    a, b := 0, 1
+    return func() int {
+        result := a       // 現在の値を保存
+        a, b = b, a+b     // 次の状態に進める
+        return result
+    }
+}
+
+func main() {
+    fib := fibonacci()
+    for i := 0; i < 10; i++ {
+        fmt.Printf("%d ", fib())
+    }
+    // 出力: 0 1 1 2 3 5 8 13 21 34
+}
+```
+
+クロージャは外側の変数 `a`, `b` を「捕捉」しています。`fib()` を呼ぶたびに `a`, `b` の状態が更新され、次のフィボナッチ数が返されます。
+
+:::
 
 ---
 

@@ -342,6 +342,80 @@ func run(args []string, stdout io.Writer) error {
 - `-count`フラグでファイル数のみ表示（bool）
 - `filepath.WalkDir`を使ってファイルを列挙
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func main() {
+	// フラグ定義: flag.String/Bool はポインタを返す
+	dir := flag.String("dir", ".", "検索ディレクトリ")
+	ext := flag.String("ext", ".go", "拡張子フィルタ（例: .go, .txt）")
+	count := flag.Bool("count", false, "ファイル数のみ表示")
+
+	// カスタム Usage でわかりやすいヘルプを表示
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: findgo [options]\n\n指定ディレクトリから拡張子でファイルを検索します。\n\nOptions:\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	// 拡張子が . で始まっていなければ補完する
+	if !strings.HasPrefix(*ext, ".") {
+		*ext = "." + *ext
+	}
+
+	var files []string
+
+	// filepath.WalkDir でディレクトリを再帰的に走査
+	err := filepath.WalkDir(*dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err // パーミッションエラー等はスキップせず返す
+		}
+		// ディレクトリはスキップ、拡張子が一致するファイルのみ収集
+		if !d.IsDir() && filepath.Ext(path) == *ext {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *count {
+		// -count フラグが指定された場合はファイル数のみ出力
+		fmt.Printf("%d files found\n", len(files))
+	} else {
+		for _, f := range files {
+			fmt.Println(f)
+		}
+		fmt.Printf("\nTotal: %d files\n", len(files))
+	}
+}
+
+// 実行例:
+// $ findgo -dir ./src -ext .go
+// ./src/main.go
+// ./src/handler.go
+// Total: 2 files
+//
+// $ findgo -dir ./src -ext .go -count
+// 2 files found
+```
+
+ポイント: `flag` パッケージはシンプルなCLIに最適。`flag.Usage` をカスタマイズしてわかりやすいヘルプを提供する。`filepath.WalkDir` は `filepath.Walk` より効率的（`os.FileInfo` を遅延取得）。エラーは `os.Stderr` に出力し、`os.Exit(1)` で異常終了コードを返すのが作法。
+
+:::
+
 ### 演習2: cobra + viperでタスク管理CLI
 
 `cobra`と`viper`を使って、`task`コマンドを作ってみましょう。
@@ -352,6 +426,277 @@ func run(args []string, stdout io.Writer) error {
 - タスクデータは`~/.task.json`に保存
 - ヒント: ルートコマンド + 3つのサブコマンドを`cmd/`に配置
 
+:::details 解答例を見る
+
+```go
+// === main.go ===
+package main
+
+import "mytask/cmd"
+
+func main() {
+	cmd.Execute()
+}
+```
+
+```go
+// === cmd/root.go ===
+package cmd
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:          "task",
+	Short:        "シンプルなタスク管理CLI",
+	SilenceUsage: true, // エラー時にUsageを表示しない
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+```go
+// === cmd/add.go ===
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"mytask/store"
+)
+
+var addCmd = &cobra.Command{
+	Use:   "add [タスク名]",
+	Short: "タスクを追加する",
+	Args:  cobra.ExactArgs(1), // 引数が1つでなければエラー
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tasks, err := store.Load()
+		if err != nil {
+			return err
+		}
+
+		task := store.Task{
+			ID:   len(tasks) + 1,
+			Name: args[0],
+			Done: false,
+		}
+		tasks = append(tasks, task)
+
+		if err := store.Save(tasks); err != nil {
+			return err
+		}
+		fmt.Printf("タスク追加: #%d %s\n", task.ID, task.Name)
+		return nil
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(addCmd)
+}
+```
+
+```go
+// === cmd/list.go ===
+package cmd
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+	"mytask/store"
+)
+
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "タスク一覧を表示する",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		tasks, err := store.Load()
+		if err != nil {
+			return err
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+
+		// --output json でJSON出力に切り替え
+		if output == "json" {
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(tasks)
+		}
+
+		// デフォルトはテキスト出力
+		if len(tasks) == 0 {
+			fmt.Println("タスクはありません")
+			return nil
+		}
+		for _, t := range tasks {
+			status := "[ ]"
+			if t.Done {
+				status = "[x]"
+			}
+			fmt.Printf("#%d %s %s\n", t.ID, status, t.Name)
+		}
+		return nil
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(listCmd)
+	// Flags() はこのコマンド専用のフラグ
+	listCmd.Flags().StringP("output", "o", "text", "出力形式 (text|json)")
+}
+```
+
+```go
+// === cmd/done.go ===
+package cmd
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/spf13/cobra"
+	"mytask/store"
+)
+
+var doneCmd = &cobra.Command{
+	Use:   "done [id]",
+	Short: "タスクを完了にする",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("IDは数値で指定してください: %w", err)
+		}
+
+		tasks, err := store.Load()
+		if err != nil {
+			return err
+		}
+
+		found := false
+		for i := range tasks {
+			if tasks[i].ID == id {
+				tasks[i].Done = true
+				found = true
+				fmt.Printf("完了: #%d %s\n", tasks[i].ID, tasks[i].Name)
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("タスク #%d が見つかりません", id)
+		}
+
+		return store.Save(tasks)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(doneCmd)
+}
+```
+
+```go
+// === store/store.go ===
+package store
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+)
+
+// Task はタスクのデータ構造
+type Task struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Done bool   `json:"done"`
+}
+
+// filePath はタスクデータの保存先（~/.task.json）を返す
+func filePath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".task.json"), nil
+}
+
+// Load はファイルからタスク一覧を読み込む
+func Load() ([]Task, error) {
+	path, err := filePath()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Task{}, nil // ファイル未作成なら空スライスを返す
+		}
+		return nil, err
+	}
+
+	var tasks []Task
+	if err := json.Unmarshal(data, &tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+// Save はタスク一覧をファイルに保存する
+func Save(tasks []Task) error {
+	path, err := filePath()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(tasks, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0644)
+}
+```
+
+```
+使用例:
+$ task add "READMEを書く"
+タスク追加: #1 READMEを書く
+
+$ task add "テストを書く"
+タスク追加: #2 テストを書く
+
+$ task list
+#1 [ ] READMEを書く
+#2 [ ] テストを書く
+
+$ task done 1
+完了: #1 READMEを書く
+
+$ task list --output json
+[
+  {"id": 1, "name": "READMEを書く", "done": true},
+  {"id": 2, "name": "テストを書く", "done": false}
+]
+```
+
+ポイント: cobraプロジェクトは「main.go（エントリポイント）+ cmd/（コマンド定義）+ internal/ or store/（ロジック）」の構成が標準。`Args: cobra.ExactArgs(1)` で引数バリデーションを宣言的に行い、`RunE` でエラーを返すことでcobraがエラーハンドリングを統一してくれる。
+
+:::
+
 ### 演習3: クロスコンパイルとバージョン表示
 
 演習2のツールに以下を追加してみましょう。
@@ -359,3 +704,87 @@ func run(args []string, stdout io.Writer) error {
 - `task version`でバージョン・コミットハッシュ・ビルド日時を表示
 - `-ldflags`でビルド時にバージョン情報を埋め込む
 - Makefileを作成し、`make build-all`で3プラットフォーム向けにビルド
+
+:::details 解答例を見る
+
+```go
+// === cmd/version.go ===
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
+
+// ldflags で埋め込む変数。ビルド時に -X で値を設定する。
+// 未設定の場合は "dev" 等のデフォルト値が使われる。
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "バージョン情報を表示する",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("task version %s\n", version)
+		fmt.Printf("  commit: %s\n", commit)
+		fmt.Printf("  built:  %s\n", date)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
+}
+```
+
+```makefile
+# === Makefile ===
+APP_NAME := task
+VERSION := 1.0.0
+COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+
+# ldflags でバージョン情報を埋め込む
+# -s -w はデバッグ情報を除去してバイナリサイズを削減
+LDFLAGS := -s -w \
+	-X mytask/cmd.version=$(VERSION) \
+	-X mytask/cmd.commit=$(COMMIT) \
+	-X mytask/cmd.date=$(DATE)
+
+.PHONY: build build-all clean
+
+# 現在のOS/Arch向けにビルド
+build:
+	go build -ldflags "$(LDFLAGS)" -o $(APP_NAME)
+
+# 3プラットフォーム向けにクロスコンパイル
+build-all:
+	GOOS=linux   GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(APP_NAME)-linux-amd64
+	GOOS=darwin  GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/$(APP_NAME)-darwin-arm64
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(APP_NAME)-windows-amd64.exe
+
+clean:
+	rm -rf dist/ $(APP_NAME)
+```
+
+```
+使用例:
+$ make build
+$ ./task version
+task version 1.0.0
+  commit: a1b2c3d
+  built:  2026-03-23T12:00:00Z
+
+$ make build-all
+$ ls dist/
+task-darwin-arm64
+task-linux-amd64
+task-windows-amd64.exe
+```
+
+ポイント: `ldflags -X` で埋め込む変数は `パッケージパス.変数名` で指定する。`main` パッケージ以外（例: `cmd` パッケージ）の変数も埋め込める。Makefileで `$(shell ...)` を使ってコミットハッシュやビルド日時を動的に取得する。`-s -w` フラグでデバッグ情報を除去すると、バイナリサイズが約30%削減される。
+
+:::

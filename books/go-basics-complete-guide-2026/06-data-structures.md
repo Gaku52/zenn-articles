@@ -321,9 +321,124 @@ fmt.Println(*p)  // 0
 ## やってみよう
 
 1. 文字列のスライスに5つの果物を入れ、`range` で全て表示してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fruits := []string{"りんご", "バナナ", "みかん", "ぶどう", "いちご"}
+    for i, f := range fruits {
+        fmt.Printf("%d: %s\n", i, f)
+    }
+    // 0: りんご
+    // 1: バナナ
+    // 2: みかん
+    // 3: ぶどう
+    // 4: いちご
+}
+```
+
+:::
+
 2. `map[string]int` で5教科の点数を管理し、合計点と平均点を計算してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    scores := map[string]int{
+        "国語": 85,
+        "数学": 92,
+        "英語": 78,
+        "理科": 88,
+        "社会": 71,
+    }
+
+    total := 0
+    for subject, score := range scores {
+        fmt.Printf("%s: %d点\n", subject, score)
+        total += score
+    }
+    avg := float64(total) / float64(len(scores))
+    fmt.Printf("合計: %d点, 平均: %.1f点\n", total, avg)
+    // 合計: 414点, 平均: 82.8点
+}
+```
+
+**注意**: `map` のイテレーション順は毎回ランダムです。表示順を固定したい場合は、キーをスライスに入れてソートしてからループします。
+
+:::
+
 3. スライスのコピーの挙動を確認してみましょう（コピーを変更して元が変わるか）
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    // ❌ スライスの代入は「同じ配列への参照」を共有する
+    original := []int{1, 2, 3, 4, 5}
+    shared := original[1:3] // [2, 3]
+    shared[0] = 99
+    fmt.Println("original:", original) // [1, 99, 3, 4, 5] ← 元も変わる！
+
+    // ✅ copy() で独立したコピーを作る
+    src := []int{1, 2, 3, 4, 5}
+    dst := make([]int, len(src))
+    copy(dst, src)
+    dst[0] = 99
+    fmt.Println("src:", src) // [1, 2, 3, 4, 5] ← 元は変わらない
+    fmt.Println("dst:", dst) // [99, 2, 3, 4, 5]
+}
+```
+
+スライスは内部に「ポインタ・長さ・容量」の3つを持つ構造体です。代入やスライス操作では同じ配列を指すため、独立したコピーが必要な場合は `copy()` を使います。
+
+:::
+
 4. `comma ok` パターンを使って、マップに存在しないキーを安全にチェックしてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    scores := map[string]int{
+        "Alice": 95,
+        "Bob":   82,
+    }
+
+    // comma ok パターン: 第2戻り値でキーの存在を判定
+    if score, ok := scores["Alice"]; ok {
+        fmt.Printf("Alice の点数: %d\n", score) // Alice の点数: 95
+    }
+
+    if score, ok := scores["Charlie"]; ok {
+        fmt.Printf("Charlie の点数: %d\n", score)
+    } else {
+        fmt.Println("Charlie は存在しません") // ← こちらが実行される
+        _ = score // 0（int のゼロ値）
+    }
+}
+```
+
+`ok` が `false` の場合、`score` は値型のゼロ値（`int` なら `0`）です。ゼロ値が有効な値である場合、`ok` で存在判定しないとバグになります。
+
+:::
 
 ---
 

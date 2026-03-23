@@ -347,10 +347,348 @@ func goodHandler(w http.ResponseWriter, r *http.Request) {
 
 Go 1.22+ の構文で TODO 管理 REST API を作成。`GET /todos`、`POST /todos`、`PUT /todos/{id}`（完了切替）、`DELETE /todos/{id}` の4エンドポイント。データはメモリ上の `map` で管理し、`r.PathValue("id")` を使うこと。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
+var (
+	mu     sync.Mutex
+	todos  = map[int]*Todo{}
+	nextID = 1
+)
+
+func main() {
+	mux := http.NewServeMux()
+
+	// Go 1.22+ のメソッド指定パターン
+	mux.HandleFunc("GET /todos", listTodos)
+	mux.HandleFunc("POST /todos", createTodo)
+	mux.HandleFunc("PUT /todos/{id}", toggleTodo)
+	mux.HandleFunc("DELETE /todos/{id}", deleteTodo)
+
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+	fmt.Println("Server listening on :8080")
+	log.Fatal(server.ListenAndServe())
+}
+
+func listTodos(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	list := make([]*Todo, 0, len(todos))
+	for _, t := range todos {
+		list = append(list, t)
+	}
+	writeJSON(w, http.StatusOK, list)
+}
+
+func createTodo(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+		return
+	}
+	if input.Title == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "title is required"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo := &Todo{ID: nextID, Title: input.Title, Done: false}
+	todos[nextID] = todo
+	nextID++
+
+	writeJSON(w, http.StatusCreated, todo)
+}
+
+func toggleTodo(w http.ResponseWriter, r *http.Request) {
+	// Go 1.22+ の PathValue でパスパラメータを取得
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo, ok := todos[id]
+	if !ok {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "todo not found"})
+		return
+	}
+	// Done フラグを反転するだけのシンプルなトグル
+	todo.Done = !todo.Done
+	writeJSON(w, http.StatusOK, todo)
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if _, ok := todos[id]; !ok {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "todo not found"})
+		return
+	}
+	delete(todos, id)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
+}
+
+// 実行例:
+// curl -X POST -d '{"title":"買い物"}' localhost:8080/todos
+//   → {"id":1,"title":"買い物","done":false}
+// curl localhost:8080/todos
+//   → [{"id":1,"title":"買い物","done":false}]
+// curl -X PUT localhost:8080/todos/1
+//   → {"id":1,"title":"買い物","done":true}
+// curl -X DELETE localhost:8080/todos/1
+//   → 204 No Content
+```
+
+`sync.Mutex` で並行アクセスを保護するのが重要です。本番では `http.Server` にタイムアウトを設定し、`http.ListenAndServe` は使わないようにしましょう。
+
+:::
+
 ### 問題 2: リクエストロガー
 
 メソッド・パス・ステータスコード・処理時間を記録するロギングミドルウェアを実装。`ResponseWriter` ラッパーでステータスコードをキャプチャし、問題1のAPIに組み込んで動作確認。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
+)
+
+// statusRecorder は ResponseWriter をラップしてステータスコードを記録する
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rec *statusRecorder) WriteHeader(code int) {
+	rec.status = code
+	rec.ResponseWriter.WriteHeader(code)
+}
+
+// loggingMiddleware はリクエストのメソッド・パス・ステータスコード・処理時間を記録する
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		// デフォルト200（WriteHeaderが呼ばれない場合のため）
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
+		log.Printf("%s %s → %d (%v)", r.Method, r.URL.Path, rec.status, time.Since(start))
+	})
+}
+
+// --- 以下、問題1のTODO APIコード（省略なし） ---
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
+var (
+	mu     sync.Mutex
+	todos  = map[int]*Todo{}
+	nextID = 1
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /todos", listTodos)
+	mux.HandleFunc("POST /todos", createTodo)
+	mux.HandleFunc("PUT /todos/{id}", toggleTodo)
+	mux.HandleFunc("DELETE /todos/{id}", deleteTodo)
+
+	// ミドルウェアを適用（mux をラップする）
+	handler := loggingMiddleware(mux)
+
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      handler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	fmt.Println("Server listening on :8080")
+	log.Fatal(server.ListenAndServe())
+}
+
+func listTodos(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+	list := make([]*Todo, 0, len(todos))
+	for _, t := range todos {
+		list = append(list, t)
+	}
+	writeJSON(w, http.StatusOK, list)
+}
+
+func createTodo(w http.ResponseWriter, r *http.Request) {
+	var input struct{ Title string `json:"title"` }
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	todo := &Todo{ID: nextID, Title: input.Title}
+	todos[nextID] = todo
+	nextID++
+	writeJSON(w, http.StatusCreated, todo)
+}
+
+func toggleTodo(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(r.PathValue("id"))
+	mu.Lock()
+	defer mu.Unlock()
+	todo, ok := todos[id]
+	if !ok {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	todo.Done = !todo.Done
+	writeJSON(w, http.StatusOK, todo)
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(r.PathValue("id"))
+	mu.Lock()
+	defer mu.Unlock()
+	delete(todos, id)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(data)
+}
+
+// 実行例（サーバーのログ出力）:
+// 2026/03/23 10:00:00 POST /todos → 201 (52.1µs)
+// 2026/03/23 10:00:01 GET /todos → 200 (12.3µs)
+// 2026/03/23 10:00:02 PUT /todos/1 → 200 (8.7µs)
+// 2026/03/23 10:00:03 DELETE /todos/1 → 204 (5.1µs)
+```
+
+`statusRecorder` パターンは `net/http` ミドルウェアの定石です。`func(http.Handler) http.Handler` のシグネチャに従うことで、複数のミドルウェアを自由にチェーンできます。
+
+:::
+
 ### 問題 3: タイムアウト付き外部API呼び出し
 
 `NewAPIClient` を参考に、`https://httpbin.org/delay/3` へ2秒タイムアウト付きGETを送信。タイムアウト時のエラーメッセージ表示を確認。`context.WithTimeout` を使うこと。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+)
+
+func main() {
+	// タイムアウト付きのHTTPクライアントを作成
+	// DefaultClient は使わない（タイムアウトが未設定のため）
+	client := &http.Client{
+		Timeout: 30 * time.Second, // クライアント全体のタイムアウト（安全弁）
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     90 * time.Second,
+		},
+	}
+
+	// context.WithTimeout で個別リクエストのタイムアウトを制御
+	// /delay/3 は3秒待つAPIだが、2秒でタイムアウトさせる
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://httpbin.org/delay/3", nil)
+	if err != nil {
+		fmt.Printf("リクエスト作成エラー: %v\n", err)
+		return
+	}
+	req.Header.Set("Accept", "application/json")
+
+	fmt.Println("リクエスト送信中（2秒タイムアウト → 3秒遅延API）...")
+	start := time.Now()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		// context.DeadlineExceeded がラップされたエラーが返る
+		fmt.Printf("エラー: %v\n", err)
+		fmt.Printf("経過時間: %v\n", time.Since(start))
+		return
+	}
+	defer resp.Body.Close()
+
+	// ボディサイズを制限して読む（メモリ枯渇対策）
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
+	fmt.Printf("Status: %d\nBody: %s\n", resp.StatusCode, body)
+}
+
+// 実行結果:
+// リクエスト送信中（2秒タイムアウト → 3秒遅延API）...
+// エラー: Get "https://httpbin.org/delay/3": context deadline exceeded
+// 経過時間: 2.001s
+```
+
+`context.WithTimeout` はリクエスト単位でタイムアウトを制御する標準的な方法です。`http.Client.Timeout` はクライアント全体の安全弁、`context` は個別リクエストの細かい制御と、2層で使い分けるのが実務のベストプラクティスです。
+
+:::

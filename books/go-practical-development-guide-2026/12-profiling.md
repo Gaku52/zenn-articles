@@ -335,10 +335,290 @@ func CountWords(texts []string) map[string]int {
 
 **ヒント**: `b.ReportAllocs()` でアロケーション数を確認し、`go test -bench=. -cpuprofile=cpu.prof` でプロファイルを取得して `go tool pprof -http=:8081 cpu.prof` のフレームグラフを観察しましょう。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
+
+// --- 最適化前: strings.Split が毎回スライスを生成 ---
+func CountWords(texts []string) map[string]int {
+	counts := make(map[string]int)
+	for _, text := range texts {
+		words := strings.Split(text, " ")
+		for _, w := range words {
+			counts[strings.ToLower(w)]++
+		}
+	}
+	return counts
+}
+
+// --- 最適化後: マップのプリアロケーション + strings.FieldsFunc 回避で改善 ---
+func CountWordsOpt(texts []string) map[string]int {
+	// マップを推定サイズで事前確保し、rehash を削減
+	counts := make(map[string]int, 256)
+	for _, text := range texts {
+		// strings.Split の代わりに手動でスペース区切りを処理し
+		// 中間スライスのアロケーションを回避
+		start := 0
+		for i := 0; i <= len(text); i++ {
+			if i == len(text) || text[i] == ' ' {
+				if start < i {
+					// ToLower は避けられないが、スライスのアロケーションを削減
+					word := strings.ToLower(text[start:i])
+					counts[word]++
+				}
+				start = i + 1
+			}
+		}
+	}
+	return counts
+}
+
+// --- ベンチマーク ---
+func BenchmarkCountWords(b *testing.B) {
+	texts := make([]string, 100)
+	for i := range texts {
+		texts[i] = "the quick brown fox jumps over the lazy dog"
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		CountWords(texts)
+	}
+}
+
+func BenchmarkCountWordsOpt(b *testing.B) {
+	texts := make([]string, 100)
+	for i := range texts {
+		texts[i] = "the quick brown fox jumps over the lazy dog"
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		CountWordsOpt(texts)
+	}
+}
+
+func main() {
+	texts := []string{
+		"hello world hello go",
+		"go is fast and go is fun",
+	}
+	result := CountWordsOpt(texts)
+	for word, count := range result {
+		fmt.Printf("%s: %d\n", word, count)
+	}
+	// 出力例:
+	// hello: 2
+	// world: 1
+	// go: 3
+	// is: 2
+	// fast: 1
+	// and: 1
+	// fun: 1
+}
+```
+
+```bash
+# 1. ベンチマーク実行 & CPUプロファイル取得
+go test -bench=BenchmarkCountWords -cpuprofile=cpu.prof -benchmem -count=5
+
+# 2. フレームグラフで strings.Split と strings.ToLower のコストを確認
+go tool pprof -http=:8081 cpu.prof
+
+# 3. メモリプロファイルも取得して alloc_space を確認
+go test -bench=BenchmarkCountWords -memprofile=mem.prof -count=5
+go tool pprof -alloc_space -http=:8081 mem.prof
+
+# 4. benchstat で最適化前後を比較
+go test -bench=BenchmarkCountWords -benchmem -count=10 > before.txt
+go test -bench=BenchmarkCountWordsOpt -benchmem -count=10 > after.txt
+benchstat before.txt after.txt
+```
+
+ポイント: pprofのフレームグラフで `strings.Split` のアロケーションコストが支配的であることを確認してから最適化する。推測ではなく計測に基づく改善が最適化の鉄則。マップのプリアロケーション (`make(map, 256)`) も rehash 回避に効果的。
+
+:::
+
 ### 演習2: goroutineリークの検出
 
 意図的にgoroutineリークを起こすプログラムを書き、`/debug/pprof/goroutine?debug=1` で増加を観察してください。その後、`context.WithCancel` を使ってリークを解消してください。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof" // /debug/pprof/ エンドポイントを登録
+	"runtime"
+	"time"
+)
+
+// --- リーク版: チャネルの受信者がいないためgoroutineが永遠にブロック ---
+func leakyWorker() {
+	ch := make(chan int)
+	for i := 0; i < 10; i++ {
+		go func(id int) {
+			// ch に送信するが、誰も受信しないのでブロックし続ける
+			ch <- id
+		}(i)
+	}
+	// ch を読まないため、10個のgoroutineがリークする
+}
+
+// --- 修正版: context.WithCancel でgoroutineを確実に停止 ---
+func safeWorker() {
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := make(chan int, 10) // バッファ付きチャネル
+
+	for i := 0; i < 10; i++ {
+		go func(id int) {
+			select {
+			case ch <- id:
+			case <-ctx.Done():
+				// キャンセルされたら即座に終了
+				return
+			}
+		}(i)
+	}
+
+	// 全て受信してからキャンセル
+	for i := 0; i < 10; i++ {
+		fmt.Println("received:", <-ch)
+	}
+	cancel() // goroutineを確実に停止
+}
+
+func main() {
+	// pprof サーバーを別ポートで起動
+	go func() {
+		log.Println("pprof: http://localhost:6060/debug/pprof/")
+		log.Fatal(http.ListenAndServe("127.0.0.1:6060", nil))
+	}()
+
+	fmt.Println("=== Before leak ===")
+	fmt.Println("Goroutines:", runtime.NumGoroutine())
+
+	// リークを発生させる
+	leakyWorker()
+	time.Sleep(100 * time.Millisecond)
+	fmt.Println("=== After leak ===")
+	fmt.Println("Goroutines:", runtime.NumGoroutine())
+
+	// 修正版を実行
+	safeWorker()
+	time.Sleep(100 * time.Millisecond)
+	fmt.Println("=== After safe worker ===")
+	fmt.Println("Goroutines:", runtime.NumGoroutine())
+
+	// 出力例:
+	// === Before leak ===
+	// Goroutines: 2
+	// === After leak ===
+	// Goroutines: 12  ← 10個リーク!
+	// === After safe worker ===
+	// Goroutines: 12  ← リーク分はそのまま（GCされない）
+
+	// ブラウザで http://localhost:6060/debug/pprof/goroutine?debug=1 を開き
+	// リークしたgoroutineのスタックトレースを確認できる
+	fmt.Println("Access http://localhost:6060/debug/pprof/goroutine?debug=1")
+	select {} // サーバーを維持
+}
+```
+
+ポイント: goroutineリークの主な原因は「送信先/受信先のないチャネル操作」。`context.WithCancel` で明示的にキャンセルシグナルを送り、`select` でキャンセルを検知して goroutine を終了させる。`runtime.NumGoroutine()` や pprof の goroutine エンドポイントで定期的にリークを監視する習慣をつけること。
+
+:::
+
 ### 演習3: traceでGCを観察する
 
 大量のアロケーションを発生させるプログラムを `runtime/trace` 付きで実行し、`go tool trace` のタイムラインでGCイベントの頻度とSTW（Stop-The-World）時間を観察してください。`GOGC` の値を変えるとGCの挙動がどう変わるか試してみましょう。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"runtime/trace"
+)
+
+func main() {
+	// トレースファイルを作成
+	f, err := os.Create("trace.out")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	// トレース開始
+	if err := trace.Start(f); err != nil {
+		panic(err)
+	}
+	defer trace.Stop()
+
+	// 大量のアロケーションを発生させてGCを誘発
+	fmt.Println("Allocating memory...")
+	var stats runtime.MemStats
+
+	for i := 0; i < 100; i++ {
+		// 毎回1MBのスライスを確保して即座に捨てる
+		// → GCが頻繁にトリガーされる
+		data := make([]byte, 1024*1024)
+		data[0] = byte(i) // コンパイラの最適化による除去を防ぐ
+		_ = data
+	}
+
+	runtime.ReadMemStats(&stats)
+	fmt.Printf("GC cycles: %d\n", stats.NumGC)
+	fmt.Printf("Total alloc: %d MB\n", stats.TotalAlloc/1024/1024)
+	fmt.Printf("Heap alloc: %d KB\n", stats.HeapAlloc/1024)
+
+	// 出力例:
+	// Allocating memory...
+	// GC cycles: 12
+	// Total alloc: 100 MB
+	// Heap alloc: 150 KB
+}
+```
+
+```bash
+# 1. デフォルトのGOGC=100で実行
+go run main.go
+go tool trace trace.out
+# → ブラウザで "Goroutines" や "Heap" タブを確認
+#   GCイベント（青い縦線）の頻度を観察
+
+# 2. GOGC=50 でGCを頻繁にする（ヒープが50%増えたらGC）
+GOGC=50 go run main.go
+go tool trace trace.out
+# → GCの回数が増え、個々のSTW時間は短くなる
+
+# 3. GOGC=200 でGCを遅延させる（ヒープが200%増えたらGC）
+GOGC=200 go run main.go
+go tool trace trace.out
+# → GCの回数が減り、メモリ使用量は増える
+
+# 4. GOGC=off でGCを完全に無効化（比較用）
+GOGC=off go run main.go
+go tool trace trace.out
+# → GCが発生せず、メモリ使用量が増え続ける
+```
+
+ポイント: `GOGC` はヒープが前回GC後のサイズから何%増えたらGCをトリガーするかを制御する。デフォルトの `GOGC=100` は2倍になったらGCを実行する意味。トレースの "Heap" ビューでGC発生タイミングとヒープサイズの推移を時系列で観察すると、GCチューニングの効果が直感的に理解できる。
+
+:::

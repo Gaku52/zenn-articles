@@ -324,9 +324,97 @@ func main() {
 ## やってみよう
 
 1. 自分の名前と年齢を変数に入れて `fmt.Printf` で表示してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    name := "田中太郎"
+    age := 30
+    // %s は文字列、%d は整数のフォーマット指定子
+    fmt.Printf("名前: %s, 年齢: %d歳\n", name, age)
+    // 出力: 名前: 田中太郎, 年齢: 30歳
+}
+```
+
+:::
+
 2. `iota` を使って季節（Spring=0, Summer=1, ...）の定数を定義してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+type Season int
+
+const (
+    Spring Season = iota // 0
+    Summer               // 1（iota が自動的にインクリメント）
+    Autumn               // 2
+    Winter               // 3
+)
+
+func main() {
+    fmt.Println(Spring, Summer, Autumn, Winter) // 0 1 2 3
+}
+```
+
+`iota` は `const` ブロック内で 0 から始まり、行ごとに 1 ずつ増加します。型を `Season` にしておくと、関数の引数で `int` と区別でき、安全です。
+
+:::
+
 3. 文字列 `"Go言語"` の `len()` と `len([]rune())` の結果を比較してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    s := "Go言語"
+    fmt.Println(len(s))         // 8（バイト数: "Go"=2 + "言"=3 + "語"=3）
+    fmt.Println(len([]rune(s))) // 4（文字数: G, o, 言, 語）
+}
+```
+
+Go の文字列は **UTF-8 エンコードされたバイト列** です。`len()` はバイト数を返すため、日本語のようなマルチバイト文字では文字数と一致しません。文字数を得るには `[]rune` に変換します。
+
+:::
+
 4. `int` と `float64` の型変換を試してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    // int → float64
+    i := 42
+    f := float64(i)
+    fmt.Printf("int: %d → float64: %f\n", i, f) // 42 → 42.000000
+
+    // float64 → int（小数点以下は切り捨て）
+    pi := 3.14
+    n := int(pi)
+    fmt.Printf("float64: %f → int: %d\n", pi, n) // 3.14 → 3
+}
+```
+
+Go は暗黙の型変換を行いません。`int` と `float64` の演算をするには、明示的に `float64(i)` や `int(f)` と書く必要があります。
+
+:::
 
 ---
 

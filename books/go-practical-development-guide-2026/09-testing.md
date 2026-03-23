@@ -345,9 +345,168 @@ case <-time.After(5 * time.Second):
 
 `IsPalindrome(s string) bool`（回文判定）に対してテーブル駆動テストを書いてください。ケース: 回文（"racecar"）、空文字列、1文字、非回文、大文字小文字混在（"RaceCar" -- 仕様は自分で決める）。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
+
+// IsPalindrome は大文字小文字を区別せずに回文かどうかを判定する。
+// 仕様: 大文字小文字は無視して比較する（"RaceCar" → true）。
+func IsPalindrome(s string) bool {
+	s = strings.ToLower(s) // 大文字小文字を統一して比較
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		if s[i] != s[j] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestIsPalindrome(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{name: "回文", input: "racecar", want: true},
+		{name: "空文字列", input: "", want: true},
+		{name: "1文字", input: "a", want: true},
+		{name: "非回文", input: "hello", want: false},
+		{name: "大文字小文字混在の回文", input: "RaceCar", want: true},
+		{name: "偶数長の回文", input: "abba", want: true},
+		{name: "偶数長の非回文", input: "abcd", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsPalindrome(tt.input)
+			if got != tt.want {
+				t.Errorf("IsPalindrome(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func main() {
+	// 動作確認用
+	words := []string{"racecar", "", "a", "hello", "RaceCar", "abba"}
+	for _, w := range words {
+		fmt.Printf("IsPalindrome(%q) = %v\n", w, IsPalindrome(w))
+	}
+	// 出力例:
+	// IsPalindrome("racecar") = true
+	// IsPalindrome("") = true
+	// IsPalindrome("a") = true
+	// IsPalindrome("hello") = false
+	// IsPalindrome("RaceCar") = true
+	// IsPalindrome("abba") = true
+}
+```
+
+ポイント: テーブル駆動テストでは「正常系・境界値・異常系」を網羅する。仕様が曖昧な部分（大文字小文字の扱い）はテストケースの段階で決定し、テスト名に仕様の意図を明示する。`t.Run` を使うことで `go test -run TestIsPalindrome/空文字列` のように個別実行できる。
+
+:::
+
 ### 演習2: httptestでAPIテスト
 
 `GET /api/health` ハンドラを実装し、`httptest.NewRecorder` でテストしてください。期待値: ステータス200、Content-Type: application/json、ボディ `{"status":"ok","version":"1.0.0"}`。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+// HealthResponse はヘルスチェックのレスポンス構造体
+type HealthResponse struct {
+	Status  string `json:"status"`
+	Version string `json:"version"`
+}
+
+// HealthHandler はヘルスチェック用のHTTPハンドラ
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(HealthResponse{
+		Status:  "ok",
+		Version: "1.0.0",
+	})
+}
+
+func TestHealthHandler(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		wantStatus     int
+		wantContentType string
+		wantBody       HealthResponse
+	}{
+		{
+			name:           "正常なGETリクエスト",
+			method:         "GET",
+			wantStatus:     http.StatusOK,
+			wantContentType: "application/json",
+			wantBody:       HealthResponse{Status: "ok", Version: "1.0.0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// httptest.NewRequest でリクエストを作成
+			req := httptest.NewRequest(tt.method, "/api/health", nil)
+			// httptest.NewRecorder でレスポンスを記録
+			rec := httptest.NewRecorder()
+
+			HealthHandler(rec, req)
+
+			// ステータスコードの検証
+			if rec.Code != tt.wantStatus {
+				t.Errorf("status = %d, want %d", rec.Code, tt.wantStatus)
+			}
+
+			// Content-Type の検証
+			ct := rec.Header().Get("Content-Type")
+			if ct != tt.wantContentType {
+				t.Errorf("Content-Type = %q, want %q", ct, tt.wantContentType)
+			}
+
+			// ボディの検証（JSONデコードして構造体で比較）
+			var got HealthResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+				t.Fatalf("failed to decode body: %v", err)
+			}
+			if got != tt.wantBody {
+				t.Errorf("body = %+v, want %+v", got, tt.wantBody)
+			}
+		})
+	}
+}
+
+func main() {
+	http.HandleFunc("/api/health", HealthHandler)
+	fmt.Println("サーバー起動: http://localhost:8080")
+	http.ListenAndServe(":8080", nil)
+	// 出力例: curl http://localhost:8080/api/health
+	// {"status":"ok","version":"1.0.0"}
+}
+```
+
+ポイント: `httptest.NewRecorder` はサーバーを起動せずにハンドラを直接テストできる。レスポンスの検証は「ステータスコード → ヘッダー → ボディ」の順で行い、ボディはJSON構造体にデコードして比較すると可読性が高い。
+
+:::
 
 ### 演習3: インターフェースでモック可能にする
 
@@ -363,3 +522,125 @@ func GetWeather(city string) (string, error) {
 ```
 
 ヒント: `WeatherFetcher` インターフェースを定義し、`GetWeather` を構造体のメソッドに変更する。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"testing"
+)
+
+// WeatherFetcher は天気情報を取得するインターフェース。
+// インターフェースで抽象化することで、テスト時に実装を差し替えられる。
+type WeatherFetcher interface {
+	FetchWeather(city string) (string, error)
+}
+
+// APIWeatherFetcher は実際のAPIを呼ぶ本番用の実装
+type APIWeatherFetcher struct {
+	BaseURL string
+	Client  *http.Client
+}
+
+func (f *APIWeatherFetcher) FetchWeather(city string) (string, error) {
+	resp, err := f.Client.Get(f.BaseURL + "/" + city)
+	if err != nil {
+		return "", fmt.Errorf("API呼び出し失敗: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("レスポンス読み取り失敗: %w", err)
+	}
+
+	var result struct {
+		Weather string `json:"weather"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", fmt.Errorf("JSONパース失敗: %w", err)
+	}
+	return result.Weather, nil
+}
+
+// SpyWeatherFetcher はテスト用のSpy実装。
+// 呼び出し記録を保持し、事前設定した値を返す。
+type SpyWeatherFetcher struct {
+	Calls   []string // 呼び出された都市名を記録
+	Result  string   // 返す天気情報
+	Err     error    // 返すエラー
+}
+
+func (s *SpyWeatherFetcher) FetchWeather(city string) (string, error) {
+	s.Calls = append(s.Calls, city)
+	return s.Result, s.Err
+}
+
+// WeatherService は WeatherFetcher に依存するサービス層
+type WeatherService struct {
+	fetcher WeatherFetcher
+}
+
+func NewWeatherService(f WeatherFetcher) *WeatherService {
+	return &WeatherService{fetcher: f}
+}
+
+func (ws *WeatherService) GetWeather(city string) (string, error) {
+	return ws.fetcher.FetchWeather(city)
+}
+
+func TestWeatherService(t *testing.T) {
+	t.Run("正常に天気を取得", func(t *testing.T) {
+		spy := &SpyWeatherFetcher{Result: "晴れ"}
+		svc := NewWeatherService(spy)
+
+		got, err := svc.GetWeather("tokyo")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "晴れ" {
+			t.Errorf("weather = %q, want 晴れ", got)
+		}
+		// Spy で呼び出し引数を検証
+		if len(spy.Calls) != 1 || spy.Calls[0] != "tokyo" {
+			t.Errorf("calls = %v, want [tokyo]", spy.Calls)
+		}
+	})
+
+	t.Run("API失敗時のエラー処理", func(t *testing.T) {
+		spy := &SpyWeatherFetcher{Err: fmt.Errorf("connection refused")}
+		svc := NewWeatherService(spy)
+
+		_, err := svc.GetWeather("tokyo")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+}
+
+func main() {
+	// 本番ではAPIWeatherFetcherを注入
+	fetcher := &APIWeatherFetcher{
+		BaseURL: "https://api.weather.com",
+		Client:  http.DefaultClient,
+	}
+	svc := NewWeatherService(fetcher)
+	weather, err := svc.GetWeather("tokyo")
+	if err != nil {
+		fmt.Printf("エラー: %v\n", err)
+		return
+	}
+	fmt.Printf("東京の天気: %s\n", weather)
+	// 出力例: 東京の天気: 晴れ
+}
+```
+
+ポイント: 外部API依存をインターフェースで抽象化するのがGoのテスト設計の基本。Spyは「何が呼ばれたか」を記録して検証に使う。本番実装とテスト実装を同じインターフェースで差し替えられる設計にすることで、ネットワーク不要の高速なユニットテストが書ける。
+
+:::

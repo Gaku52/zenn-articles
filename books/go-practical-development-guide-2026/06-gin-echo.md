@@ -341,6 +341,147 @@ type CreateUserRequest struct {
 
 データはメモリ上（`map` や `slice`）で管理して構いません。バリデーションには binding タグを使いましょう。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"net/http"
+	"strconv"
+	"sync"
+
+	"github.com/gin-gonic/gin"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title" binding:"required,min=3"` // binding タグでバリデーション
+	Done  bool   `json:"done"`
+}
+
+// CreateTodoRequest は POST 用のリクエスト構造体（ID は自動採番）
+type CreateTodoRequest struct {
+	Title string `json:"title" binding:"required,min=3"`
+}
+
+var (
+	mu     sync.Mutex
+	todos  = map[int]*Todo{}
+	nextID = 1
+)
+
+func main() {
+	r := gin.Default() // Logger + Recovery ミドルウェア付き
+
+	r.GET("/todos", listTodos)
+	r.POST("/todos", createTodo)
+	r.GET("/todos/:id", getTodo)
+	r.PUT("/todos/:id", toggleTodo)
+	r.DELETE("/todos/:id", deleteTodo)
+
+	r.Run(":8080")
+}
+
+func listTodos(c *gin.Context) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	list := make([]*Todo, 0, len(todos))
+	for _, t := range todos {
+		list = append(list, t)
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func createTodo(c *gin.Context) {
+	var req CreateTodoRequest
+	// ShouldBindJSON で Bind + Validate が一括実行される
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo := &Todo{ID: nextID, Title: req.Title, Done: false}
+	todos[nextID] = todo
+	nextID++
+
+	c.JSON(http.StatusCreated, todo)
+}
+
+func getTodo(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id")) // :id パスパラメータ
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo, ok := todos[id]
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		return
+	}
+	c.JSON(http.StatusOK, todo)
+}
+
+func toggleTodo(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo, ok := todos[id]
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		return
+	}
+	todo.Done = !todo.Done
+	c.JSON(http.StatusOK, todo)
+}
+
+func deleteTodo(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if _, ok := todos[id]; !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		return
+	}
+	delete(todos, id)
+	c.Status(http.StatusNoContent)
+}
+
+// 実行例:
+// curl -X POST -d '{"title":"Go"}' localhost:8080/todos
+//   → {"error":"... min=3 ..."}  ← 3文字未満でバリデーションエラー
+// curl -X POST -d '{"title":"Go勉強"}' localhost:8080/todos
+//   → {"id":1,"title":"Go勉強","done":false}
+// curl localhost:8080/todos/1
+//   → {"id":1,"title":"Go勉強","done":false}
+// curl -X PUT localhost:8080/todos/1
+//   → {"id":1,"title":"Go勉強","done":true}
+```
+
+`binding:"required,min=3"` でバリデーションをタグに集約し、`ShouldBindJSON` 一発で Bind + Validate を実行するのが Gin の流儀です。ハンドラ内で手書きチェックを重複させないようにしましょう。
+
+:::
+
 ### 演習2: Echo で同じ API を作り直す
 
 演習1 と同じ仕様の TODO API を Echo で実装してください。以下の点に注目して違いを体感しましょう。
@@ -349,6 +490,157 @@ type CreateUserRequest struct {
 - `c.Bind()` + `c.Validate()` の分離
 - `echo.NewHTTPError()` によるエラー返却
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"net/http"
+	"strconv"
+	"sync"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title" validate:"required,min=3"`
+	Done  bool   `json:"done"`
+}
+
+type CreateTodoRequest struct {
+	Title string `json:"title" validate:"required,min=3"`
+}
+
+// CustomValidator は echo.Validator インターフェースを実装する
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i any) error {
+	return cv.validator.Struct(i)
+}
+
+var (
+	mu     sync.Mutex
+	todos  = map[int]*Todo{}
+	nextID = 1
+)
+
+func main() {
+	e := echo.New()
+
+	// Echo にはバリデータが組み込まれていないため明示的に登録する
+	e.Validator = &CustomValidator{validator: validator.New()}
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.GET("/todos", listTodos)
+	e.POST("/todos", createTodo)
+	e.GET("/todos/:id", getTodo)
+	e.PUT("/todos/:id", toggleTodo)
+	e.DELETE("/todos/:id", deleteTodo)
+
+	e.Logger.Fatal(e.Start(":8080"))
+}
+
+// Echo のハンドラは error を返す → return で明示的にレスポンスを返却
+func listTodos(c echo.Context) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	list := make([]*Todo, 0, len(todos))
+	for _, t := range todos {
+		list = append(list, t)
+	}
+	return c.JSON(http.StatusOK, list)
+}
+
+func createTodo(c echo.Context) error {
+	var req CreateTodoRequest
+
+	// Bind と Validate が分離している（Echo の設計思想）
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if err := c.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo := &Todo{ID: nextID, Title: req.Title, Done: false}
+	todos[nextID] = todo
+	nextID++
+
+	return c.JSON(http.StatusCreated, todo)
+}
+
+func getTodo(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo, ok := todos[id]
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, "todo not found")
+	}
+	return c.JSON(http.StatusOK, todo)
+}
+
+func toggleTodo(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	todo, ok := todos[id]
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, "todo not found")
+	}
+	todo.Done = !todo.Done
+	return c.JSON(http.StatusOK, todo)
+}
+
+func deleteTodo(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if _, ok := todos[id]; !ok {
+		return echo.NewHTTPError(http.StatusNotFound, "todo not found")
+	}
+	delete(todos, id)
+	return c.NoContent(http.StatusNoContent)
+}
+
+// 実行例:
+// curl -X POST -d '{"title":"Go勉強"}' -H 'Content-Type: application/json' localhost:8080/todos
+//   → {"id":1,"title":"Go勉強","done":false}
+// curl -X POST -d '{"title":"Go"}' -H 'Content-Type: application/json' localhost:8080/todos
+//   → {"message":"... min=3 ..."}  ← バリデーションエラー
+```
+
+Gin と比較すると、(1) ハンドラが `error` を返すため `return` 忘れが起きにくい、(2) `c.Bind()` + `c.Validate()` が分離しておりデバッグしやすい、(3) `echo.NewHTTPError` でエラー返却が統一されている、という違いが体感できるはずです。
+
+:::
+
 ### 演習3: 認証ミドルウェアを追加する
 
 演習1 または 2 の API に、簡易的な API キー認証ミドルウェアを追加してください。
@@ -356,3 +648,164 @@ type CreateUserRequest struct {
 - `Authorization: Bearer <api-key>` ヘッダーを検証
 - 正しいキーは環境変数 `API_KEY` から読み取る
 - `GET /todos`（一覧取得）は公開、それ以外のエンドポイントに認証を適用（グループ機能を使う）
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/gin-gonic/gin"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title" binding:"required,min=3"`
+	Done  bool   `json:"done"`
+}
+
+type CreateTodoRequest struct {
+	Title string `json:"title" binding:"required,min=3"`
+}
+
+var (
+	mu     sync.Mutex
+	todos  = map[int]*Todo{}
+	nextID = 1
+)
+
+// apiKeyAuth は Authorization ヘッダーの Bearer トークンを検証するミドルウェア
+func apiKeyAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 環境変数から正しい API キーを取得
+		expectedKey := os.Getenv("API_KEY")
+		if expectedKey == "" {
+			// API_KEY が未設定なら全リクエストを拒否（安全側に倒す）
+			c.AbortWithStatusJSON(http.StatusInternalServerError,
+				gin.H{"error": "API_KEY not configured"})
+			return
+		}
+
+		auth := c.GetHeader("Authorization")
+		if auth == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized,
+				gin.H{"error": "authorization header required"})
+			return
+		}
+
+		// "Bearer <key>" 形式を分解
+		parts := strings.SplitN(auth, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized,
+				gin.H{"error": "invalid authorization format, use: Bearer <key>"})
+			return
+		}
+
+		if parts[1] != expectedKey {
+			c.AbortWithStatusJSON(http.StatusForbidden,
+				gin.H{"error": "invalid api key"})
+			return
+		}
+
+		c.Next() // 認証成功 → 後続のハンドラを実行
+	}
+}
+
+func main() {
+	r := gin.Default()
+
+	// 公開グループ（認証不要）
+	public := r.Group("/todos")
+	{
+		public.GET("", listTodos) // GET /todos は誰でもアクセス可能
+	}
+
+	// 認証必須グループ（apiKeyAuth を適用）
+	protected := r.Group("/todos")
+	protected.Use(apiKeyAuth())
+	{
+		protected.POST("", createTodo)
+		protected.GET("/:id", getTodo)
+		protected.PUT("/:id", toggleTodo)
+		protected.DELETE("/:id", deleteTodo)
+	}
+
+	r.Run(":8080")
+}
+
+func listTodos(c *gin.Context) {
+	mu.Lock()
+	defer mu.Unlock()
+	list := make([]*Todo, 0, len(todos))
+	for _, t := range todos {
+		list = append(list, t)
+	}
+	c.JSON(http.StatusOK, list)
+}
+
+func createTodo(c *gin.Context) {
+	var req CreateTodoRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	todo := &Todo{ID: nextID, Title: req.Title}
+	todos[nextID] = todo
+	nextID++
+	c.JSON(http.StatusCreated, todo)
+}
+
+func getTodo(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	mu.Lock()
+	defer mu.Unlock()
+	todo, ok := todos[id]
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	c.JSON(http.StatusOK, todo)
+}
+
+func toggleTodo(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	mu.Lock()
+	defer mu.Unlock()
+	todo, ok := todos[id]
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	todo.Done = !todo.Done
+	c.JSON(http.StatusOK, todo)
+}
+
+func deleteTodo(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	mu.Lock()
+	defer mu.Unlock()
+	delete(todos, id)
+	c.Status(http.StatusNoContent)
+}
+
+// 実行例:
+// export API_KEY="my-secret-key"
+// curl localhost:8080/todos
+//   → []  ← 認証なしでアクセス可能
+// curl -X POST -d '{"title":"テスト"}' localhost:8080/todos
+//   → {"error":"authorization header required"}
+// curl -X POST -d '{"title":"テスト"}' -H 'Authorization: Bearer my-secret-key' localhost:8080/todos
+//   → {"id":1,"title":"テスト","done":false}
+```
+
+Gin のルーティンググループを使うと、公開 API と認証必須 API を明確に分離できます。`c.Abort()` / `c.AbortWithStatusJSON()` でミドルウェアチェーンを中断し、`c.Next()` で後続処理へ進む――この流れがミドルウェア実装の基本です。
+
+:::

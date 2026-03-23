@@ -300,9 +300,216 @@ $ go test -cover ./...
 ## やってみよう
 
 1. `calculator` パッケージを作り、`Add`, `Subtract`, `Multiply`, `Divide` を実装してみましょう
+
+:::details 解答例を見る
+
+プロジェクト構成:
+
+```
+myproject/
+├── go.mod
+├── main.go
+└── calculator/
+    └── calculator.go
+```
+
+```bash
+$ mkdir myproject && cd myproject
+$ go mod init myproject
+$ mkdir calculator
+```
+
+```go
+// calculator/calculator.go
+package calculator
+
+import "errors"
+
+// 大文字で始まる関数は外部パッケージから参照可能（公開）
+func Add(a, b int) int      { return a + b }
+func Subtract(a, b int) int { return a - b }
+func Multiply(a, b int) int { return a * b }
+
+func Divide(a, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+    return a / b, nil
+}
+```
+
+```go
+// main.go
+package main
+
+import (
+    "fmt"
+    "myproject/calculator"
+)
+
+func main() {
+    fmt.Println(calculator.Add(10, 3))      // 13
+    fmt.Println(calculator.Subtract(10, 3)) // 7
+    fmt.Println(calculator.Multiply(10, 3)) // 30
+
+    result, err := calculator.Divide(10, 3)
+    if err != nil {
+        fmt.Println("エラー:", err)
+        return
+    }
+    fmt.Println(result) // 3
+}
+```
+
+:::
+
 2. 各関数のテーブル駆動テストを書いて `go test -v` で実行してみましょう
+
+:::details 解答例を見る
+
+```go
+// calculator/calculator_test.go
+package calculator
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+    tests := []struct {
+        name     string
+        a, b     int
+        expected int
+    }{
+        {"正の数同士", 2, 3, 5},
+        {"負の数同士", -1, -2, -3},
+        {"ゼロ", 0, 0, 0},
+        {"正と負", -5, 10, 5},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result := Add(tt.a, tt.b)
+            if result != tt.expected {
+                t.Errorf("Add(%d, %d) = %d, want %d",
+                    tt.a, tt.b, result, tt.expected)
+            }
+        })
+    }
+}
+
+func TestDivide(t *testing.T) {
+    tests := []struct {
+        name      string
+        a, b      int
+        expected  int
+        expectErr bool
+    }{
+        {"通常の除算", 10, 3, 3, false},
+        {"割り切れる", 10, 2, 5, false},
+        {"ゼロ除算", 10, 0, 0, true},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result, err := Divide(tt.a, tt.b)
+            if tt.expectErr {
+                if err == nil {
+                    t.Error("エラーを期待したが nil だった")
+                }
+                return
+            }
+            if err != nil {
+                t.Fatalf("予期しないエラー: %v", err)
+            }
+            if result != tt.expected {
+                t.Errorf("Divide(%d, %d) = %d, want %d",
+                    tt.a, tt.b, result, tt.expected)
+            }
+        })
+    }
+}
+```
+
+```bash
+$ go test -v ./calculator/
+=== RUN   TestAdd
+=== RUN   TestAdd/正の数同士
+=== RUN   TestAdd/負の数同士
+=== RUN   TestAdd/ゼロ
+=== RUN   TestAdd/正と負
+--- PASS: TestAdd (0.00s)
+=== RUN   TestDivide
+=== RUN   TestDivide/通常の除算
+=== RUN   TestDivide/割り切れる
+=== RUN   TestDivide/ゼロ除算
+--- PASS: TestDivide (0.00s)
+PASS
+```
+
+:::
+
 3. `internal` パッケージを使って、外部からアクセスできないヘルパー関数を作ってみましょう
+
+:::details 解答例を見る
+
+```
+myproject/
+├── go.mod
+├── main.go
+├── calculator/
+│   └── calculator.go
+└── internal/
+    └── helper/
+        └── helper.go
+```
+
+```go
+// internal/helper/helper.go
+package helper
+
+// Abs は同一モジュール内からのみアクセス可能
+func Abs(n int) int {
+    if n < 0 {
+        return -n
+    }
+    return n
+}
+```
+
+```go
+// calculator/calculator.go で internal パッケージを使用
+package calculator
+
+import "myproject/internal/helper"
+
+func Diff(a, b int) int {
+    return helper.Abs(a - b) // ✅ 同一モジュール内なのでアクセス可能
+}
+```
+
+`internal/` 配下のパッケージは、同じモジュール内からのみインポートできます。外部モジュールがインポートしようとするとコンパイルエラーになります。
+
+:::
+
 4. `go mod tidy` で依存を整理してみましょう
+
+:::details 解答例を見る
+
+```bash
+# コード内で使用していない依存を削除し、必要な依存を追加する
+$ go mod tidy
+
+# 結果を確認
+$ cat go.mod
+```
+
+`go mod tidy` は以下を行います:
+- コード内で `import` しているが `go.mod` にないパッケージを追加
+- `go.mod` にあるがコード内で使われていないパッケージを削除
+- `go.sum` のチェックサムを更新
+
+依存を追加・削除した後は `go mod tidy` を実行する習慣をつけましょう。
+
+:::
 
 ---
 

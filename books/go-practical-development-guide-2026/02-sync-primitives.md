@@ -323,10 +323,276 @@ func transfer(from, to *Account, amount int) {
 
 `sync.RWMutex` を使って、TTL（有効期限）付きのスレッドセーフなキャッシュを実装してください。`Get(key)` で期限切れエントリは自動削除し、`Set(key, value, ttl)` で登録。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+// entry はキャッシュの1エントリ。値と有効期限を保持する
+type entry struct {
+	value     string
+	expiresAt time.Time
+}
+
+// TTLCache はTTL付きスレッドセーフキャッシュ
+type TTLCache struct {
+	mu    sync.RWMutex
+	items map[string]entry
+}
+
+func NewTTLCache() *TTLCache {
+	return &TTLCache{items: make(map[string]entry)}
+}
+
+// Set はキーに値とTTLを設定する
+func (c *TTLCache) Set(key, value string, ttl time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.items[key] = entry{
+		value:     value,
+		expiresAt: time.Now().Add(ttl),
+	}
+}
+
+// Get はキーの値を取得する。期限切れの場合は削除してfalseを返す
+func (c *TTLCache) Get(key string) (string, bool) {
+	// まず読み取りロックで確認
+	c.mu.RLock()
+	e, ok := c.items[key]
+	c.mu.RUnlock()
+
+	if !ok {
+		return "", false
+	}
+
+	// 期限切れチェック
+	if time.Now().After(e.expiresAt) {
+		// 書き込みロックに昇格して削除
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		// ダブルチェック: RUnlock〜Lock間に他のgoroutineが削除した可能性
+		if e2, ok := c.items[key]; ok && time.Now().After(e2.expiresAt) {
+			delete(c.items, key)
+		}
+		return "", false
+	}
+
+	return e.value, true
+}
+
+func main() {
+	cache := NewTTLCache()
+
+	cache.Set("token", "abc123", 500*time.Millisecond)
+
+	// 即座に取得 → ヒット
+	if v, ok := cache.Get("token"); ok {
+		fmt.Printf("Hit: %s\n", v)
+	}
+
+	// TTL経過後 → ミス（自動削除される）
+	time.Sleep(600 * time.Millisecond)
+	if _, ok := cache.Get("token"); !ok {
+		fmt.Println("Miss: expired and removed")
+	}
+
+	// 出力:
+	// Hit: abc123
+	// Miss: expired and removed
+}
+```
+
+**ポイント:** `RLock` で読み取り → 期限切れなら `Lock` に昇格して削除、という2段階ロックがRWMutexの典型的な使い方。RUnlockとLockの間に他のgoroutineが変更する可能性があるため、ダブルチェックパターンを使う。
+
+:::
+
 ### 問題 2: 並行ダウンローダー
 
 `sync.WaitGroup` と `sync.Mutex` を使って、URLリストから並行にダウンロードし、全結果を集約する関数を実装してください。エラーが発生したURLはスキップすること。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"sync"
+)
+
+// DownloadResult は各URLのダウンロード結果
+type DownloadResult struct {
+	URL  string
+	Body string
+	Err  error
+}
+
+// downloadAll はURLリストから並行にダウンロードし、全結果を返す
+func downloadAll(urls []string) []DownloadResult {
+	var (
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		results []DownloadResult
+	)
+
+	for _, url := range urls {
+		wg.Add(1) // 必ずgo文の前でAdd
+		go func(u string) {
+			defer wg.Done()
+
+			resp, err := http.Get(u)
+			if err != nil {
+				// エラーでも結果に記録（スキップ扱い）
+				mu.Lock()
+				results = append(results, DownloadResult{URL: u, Err: err})
+				mu.Unlock()
+				return
+			}
+			defer resp.Body.Close()
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				mu.Lock()
+				results = append(results, DownloadResult{URL: u, Err: err})
+				mu.Unlock()
+				return
+			}
+
+			// 共有スライスへの追加はMutexで保護
+			mu.Lock()
+			results = append(results, DownloadResult{URL: u, Body: string(body)})
+			mu.Unlock()
+		}(url)
+	}
+
+	wg.Wait() // 全goroutineの完了を待つ
+	return results
+}
+
+func main() {
+	urls := []string{
+		"https://httpbin.org/get",
+		"https://httpbin.org/status/404",
+		"https://invalid.example.com", // エラーになるURL
+	}
+
+	results := downloadAll(urls)
+	for _, r := range results {
+		if r.Err != nil {
+			fmt.Printf("[SKIP] %s: %v\n", r.URL, r.Err)
+		} else {
+			fmt.Printf("[OK]   %s: %d bytes\n", r.URL, len(r.Body))
+		}
+	}
+
+	// 出力例:
+	// [OK]   https://httpbin.org/get: 283 bytes
+	// [OK]   https://httpbin.org/status/404: 0 bytes
+	// [SKIP] https://invalid.example.com: Get "...": dial tcp: ...
+}
+```
+
+**ポイント:** 共有スライスへの `append` はスレッドセーフではないため、必ず `sync.Mutex` で保護する。`wg.Add(1)` を `go` 文の前に置くのは鉄則。エラーが起きたURLもスキップしつつ記録することで、呼び出し元がエラー情報を利用できる。
+
+:::
+
 ### 問題 3: メトリクス収集器
 
 `atomic` パッケージを使って、リクエスト数・エラー数・アクティブ接続数・レイテンシ（`atomic.Int64` でナノ秒）を記録する `Metrics` 構造体を実装してください。Mutexは使わないこと。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+// Metrics はロックフリーのメトリクス収集器
+// 全フィールドがatomic型なのでMutex不要
+type Metrics struct {
+	RequestCount atomic.Int64
+	ErrorCount   atomic.Int64
+	ActiveConns  atomic.Int32
+	TotalLatency atomic.Int64 // ナノ秒の累計
+}
+
+// RecordRequest はリクエストを記録する
+func (m *Metrics) RecordRequest(start time.Time, success bool) {
+	m.RequestCount.Add(1)
+	if !success {
+		m.ErrorCount.Add(1)
+	}
+	// レイテンシをナノ秒で累計加算
+	latency := time.Since(start).Nanoseconds()
+	m.TotalLatency.Add(latency)
+}
+
+// ConnOpened はアクティブ接続数を+1
+func (m *Metrics) ConnOpened() { m.ActiveConns.Add(1) }
+
+// ConnClosed はアクティブ接続数を-1
+func (m *Metrics) ConnClosed() { m.ActiveConns.Add(-1) }
+
+// AvgLatency は平均レイテンシを返す
+func (m *Metrics) AvgLatency() time.Duration {
+	count := m.RequestCount.Load()
+	if count == 0 {
+		return 0
+	}
+	return time.Duration(m.TotalLatency.Load() / count)
+}
+
+// Snapshot はメトリクスの現在値を返す
+func (m *Metrics) Snapshot() string {
+	return fmt.Sprintf(
+		"requests=%d errors=%d active_conns=%d avg_latency=%v",
+		m.RequestCount.Load(),
+		m.ErrorCount.Load(),
+		m.ActiveConns.Load(),
+		m.AvgLatency(),
+	)
+}
+
+func main() {
+	var metrics Metrics
+	var wg sync.WaitGroup
+
+	// 100個のリクエストを並行にシミュレート
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			metrics.ConnOpened()
+			defer metrics.ConnClosed()
+
+			start := time.Now()
+			time.Sleep(time.Duration(id%10) * time.Millisecond) // 処理シミュレート
+			success := id%7 != 0                                // 7の倍数はエラー扱い
+			metrics.RecordRequest(start, success)
+		}(i)
+	}
+
+	wg.Wait()
+	fmt.Println(metrics.Snapshot())
+	// 出力例: requests=100 errors=15 active_conns=0 avg_latency=4.2ms
+}
+```
+
+**ポイント:** 単純なカウンタやフラグには `atomic` がMutexより高速。`atomic.Int64` / `atomic.Int32` / `atomic.Bool` はGo 1.19+で追加された型安全なAPIで、`Add` / `Load` / `Store` のメソッドで操作する。平均レイテンシの計算は累計÷回数で近似できる。
+
+:::
+

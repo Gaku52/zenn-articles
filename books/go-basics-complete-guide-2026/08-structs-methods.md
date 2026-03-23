@@ -297,9 +297,171 @@ func main() {
 ## やってみよう
 
 1. `Circle` 構造体（半径を持つ）を作り、`Area()` と `Circumference()` メソッドを実装してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Circle struct {
+    Radius float64
+}
+
+// 面積: πr²（値レシーバ: フィールドを変更しない）
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+// 円周: 2πr
+func (c Circle) Circumference() float64 {
+    return 2 * math.Pi * c.Radius
+}
+
+func main() {
+    c := Circle{Radius: 5.0}
+    fmt.Printf("半径: %.1f\n", c.Radius)
+    fmt.Printf("面積: %.2f\n", c.Area())          // 78.54
+    fmt.Printf("円周: %.2f\n", c.Circumference()) // 31.42
+}
+```
+
+:::
+
 2. ポインタレシーバを使って `Resize(factor float64)` メソッドを追加してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Circle struct {
+    Radius float64
+}
+
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+// ポインタレシーバ: Radius を変更するため *Circle が必要
+func (c *Circle) Resize(factor float64) {
+    c.Radius *= factor
+}
+
+func main() {
+    c := Circle{Radius: 5.0}
+    fmt.Printf("変更前: 半径=%.1f, 面積=%.2f\n", c.Radius, c.Area())
+    // 変更前: 半径=5.0, 面積=78.54
+
+    c.Resize(2.0) // 半径を2倍に
+    fmt.Printf("変更後: 半径=%.1f, 面積=%.2f\n", c.Radius, c.Area())
+    // 変更後: 半径=10.0, 面積=314.16
+}
+```
+
+値レシーバ `(c Circle)` ではコピーが渡されるため、フィールドを変更しても元の構造体には反映されません。フィールドを変更する場合はポインタレシーバ `(c *Circle)` を使います。
+
+:::
+
 3. `NewCircle(radius float64) (*Circle, error)` コンストラクタを作り、負の半径をエラーにしてみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "fmt"
+    "math"
+)
+
+type Circle struct {
+    Radius float64
+}
+
+func (c Circle) Area() float64 {
+    return math.Pi * c.Radius * c.Radius
+}
+
+// コンストラクタ関数: New で始める慣習
+func NewCircle(radius float64) (*Circle, error) {
+    if radius < 0 {
+        return nil, fmt.Errorf("半径は0以上である必要があります")
+    }
+    return &Circle{Radius: radius}, nil
+}
+
+func main() {
+    // 正常系
+    c, err := NewCircle(5.0)
+    if err != nil {
+        fmt.Println("エラー:", err)
+        return
+    }
+    fmt.Printf("円: 半径=%.1f, 面積=%.2f\n", c.Radius, c.Area())
+    // 円: 半径=5.0, 面積=78.54
+
+    // 異常系: 負の半径
+    _, err = NewCircle(-3.0)
+    if err != nil {
+        fmt.Println("エラー:", err)
+        // エラー: 半径は0以上である必要があります
+    }
+}
+```
+
+:::
+
 4. 構造体にJSONタグを付けて、JSONとの変換を試してみましょう
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+)
+
+type Circle struct {
+    Radius float64 `json:"radius"`
+    Color  string  `json:"color,omitempty"`
+}
+
+func main() {
+    // 構造体 → JSON
+    c := Circle{Radius: 5.0, Color: "red"}
+    data, _ := json.Marshal(c)
+    fmt.Println(string(data))
+    // {"radius":5,"color":"red"}
+
+    // omitempty: ゼロ値のフィールドは JSON から省略される
+    c2 := Circle{Radius: 3.0}
+    data2, _ := json.Marshal(c2)
+    fmt.Println(string(data2))
+    // {"radius":3}
+
+    // JSON → 構造体
+    var c3 Circle
+    json.Unmarshal([]byte(`{"radius":10,"color":"blue"}`), &c3)
+    fmt.Printf("半径: %.1f, 色: %s\n", c3.Radius, c3.Color)
+    // 半径: 10.0, 色: blue
+}
+```
+
+JSON タグはバッククォート `` ` `` で囲みます。`omitempty` を付けるとゼロ値（`""`, `0`, `false` など）のフィールドが JSON 出力から省略されます。
+
+:::
 
 ---
 

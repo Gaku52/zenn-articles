@@ -345,6 +345,117 @@ context.Background()
 - 1つでもタイムアウトしたら全リクエストをキャンセルする
 - ヒント: `context.WithCancel`で親contextを作り、各goroutineで`http.NewRequestWithContext`を使う
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"sync"
+	"time"
+)
+
+// FetchResult はHTTPリクエストの結果
+type FetchResult struct {
+	URL        string
+	StatusCode int
+	BodySize   int
+	Err        error
+}
+
+// fetchAllWithTimeout は3つのURLに並行リクエストし、
+// 1つでもタイムアウトしたら全体をキャンセルする
+func fetchAllWithTimeout(urls []string) ([]FetchResult, error) {
+	// 全体のタイムアウトを5秒に設定
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // 必ず呼ぶ（タイマーgoroutineのリーク防止）
+
+	var (
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		results = make([]FetchResult, len(urls))
+	)
+
+	for i, url := range urls {
+		wg.Add(1)
+		go func(idx int, u string) {
+			defer wg.Done()
+
+			// contextをリクエストに紐づける
+			// → ctx がキャンセルされるとこのリクエストも中断される
+			req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+			if err != nil {
+				mu.Lock()
+				results[idx] = FetchResult{URL: u, Err: err}
+				mu.Unlock()
+				cancel() // エラー発生で全体をキャンセル
+				return
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				mu.Lock()
+				results[idx] = FetchResult{URL: u, Err: err}
+				mu.Unlock()
+				cancel() // タイムアウト or エラーで全体をキャンセル
+				return
+			}
+			defer resp.Body.Close()
+
+			body, _ := io.ReadAll(resp.Body)
+			mu.Lock()
+			results[idx] = FetchResult{
+				URL:        u,
+				StatusCode: resp.StatusCode,
+				BodySize:   len(body),
+			}
+			mu.Unlock()
+		}(i, url)
+	}
+
+	wg.Wait()
+
+	// タイムアウトが発生していたらエラーを返す
+	if ctx.Err() != nil {
+		return results, fmt.Errorf("request failed: %w", ctx.Err())
+	}
+	return results, nil
+}
+
+func main() {
+	urls := []string{
+		"https://httpbin.org/delay/1", // 1秒で応答
+		"https://httpbin.org/delay/2", // 2秒で応答
+		"https://httpbin.org/delay/3", // 3秒で応答
+	}
+
+	results, err := fetchAllWithTimeout(urls)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	for _, r := range results {
+		if r.Err != nil {
+			fmt.Printf("[FAIL] %s: %v\n", r.URL, r.Err)
+		} else {
+			fmt.Printf("[OK]   %s: %d (%d bytes)\n", r.URL, r.StatusCode, r.BodySize)
+		}
+	}
+
+	// 出力例（全て5秒以内に応答する場合）:
+	// [OK]   https://httpbin.org/delay/1: 200 (283 bytes)
+	// [OK]   https://httpbin.org/delay/2: 200 (283 bytes)
+	// [OK]   https://httpbin.org/delay/3: 200 (283 bytes)
+}
+```
+
+**ポイント:** `context.WithTimeout` で作ったcontextを `http.NewRequestWithContext` に渡すことで、タイムアウト時にHTTPリクエストが自動キャンセルされる。1つでもエラーが発生したら `cancel()` を呼んで他のリクエストもキャンセルする設計。`cancel()` は複数回呼んでも安全。
+
+:::
+
 ### 練習2: WithValueを使ったリクエストID伝搬
 
 以下を実装してください。
@@ -354,6 +465,111 @@ context.Background()
 3. ハンドラでcontextからリクエストIDを取得してレスポンスに含める
 4. ヘッダーが未設定の場合はUUIDを自動生成する
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"log"
+	"net/http"
+)
+
+// --- contextキーの定義 ---
+
+// 非公開型でキーの衝突を防ぐ（文字列キーはパッケージ間で衝突するリスクがある）
+type ctxKey int
+
+const requestIDKey ctxKey = iota
+
+// SetRequestID はcontextにリクエストIDを設定する
+func SetRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey, id)
+}
+
+// GetRequestID はcontextからリクエストIDを取得する
+func GetRequestID(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(requestIDKey).(string)
+	return id, ok
+}
+
+// --- UUID生成 ---
+
+// generateID は簡易的なランダムIDを生成する
+func generateID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
+// --- ミドルウェア ---
+
+// requestIDMiddleware はX-Request-IDヘッダーからリクエストIDを取得し、
+// contextに設定するミドルウェア
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// ヘッダーからリクエストIDを取得
+		reqID := r.Header.Get("X-Request-ID")
+		if reqID == "" {
+			// 未設定の場合はUUIDを自動生成
+			reqID = generateID()
+		}
+
+		// contextにリクエストIDを設定
+		ctx := SetRequestID(r.Context(), reqID)
+
+		// レスポンスヘッダーにもリクエストIDを含める
+		w.Header().Set("X-Request-ID", reqID)
+
+		// 次のハンドラに渡す（contextが更新されたリクエスト）
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// --- ハンドラ ---
+
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	reqID, ok := GetRequestID(r.Context())
+	if !ok {
+		reqID = "unknown"
+	}
+
+	log.Printf("[%s] helloHandler called", reqID)
+	fmt.Fprintf(w, "Hello! Request-ID: %s\n", reqID)
+}
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /hello", helloHandler)
+
+	// ミドルウェアでラップ
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: requestIDMiddleware(mux),
+	}
+
+	log.Println("Server starting on :8080")
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
+
+	// テスト方法:
+	// curl -v http://localhost:8080/hello
+	// → X-Request-ID が自動生成される
+	//
+	// curl -H "X-Request-ID: my-trace-123" http://localhost:8080/hello
+	// → 指定したIDがそのまま使われる
+}
+```
+
+**ポイント:** `context.WithValue` のキーには必ず非公開型（`type ctxKey int`）を使う。文字列キーはパッケージ間で衝突するリスクがある。アクセサ関数（`SetRequestID` / `GetRequestID`）を提供することで、キーの型を外部に公開せずに型安全なアクセスを実現できる。
+
+:::
+
 ### 練習3: Graceful Shutdown
 
 以下の仕様でHTTPサーバーを実装してください。
@@ -362,3 +578,113 @@ context.Background()
 - 処理中のリクエストの完了を**最大30秒**待つ
 - バックグラウンドワーカー（1秒ごとにログ出力）も同時に停止する
 - ヒント: `signal.Notify`でシグナルを受け、`server.Shutdown(ctx)`にタイムアウト付きcontextを渡す
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+)
+
+// backgroundWorker は1秒ごとにログを出力するワーカー
+// contextがキャンセルされると停止する
+func backgroundWorker(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	count := 0
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("Worker stopped (processed %d ticks)", count)
+			return
+		case <-ticker.C:
+			count++
+			log.Printf("Worker tick #%d", count)
+		}
+	}
+}
+
+func main() {
+	// 全体のキャンセル用context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// バックグラウンドワーカーの起動
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go backgroundWorker(ctx, &wg)
+
+	// HTTPサーバーの設定
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		// 重い処理をシミュレート（Graceful Shutdown のテスト用）
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(3 * time.Second):
+			fmt.Fprintln(w, "Hello, World!")
+		}
+	})
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	// サーバーを別goroutineで起動
+	go func() {
+		log.Println("Server starting on :8080")
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// シグナル待ち受け
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-sigCh
+	log.Printf("Received signal: %v, starting graceful shutdown...", sig)
+
+	// 1. バックグラウンドワーカーを停止
+	cancel()
+
+	// 2. HTTPサーバーのGraceful Shutdown（最大30秒待機）
+	shutdownCtx, shutdownCancel := context.WithTimeout(
+		context.Background(), 30*time.Second,
+	)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Shutdown error: %v", err)
+	} else {
+		log.Println("HTTP server shut down gracefully")
+	}
+
+	// 3. ワーカーの完了を待つ
+	wg.Wait()
+	log.Println("All components stopped. Bye!")
+
+	// テスト方法:
+	// 1. サーバー起動: go run main.go
+	// 2. リクエスト送信: curl http://localhost:8080/ &
+	// 3. Ctrl+C でシグナル送信
+	// → 処理中のリクエストが完了してからサーバーが停止する
+}
+```
+
+**ポイント:** Graceful Shutdownの3ステップ -- (1) シグナル受信でキャンセル開始、(2) `server.Shutdown` で処理中リクエストの完了を待つ（タイムアウト付き）、(3) `sync.WaitGroup` でバックグラウンドワーカーの完了を待つ。`context.Background()` から新しくタイムアウトcontextを作るのは、既にキャンセルされた `ctx` を再利用しないため。
+
+:::
+

@@ -345,6 +345,45 @@ func safeSearch(query string) string {
 
 **ヒント:** カウンターへのアクセスを `sync.Mutex` または `atomic.Int64` で保護する必要がある。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+)
+
+func main() {
+	var counter atomic.Int64
+	var wg sync.WaitGroup
+
+	const numGoroutines = 3
+	const incrementsPerGoroutine = 1000
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1) // 必ずgo文の前でAddする
+		go func() {
+			defer wg.Done()
+			for j := 0; j < incrementsPerGoroutine; j++ {
+				// atomic.Int64.Add はロック不要でスレッドセーフ
+				counter.Add(1)
+			}
+		}()
+	}
+
+	wg.Wait() // 全goroutineの完了を待つ
+	fmt.Printf("最終カウンター値: %d\n", counter.Load())
+	// 出力: 最終カウンター値: 3000
+}
+```
+
+**ポイント:** 単純なカウンターには `atomic.Int64` が最適。`sync.Mutex` でも実現できるが、atomic操作の方がロックのオーバーヘッドがなく高速。`wg.Add(1)` を `go` 文の前に置くのは鉄則 -- goroutine内で呼ぶと `wg.Wait()` が先に実行されるレースが起きる。
+
+:::
+
 ### 練習2: パイプライン
 
 以下の3ステージのパイプラインをchannelで構築してください。
@@ -355,8 +394,153 @@ func safeSearch(query string) string {
 
 各ステージはgoroutineで動作し、channelの方向制約（`<-chan`, `chan<-`）を使うこと。`context.Context` によるキャンセルにも対応してください。
 
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+// generate: 1〜20の整数をchannelに送信する
+// チャネルを作成した側がcloseする責務を持つ
+func generate(ctx context.Context) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for i := 1; i <= 20; i++ {
+			select {
+			case <-ctx.Done():
+				return // キャンセル時にgoroutineを確実に終了
+			case out <- i:
+			}
+		}
+	}()
+	return out
+}
+
+// square: 受信した値を二乗して送信する
+func square(ctx context.Context, in <-chan int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for v := range in {
+			select {
+			case <-ctx.Done():
+				return
+			case out <- v * v:
+			}
+		}
+	}()
+	return out
+}
+
+// filter: 偶数だけを通過させる
+func filter(ctx context.Context, in <-chan int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for v := range in {
+			if v%2 != 0 {
+				continue // 奇数はスキップ
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- v:
+			}
+		}
+	}()
+	return out
+}
+
+func main() {
+	// 5秒のタイムアウトでパイプライン全体を制御
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// パイプラインを連結: generate → square → filter
+	for v := range filter(ctx, square(ctx, generate(ctx))) {
+		fmt.Println(v)
+	}
+	// 出力: 4, 16, 36, 64, 100, 144, 196, 256, 324, 400
+	// (1〜20の二乗のうち偶数のもの)
+}
+```
+
+**ポイント:** 各ステージでchannelの方向制約（`<-chan` / `chan<-`）を使うことで、送信と受信の誤用をコンパイル時に防げる。全ステージで `select` + `ctx.Done()` を組み合わせることで、キャンセル時に全goroutineが確実に終了しリークを防ぐ。
+
+> ※ `context` の詳細は Chapter 04 で学びます。ここでは「キャンセルを伝搬する仕組み」と理解しておけばOKです。
+
+:::
+
 ### 練習3: タイムアウト付きHTTPクライアント
 
 `select` と `time.After` を使い、3つのURL（任意）に同時にHTTPリクエストを投げ、**最初に返ってきたレスポンス**のステータスコードを表示するプログラムを書いてください。全体のタイムアウトは5秒とします。
 
 **ヒント:** `context.WithTimeout` を使う方法もある。両方試して違いを比較してみよう。
+
+:::details 解答例を見る
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"time"
+)
+
+// result はHTTPリクエストの結果を運ぶ構造体
+type result struct {
+	url        string
+	statusCode int
+	err        error
+}
+
+func main() {
+	urls := []string{
+		"https://httpbin.org/delay/1",
+		"https://httpbin.org/delay/2",
+		"https://httpbin.org/delay/3",
+	}
+
+	// バッファサイズ = goroutine数にして全goroutineが送信可能にする
+	// → リーク防止の鉄則
+	ch := make(chan result, len(urls))
+
+	for _, url := range urls {
+		go func(u string) {
+			resp, err := http.Get(u)
+			if err != nil {
+				ch <- result{url: u, err: err}
+				return
+			}
+			defer resp.Body.Close()
+			ch <- result{url: u, statusCode: resp.StatusCode}
+		}(url)
+	}
+
+	// selectで最初のレスポンスまたはタイムアウトを待つ
+	select {
+	case r := <-ch:
+		if r.err != nil {
+			fmt.Printf("Error from %s: %v\n", r.url, r.err)
+		} else {
+			fmt.Printf("Fastest: %s → %d\n", r.url, r.statusCode)
+		}
+	case <-time.After(5 * time.Second):
+		fmt.Println("Timeout: 5秒以内にレスポンスなし")
+	}
+
+	// 出力例: Fastest: https://httpbin.org/delay/1 → 200
+}
+```
+
+**ポイント:** `ch` のバッファサイズを goroutine数と同じにすることで、受信されなかった結果もバッファに書き込めて goroutine リークを防止できる。本番では `time.After` より `context.WithTimeout` を使う方が一般的 -- contextなら途中で不要になったリクエストもキャンセルできる。
+
+:::
+
