@@ -330,7 +330,7 @@ A: Zennの規約に従います。購入前にサンプルチャプターで内�
 
 ### GitHub
 
-**[claude-code-skills](https://github.com/Gaku52/claude-code-skills)**
+**[software-engineering-universe](https://github.com/Gaku52/software-engineering-universe)**
 - 25個の技術Skills、無料公開
 
 ---

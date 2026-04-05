@@ -175,7 +175,7 @@ READMEには、様々な目的を持った読者が訪れます。それぞれ�
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ![Progress](https://img.shields.io/badge/Progress-100%25-green)
@@ -183,7 +183,7 @@ READMEには、様々な目的を持った読者が訪れます。それぞれ�
 ![Characters](https://img.shields.io/badge/Characters-3485K-informational)
 ![Guides](https://img.shields.io/badge/Guides-86-success)
 
-[![MIT Master's Level](https://img.shields.io/badge/MIT%20Level-90%2F100-success)](https://github.com/Gaku52/claude-code-skills)
+[![MIT Master's Level](https://img.shields.io/badge/MIT%20Level-90%2F100-success)](https://github.com/Gaku52/software-engineering-universe)
 [![Theoretical Rigor](https://img.shields.io/badge/Theoretical%20Rigor-20%2F20-brightgreen)](#theoretical-rigor)
 [![Reproducibility](https://img.shields.io/badge/Reproducibility-20%2F20-brightgreen)](#reproducibility)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -224,7 +224,7 @@ READMEには、様々な目的を持った読者が訪れます。それぞれ�
 対象ユーザー、ターゲット層
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ## 🎯 Project Overview
@@ -308,15 +308,15 @@ yarn add package-name
 
 ```bash
 # Statistical Analysis Library
-npm install @claude-code-skills/stats
+npm install @software-engineering-universe/stats
 
 # CRDT Library
-npm install @claude-code-skills/crdt
+npm install @software-engineering-universe/crdt
 ```
 
 **Statistics Example:**
 ```typescript
-import { pairedTTest, runBeforeAfterExperiment } from '@claude-code-skills/stats';
+import { pairedTTest, runBeforeAfterExperiment } from '@software-engineering-universe/stats';
 
 const before = [12.5, 13.2, 11.8, 14.1, 12.9];
 const after = [4.8, 5.2, 4.5, 5.5, 4.9];
@@ -395,7 +395,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 - ✅ Feature 3: Description
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ## 🌟 Key Features
@@ -438,13 +438,13 @@ project/
 ```
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ## 📚 Repository Structure
 
 ```
-claude-code-skills/
+software-engineering-universe/
 ├── backend-development/
 │   └── guides/algorithms/           # 25 algorithm proofs
 │       ├── binary-search-proof.md   # 4,027× speedup
@@ -487,7 +487,7 @@ claude-code-skills/
 
 ### Algorithm Performance
 
-以下は、claude-code-skillsプロジェクトで実際に測定された結果です：
+以下は、software-engineering-universeプロジェクトで実際に測定された結果です：
 
 | Algorithm | Speedup | p-value | Effect Size | R² |
 |-----------|---------|---------|-------------|-----|
@@ -549,12 +549,12 @@ Binary Searchは、線形探索と比較して理論的に以下のような性�
 **Try it live**: [https://example.com/demo](https://example.com/demo)
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ## 🎮 Interactive Demos
 
-**Try it live**: [https://gaku52.github.io/claude-code-skills/](https://gaku52.github.io/claude-code-skills/)
+**Try it live**: [https://gaku52.github.io/software-engineering-universe/](https://gaku52.github.io/software-engineering-universe/)
 
 - **Statistics Playground**: Calculate t-tests, confidence intervals, and effect sizes in your browser
 - **CRDT Demo**: Experience distributed data types with strong eventual consistency
@@ -799,7 +799,7 @@ command-name --input file.txt --output result.txt
 ## License
 ```
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 # Claude Code Skills
@@ -1074,7 +1074,7 @@ CIステータスを表示します。
 
 プロジェクト固有の指標を表示します。
 
-**実例（claude-code-skills）:**
+**実例（software-engineering-universe）:**
 
 ```markdown
 ![Progress](https://img.shields.io/badge/Progress-100%25-green)
@@ -1149,7 +1149,7 @@ Markdown All in One: Create Table of Contents
 
 実際のREADMEを分析して、良い構成を学びましょう。
 
-### 例1: claude-code-skills
+### 例1: software-engineering-universe
 
 **特徴:**
 - 研究・学術プロジェクト
@@ -1725,7 +1725,7 @@ READMEの「概要」セクションをより魅力的にする方法を、具�
 
 ### 優れたREADMEの例
 
-- [claude-code-skills](https://github.com/Gaku52/claude-code-skills) - 研究・学術プロジェクト
+- [software-engineering-universe](https://github.com/Gaku52/software-engineering-universe) - 研究・学術プロジェクト
 - [zenn-articles](https://github.com/Gaku52/zenn-articles) - シンプルで実用的
 - [React](https://github.com/facebook/react) - ライブラリの例
 - [Next.js](https://github.com/vercel/next.js) - フレームワークの例

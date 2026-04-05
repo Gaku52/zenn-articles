@@ -662,7 +662,7 @@ graph TB
 ### ディレクトリ構成
 
 ```
-claude-code-skills/
+software-engineering-universe/
 ├── frontend/
 │   ├── react-development/
 │   │   ├── guides/
@@ -852,6 +852,6 @@ Claude Code Skillsは、単一の技術領域ではなく、**プロダクショ
 
 ## 参考リンク
 
-- [SKILLS-MAP.md](https://github.com/Gaku52/claude-code-skills/blob/main/docs/SKILLS-MAP.md) - Skills関連図
-- [INDEX.md](https://github.com/Gaku52/claude-code-skills/blob/main/INDEX.md) - 検索可能なインデックス
-- [NAVIGATION.md](https://github.com/Gaku52/claude-code-skills/blob/main/NAVIGATION.md) - ナビゲーションガイド
+- [SKILLS-MAP.md](https://github.com/Gaku52/software-engineering-universe/blob/main/docs/SKILLS-MAP.md) - Skills関連図
+- [INDEX.md](https://github.com/Gaku52/software-engineering-universe/blob/main/INDEX.md) - 検索可能なインデックス
+- [NAVIGATION.md](https://github.com/Gaku52/software-engineering-universe/blob/main/NAVIGATION.md) - ナビゲーションガイド

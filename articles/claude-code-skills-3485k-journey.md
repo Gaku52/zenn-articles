@@ -18,7 +18,7 @@ published: false
 - 🎓 **MIT修士レベル**の品質評価（90/100点）
 - 📦 **2個のnpmパッケージ**（統計分析、CRDT）※公開準備中
 
-GitHub: https://github.com/Gaku52/claude-code-skills
+GitHub: https://github.com/Gaku52/software-engineering-universe
 
 ## なぜ作ったのか
 
@@ -43,7 +43,7 @@ Claude Codeの「Skills機能」を使って、技術領域ごとの**体系的�
 ### 📁 プロジェクト構成
 
 ```
-claude-code-skills/
+software-engineering-universe/
 ├── backend-development/        # バックエンド開発の完全ガイド
 │   └── guides/algorithms/      # 25個のアルゴリズム証明
 ├── ios-development/            # iOS開発のベストプラクティス
@@ -129,15 +129,15 @@ Claude Codeと一緒に、以下を実装：
 
 ```bash
 # 統計分析ライブラリ（リポジトリ内で利用可能）
-# npm install @claude-code-skills/stats  # 近日公開予定
+# npm install @software-engineering-universe/stats  # 近日公開予定
 
 # CRDT実装（リポジトリ内で利用可能）
-# npm install @claude-code-skills/crdt  # 近日公開予定
+# npm install @software-engineering-universe/crdt  # 近日公開予定
 ```
 
 **使用例:**
 ```typescript
-import { pairedTTest } from '@claude-code-skills/stats';
+import { pairedTTest } from '@software-engineering-universe/stats';
 
 const before = [12.5, 13.2, 11.8, 14.1, 12.9];
 const after = [4.8, 5.2, 4.5, 5.5, 4.9];
@@ -281,10 +281,10 @@ Claude Codeと一緒に作ることで、一人では不可能だったことが
 
 ```bash
 # React開発のSkillを追加
-cp -r claude-code-skills/react-development .claude/skills/
+cp -r software-engineering-universe/react-development .claude/skills/
 
 # iOS開発のSkillを追加
-cp -r claude-code-skills/ios-development .claude/skills/
+cp -r software-engineering-universe/ios-development .claude/skills/
 ```
 
 Claude Codeとの会話で、自動的に高度な前提知識を持った状態で会話できます。
@@ -340,7 +340,7 @@ Claude Codeと一緒に、**348万字の技術知識ベース**を作り上げ�
 
 すべてのコードと文書は、MITライセンスでGitHubに公開しています。
 
-**GitHub:** https://github.com/Gaku52/claude-code-skills
+**GitHub:** https://github.com/Gaku52/software-engineering-universe
 
 ---
 
@@ -357,7 +357,7 @@ Claude Codeと一緒に、**348万字の技術知識ベース**を作り上げ�
 
 ### 🚀 深い技術知識を求める上級者・研究者の方
 
-👉 **[GitHubリポジトリを探索する（無料）](https://github.com/Gaku52/claude-code-skills)**
+👉 **[GitHubリポジトリを探索する（無料）](https://github.com/Gaku52/software-engineering-universe)**
 
 - 34個の数学的証明を読む
 - 255+の論文引用を参照する
@@ -370,10 +370,10 @@ Claude Codeと一緒に、**348万字の技術知識ベース**を作り上げ�
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/Gaku52/claude-code-skills.git
+git clone https://github.com/Gaku52/software-engineering-universe.git
 
 # 必要なSkillを.claude/skills/にコピー
-cp -r claude-code-skills/react-development .claude/skills/
+cp -r software-engineering-universe/react-development .claude/skills/
 ```
 
 ---
@@ -391,7 +391,7 @@ GitHubのIssueやZennのコメントでお待ちしています。
 - 348万字から厳選した「今すぐ使える」内容
 
 ### 💻 GitHub（無料）
-**[claude-code-skills](https://github.com/Gaku52/claude-code-skills)**
+**[software-engineering-universe](https://github.com/Gaku52/software-engineering-universe)**
 
 - 25個のSkills（iOS、React、バックエンド等）
 - 34個の数学的証明
@@ -399,8 +399,8 @@ GitHubのIssueやZennのコメントでお待ちしています。
 - MITライセンス（商用利用可）
 
 ### 📦 npmパッケージ（開発完了、公開準備中）
-- `@claude-code-skills/stats` - 統計分析ライブラリ
-- `@claude-code-skills/crdt` - CRDT実装
+- `@software-engineering-universe/stats` - 統計分析ライブラリ
+- `@software-engineering-universe/crdt` - CRDT実装
 - リポジトリからローカルで利用可能
 
 ### 🎮 インタラクティブデモ（リポジトリ内）

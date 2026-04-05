@@ -660,7 +660,7 @@ Xcodeプロジェクト設定、セキュリティ、データ永続化
 **[Claude Codeガイド: モダンフロントエンド開発 2026](https://zenn.dev/gaku1234/books/claude-code-frontend-guide-2026)**
 React、Next.js、TypeScriptの実践ガイド
 
-**[claude-code-skills（GitHub）](https://github.com/Gaku52/claude-code-skills)**
+**[software-engineering-universe（GitHub）](https://github.com/Gaku52/software-engineering-universe)**
 25個の技術Skills、無料公開
 
 ---

@@ -112,7 +112,7 @@ ios-project-setupを使って新規iOSプロジェクト「Neura」を作成し�
 - Core Data使用
 - フォルダ構成はFeature-basedで
 
-参考: /Users/gaku/claude-code-skills/NEURA_SPEC.md
+参考: /Users/gaku/software-engineering-universe/NEURA_SPEC.md
 ```
 
 **Skills適用のポイント**:

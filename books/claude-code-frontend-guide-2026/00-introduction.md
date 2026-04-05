@@ -49,7 +49,7 @@ title: "はじめに"
 
 本書は、MITライセンスで公開されている以下のリポジトリをベースにしています：
 
-**GitHub**: https://github.com/Gaku52/claude-code-skills
+**GitHub**: https://github.com/Gaku52/software-engineering-universe
 
 > **リポジトリ概要**: プログラミングの基礎理論を数学で学ぶ - 高速な検索アルゴリズムから大規模システム設計まで34本の証明集
 
@@ -78,7 +78,7 @@ GitHubリポジトリとの違い：
 本書に関するご質問やフィードバックは、以下の方法でお寄せください：
 
 - **Zennのコメント機能**: 各章でコメント可能
-- **GitHubリポジトリ**: https://github.com/Gaku52/claude-code-skills/issues
+- **GitHubリポジトリ**: https://github.com/Gaku52/software-engineering-universe/issues
 - **X（Twitter）**: https://x.com/Gk_Egr32
 
 皆様からのフィードバックをお待ちしております！

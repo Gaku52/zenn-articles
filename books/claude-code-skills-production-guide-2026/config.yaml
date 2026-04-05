@@ -5,7 +5,7 @@ published: false
 price: 1000
 chapters:
   - 01-introduction
-  - 02-claude-code-skills-basics
+  - 02-software-engineering-universe-basics
   - 03-skills-design-philosophy
   - 04-real-world-case-studies
   - 05-quantifying-productivity

@@ -393,10 +393,10 @@ Skills導入後: 最初から正しい設計で実装
 
 ```bash
 # 1. ディレクトリ作成
-mkdir -p ~/.claude-code-skills/my-skills
+mkdir -p ~/.software-engineering-universe/my-skills
 
 # 2. 最初のSkillを作成
-touch ~/.claude-code-skills/my-skills/react-best-practices.md
+touch ~/.software-engineering-universe/my-skills/react-best-practices.md
 
 # 3. 内容を書く（テンプレート）
 ```
@@ -765,7 +765,7 @@ Skillsを作るために:
 - Email: gaku@ogadix.com
 
 **Skillsリポジトリ**:
-- https://github.com/Gaku52/claude-code-skills
+- https://github.com/Gaku52/software-engineering-universe
 
 このリポジトリには、本書で紹介した26個のSkills、529万字の知識体系が全て公開されています。
 
@@ -796,8 +796,8 @@ AI時代のエンジニアリングは、これまで以上にエキサイティ
 
 ### 公式リポジトリ
 
-**claude-code-skills**
-- URL: https://github.com/Gaku52/claude-code-skills
+**software-engineering-universe**
+- URL: https://github.com/Gaku52/software-engineering-universe
 - 内容: 26個のSkills、529万字の知識体系
 - ライセンス: MIT License
 - 更新頻度: 週次

@@ -385,7 +385,7 @@ Week 1で作った3つのSkillsを実務で使いながら、改善サイクル�
   "skills": {
     "directories": [
       "/Users/yourname/your-skills",
-      "/Users/yourname/claude-code-skills"  // 公式Skillsも併用可能
+      "/Users/yourname/software-engineering-universe"  // 公式Skillsも併用可能
     ]
   }
 }

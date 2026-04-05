@@ -246,7 +246,7 @@ Claude CodeのSkillsとして読み込まれ、必要な知識が適切なタイ
 
 Claude Code Skillsのリポジトリはオープンソース（MIT License）で公開しています。
 
-https://github.com/Gaku52/claude-code-skills
+https://github.com/Gaku52/software-engineering-universe
 
 興味がある方は覗いてみてください。
 

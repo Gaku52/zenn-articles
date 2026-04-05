@@ -216,7 +216,7 @@ const badMetrics: Metric[] = [
 **統計的検定**:
 
 ```typescript
-import { pairedTTest } from '@claude-code-skills/stats';
+import { pairedTTest } from '@software-engineering-universe/stats';
 
 const before = [135, 142, 128, 150, 145]; // 分
 const after = [32, 28, 35, 30, 33];       // 分
@@ -328,14 +328,14 @@ t検定により、p<0.001
 → 再現性が高い
 ```
 
-### claude-code-skillsの統計フレームワーク
+### software-engineering-universeの統計フレームワーク
 
-**リポジトリ**: `/Users/gaku/claude-code-skills`
+**リポジトリ**: `/Users/gaku/software-engineering-universe`
 
 このリポジトリには、MIT修士論文レベルの統計的厳密性を持つ実験フレームワークが実装されています。
 
 ```
-claude-code-skills/
+software-engineering-universe/
 ├── _IMPROVEMENTS/phase3/experiment-templates/
 │   ├── 01-statistical-methodology.md   # 統計手法の理論
 │   ├── 02-experiment-template.ts       # 実行可能なテンプレート
@@ -452,7 +452,7 @@ function pairedTTest(before: number[], after: number[]): TTestResult {
 **使用例: Neuraのプロジェクト構築時間**:
 
 ```typescript
-import { pairedTTest } from '@claude-code-skills/stats';
+import { pairedTTest } from '@software-engineering-universe/stats';
 
 // プロジェクト構築時間（分）
 const before = [135, 142, 128, 150, 145]; // Skills無し
@@ -517,7 +517,7 @@ effects.forEach(e => {
 
 ### 投資コスト（Investment）
 
-**claude-code-skillsリポジトリの構築コスト**:
+**software-engineering-universeリポジトリの構築コスト**:
 
 ```markdown
 ## Skills構築に要した時間
@@ -813,7 +813,7 @@ console.log(`3年後: ROI ${year3.roi.toFixed(0)}%, 純利益 ${year3.netSavings
 
 ```typescript
 // analysis.ts
-import { pairedTTest } from '@claude-code-skills/stats';
+import { pairedTTest } from '@software-engineering-universe/stats';
 
 // Beforeデータ（あなたのデータに置き換え）
 const before = [120, 135, 128, 142, 130, ...]; // n=30

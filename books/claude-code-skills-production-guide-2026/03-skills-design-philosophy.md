@@ -46,8 +46,8 @@ title: "Skills体系化の設計思想"
 **Skillsの定義**:
 > 特定のドメイン（iOS開発、React開発など）における、実践的なベストプラクティスと原則を、再利用可能な形でまとめた知識ベース
 
-**claude-code-skillsリポジトリ**:
-- GitHub: https://github.com/Gaku52/claude-code-skills
+**software-engineering-universeリポジトリ**:
+- GitHub: https://github.com/Gaku52/software-engineering-universe
 - 総文字数: 529万字
 - Skills数: 30個（うち26個が実践的開発スキル）
 - 証明数: 34件（アルゴリズム25件、分散システム5件、形式検証3件）
@@ -242,7 +242,7 @@ function isGoldilocks(skill: Skill): boolean {
 }
 ```
 
-**実測値（claude-code-skillsの26Skillsの統計）**:
+**実測値（software-engineering-universeの26Skillsの統計）**:
 
 | 指標 | 平均 | 最小 | 最大 |
 |------|------|------|------|
@@ -865,7 +865,7 @@ struct UserProfileView: View {
 ### 統計情報
 
 ```
-📊 claude-code-skills リポジトリ統計
+📊 software-engineering-universe リポジトリ統計
 
 総合指標:
 ├── 総文字数: 5,290,000字

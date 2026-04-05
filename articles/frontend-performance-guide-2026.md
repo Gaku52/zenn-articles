@@ -729,4 +729,4 @@ ROI: 480,000円 ÷ 500円 = 960倍
 **関連リンク**
 
 - [本書の詳細・購入はこちら](https://zenn.dev/gaku52/books/frontend-performance-complete-guide-2026)
-- [Claude Code Skills](https://github.com/Gaku52/claude-code-skills)
+- [Claude Code Skills](https://github.com/Gaku52/software-engineering-universe)

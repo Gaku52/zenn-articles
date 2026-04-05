@@ -59,9 +59,9 @@ OSSライブラリのREADMEは、**開発者が他のプロジェクトに組み
 - API仕様・使い方
 - ライセンス情報
 
-### 実例：claude-code-skills
+### 実例：software-engineering-universe
 
-実際のOSSプロジェクト [claude-code-skills](https://github.com/Gaku52/claude-code-skills) を参考に、構成を見ていきましょう。
+実際のOSSプロジェクト [software-engineering-universe](https://github.com/Gaku52/software-engineering-universe) を参考に、構成を見ていきましょう。
 
 #### 1. バッジセクション
 
@@ -122,15 +122,15 @@ OSSライブラリのREADMEは、**開発者が他のプロジェクトに組み
 
 ```bash
 # Statistical Analysis Library
-npm install @claude-code-skills/stats
+npm install @software-engineering-universe/stats
 
 # CRDT Library
-npm install @claude-code-skills/crdt
+npm install @software-engineering-universe/crdt
 ```
 
 **Statistics Example:**
 ```typescript
-import { pairedTTest } from '@claude-code-skills/stats';
+import { pairedTTest } from '@software-engineering-universe/stats';
 
 const before = [12.5, 13.2, 11.8, 14.1, 12.9];
 const after = [4.8, 5.2, 4.5, 5.5, 4.9];
@@ -151,7 +151,7 @@ console.log(`p-value: ${result.p < 0.001 ? '<0.001' : result.p.toFixed(3)}`);
 ## 📚 Repository Structure
 
 ```
-claude-code-skills/
+software-engineering-universe/
 ├── backend-development/
 │   └── guides/algorithms/           # 25 algorithm proofs
 │
@@ -1977,7 +1977,7 @@ project/
 ---
 
 **実例として参照したリポジトリ：**
-- [claude-code-skills](https://github.com/Gaku52/claude-code-skills) - OSSライブラリ型
+- [software-engineering-universe](https://github.com/Gaku52/software-engineering-universe) - OSSライブラリ型
 - [zenn-articles](https://github.com/Gaku52/zenn-articles) - Webアプリケーション型
 
 これらは実在するリポジトリであり、本章の説明のために引用しています。

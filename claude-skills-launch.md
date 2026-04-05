@@ -77,7 +77,7 @@ Neuraのフロント部分を1-2時間で製造できたのは、この**体系�
 
 この度、私の知識と哲学を詰め込んだ本を執筆しました。
 
-https://zenn.dev/gaku/books/claude-code-skills-production-guide-2026
+https://zenn.dev/gaku/books/software-engineering-universe-production-guide-2026
 
 ### これは「生きた技術書」です
 
@@ -201,7 +201,7 @@ https://zenn.dev/gaku/books/claude-code-skills-production-guide-2026
 
 ---
 
-📚 **本はこちら**: [Claude Code Skillsで実現する開発生産性革命](https://zenn.dev/gaku/books/claude-code-skills-production-guide-2026)
+📚 **本はこちら**: [Claude Code Skillsで実現する開発生産性革命](https://zenn.dev/gaku/books/software-engineering-universe-production-guide-2026)
 
 🎉 **発売記念価格 ¥1,000** - 今が最安値です
 

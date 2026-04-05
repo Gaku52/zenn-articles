@@ -35,7 +35,7 @@ title: "コンポーネントの型定義完全版"
 ---
 
 <!--
-この章は claude-code-skills/react-development/guides/typescript-patterns.md の
+この章は software-engineering-universe/react-development/guides/typescript-patterns.md の
 コンポーネント型定義セクションをベースに執筆します
 -->
 

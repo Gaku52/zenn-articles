@@ -473,7 +473,7 @@ After:
 
 抽象的な説明ではなく、**実際に使える例**を豊富に掲載しています。
 
-- 実際のOSSプロジェクト（claude-code-skills、zenn-articlesなど）の例
+- 実際のOSSプロジェクト（software-engineering-universe、zenn-articlesなど）の例
 - 想定されるケースを明確に示した例
 - Before/Afterの比較
 
@@ -590,7 +590,7 @@ function badExample() {
 
 本書に関する質問や提案は、以下のリポジトリで受け付けています：
 
-- GitHub: https://github.com/Gaku52/claude-code-skills
+- GitHub: https://github.com/Gaku52/software-engineering-universe
 - Zenn: https://github.com/Gaku52/zenn-articles
 
 技術コミュニティ全体でドキュメント文化を向上させていきましょう。
